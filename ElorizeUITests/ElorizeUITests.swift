@@ -1,10 +1,3 @@
-//
-//  ElorizeUITests.swift
-//  ElorizeUITests
-//
-//  Created by Miriam Sasse on 27.01.26.
-//
-
 import XCTest
 
 final class ElorizeUITests: XCTestCase {

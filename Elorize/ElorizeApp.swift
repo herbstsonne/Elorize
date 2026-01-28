@@ -1,10 +1,3 @@
-//
-//  ElorizeApp.swift
-//  Elorize
-//
-//  Created by Miriam Sasse on 27.01.26.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -12,7 +5,7 @@ import SwiftData
 struct ElorizeApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            FlashCardEntity.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,7 +18,7 @@ struct ElorizeApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
         }
         .modelContainer(sharedModelContainer)
     }
