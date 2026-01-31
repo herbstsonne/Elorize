@@ -23,6 +23,7 @@ public final class FlashCardEntity {
 	public var easeFactor: Double
 	public var intervalDays: Int
 	public var consecutiveCorrect: Int
+	public var lastQuality: Int?
 
 	public init(
 		id: UUID = UUID(),
@@ -34,7 +35,8 @@ public final class FlashCardEntity {
 		lastReviewedAt: Date? = nil,
 		easeFactor: Double = 2.5,
 		intervalDays: Int = 0,
-		consecutiveCorrect: Int = 0
+		consecutiveCorrect: Int = 0,
+		lastQuality: Int? = nil
 	) {
 		self.id = id
 		self.front = front
@@ -46,6 +48,7 @@ public final class FlashCardEntity {
 		self.easeFactor = max(1.3, easeFactor)
 		self.intervalDays = max(0, intervalDays)
 		self.consecutiveCorrect = max(0, consecutiveCorrect)
+		self.lastQuality = lastQuality
 	}
 }
 
@@ -62,7 +65,8 @@ public extension FlashCardEntity {
 			lastReviewedAt: card.lastReviewedAt,
 			easeFactor: card.easeFactor,
 			intervalDays: card.intervalDays,
-			consecutiveCorrect: card.consecutiveCorrect
+			consecutiveCorrect: card.consecutiveCorrect,
+			lastQuality: nil
 		)
 		self.subject = subject
 	}
