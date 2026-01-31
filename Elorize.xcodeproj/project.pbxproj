@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7CA3CE0F2F298B0600269B9D /* home.png in Resources */ = {isa = PBXBuildFile; fileRef = 7CA3CE0E2F298B0600269B9D /* home.png */; };
 		7CA3CE112F298BEA00269B9D /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 7CA3CE102F298BEA00269B9D /* README.md */; };
+		7CA3CE3F2F2E40B900269B9D /* home.png in Resources */ = {isa = PBXBuildFile; fileRef = 7CA3CE3E2F2E40B900269B9D /* home.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,8 +32,8 @@
 		7C7FB7E62F29791C00C9318C /* Elorize.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Elorize.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C7FB7F52F29791E00C9318C /* ElorizeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ElorizeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C7FB7FF2F29791E00C9318C /* ElorizeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ElorizeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		7CA3CE0E2F298B0600269B9D /* home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = home.png; sourceTree = "<group>"; };
 		7CA3CE102F298BEA00269B9D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		7CA3CE3E2F2E40B900269B9D /* home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = home.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -104,7 +104,7 @@
 		7CA3CE0D2F298AF500269B9D /* Images */ = {
 			isa = PBXGroup;
 			children = (
-				7CA3CE0E2F298B0600269B9D /* home.png */,
+				7CA3CE3E2F2E40B900269B9D /* home.png */,
 			);
 			path = Images;
 			sourceTree = "<group>";
@@ -230,7 +230,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7CA3CE112F298BEA00269B9D /* README.md in Resources */,
-				7CA3CE0F2F298B0600269B9D /* home.png in Resources */,
+				7CA3CE3F2F2E40B900269B9D /* home.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

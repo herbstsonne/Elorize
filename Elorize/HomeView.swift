@@ -10,6 +10,9 @@ struct HomeView: View {
 	@State private var showingAddSheet = false
 	@State private var currentIndex = 0
 	
+    enum ReviewFilter: String, CaseIterable, Identifiable { case all = "All", wrong = "Wrong", correct = "Correct"; var id: String { rawValue } }
+    @State private var reviewFilter: ReviewFilter = .all
+	
 	@Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
 	private var subjects: [SubjectEntity]
 	
@@ -22,6 +25,17 @@ struct HomeView: View {
 			return flashCardEntities // All subjects
 		}
 	}
+    
+	private var filteredByOutcome: [FlashCardEntity] {
+			switch reviewFilter {
+			case .all:
+					return filteredFlashCardEntities
+			case .wrong:
+					return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) <= 2 }
+			case .correct:
+					return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) >= 3 }
+			}
+	}
 	
 	@State private var generator = FlashcardGenerator()
 	@State private var reviewer = Reviewer()
@@ -29,34 +43,46 @@ struct HomeView: View {
 	var body: some View {
 		NavigationStack {
 			VStack {
-				if subjects.isEmpty {
-					ContentUnavailableView("No Subjects", systemImage: "folder.badge.questionmark", description: Text("Add a subject to get started."))
-				} else {
-					Picker("Subject", selection: $selectedSubjectID) {
-						Text("All").tag(UUID?.none)
-						ForEach(subjects) { subject in
-							Text(subject.name).tag(Optional(subject.id))
+				HStack {
+					Text("Subject/category:")
+					Spacer()
+					if subjects.isEmpty {
+						ContentUnavailableView("No Subjects", systemImage: "folder.badge.questionmark", description: Text("Add a subject to get started."))
+					} else {
+						Picker("Subject", selection: $selectedSubjectID) {
+							Text("All").tag(UUID?.none)
+							ForEach(subjects) { subject in
+								Text(subject.name).tag(Optional(subject.id))
+							}
 						}
+						.pickerStyle(.inline) // or .menu, depending on space
 					}
-					.pickerStyle(.segmented) // or .menu, depending on space
-					.padding(.horizontal)
 				}
+				Picker("FilterByKnowledge", selection: $reviewFilter) {
+						ForEach(ReviewFilter.allCases) { f in Text(f.rawValue).tag(f) }
+				}
+				.pickerStyle(.segmented)
+				.padding(.horizontal)
+				Spacer()
 				Group {
-					if let entity = generator.nextCardEntity(filteredFlashCardEntities, index: currentIndex) {
+					if let entity = generator.nextCardEntity(filteredByOutcome, index: currentIndex) {
 						FlashCardView(card: entity.value) {
 							reviewer.registerReview(for: entity, quality: 2)
+                            entity.lastQuality = 2
 							try? context.save()
 						} onCorrect: {
 							reviewer.registerReview(for: entity, quality: 5)
+                            entity.lastQuality = 5
 							try? context.save()
 						} onNext: {
-							currentIndex = (currentIndex + 1) % max(1, filteredFlashCardEntities.count)
+							currentIndex = (currentIndex + 1) % max(1, filteredByOutcome.count)
 						}
 					} else {
 						ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
 					}
 				}
 			}
+			.padding()
 			.navigationTitle("Elorize")
 			.toolbar {
 				ToolbarItem(placement: .topBarLeading) {
