@@ -1,13 +1,12 @@
 import SwiftUI
 
 struct SplashView: View {
-    @State private var isActive = false
-    @State private var opacity: Double = 0.0
-    @State private var scale: CGFloat = 0.9
+
+	@StateObject private var viewModel = SplashViewModel()
 
     var body: some View {
         Group {
-            if isActive {
+					if viewModel.isActive {
                 HomeView()
                     .transition(.opacity)
             } else {
@@ -16,7 +15,7 @@ struct SplashView: View {
                     .onAppear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                             withAnimation(.easeOut(duration: 0.35)) {
-                                isActive = true
+															viewModel.isActive = true
                             }
                         }
                     }
@@ -104,12 +103,12 @@ struct SplashView: View {
                     .foregroundStyle(Color.white.opacity(0.72))
             }
             .padding(.horizontal, 24)
-            .opacity(opacity)
-            .scaleEffect(scale)
+						.opacity(viewModel.opacity)
+						.scaleEffect(viewModel.scale)
             .onAppear {
                 withAnimation(.easeOut(duration: 1.0)) {
-                    opacity = 1.0
-                    scale = 1.0
+									viewModel.opacity = 1.0
+									viewModel.scale = 1.0
                 }
             }
 
