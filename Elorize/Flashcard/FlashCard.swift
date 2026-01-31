@@ -93,19 +93,4 @@ public struct FlashCard: Identifiable, Codable, Hashable {
         return Calendar.current.date(byAdding: .day, value: intervalDays, to: last)
     }
 }
-// MARK: - Sample Data
-public extension FlashCard {
-    static let sample: FlashCard = .init(
-        front: "hello",
-        back: "hola",
-        note: "Basic greeting",
-        tags: ["greeting", "spanish"]
-    )
-
-    static let samples: [FlashCard] = [
-        .init(front: "thank you", back: "gracias", tags: ["courtesy", "spanish"]),
-        .init(front: "please", back: "por favor", tags: ["courtesy", "spanish"]),
-        .init(front: "goodbye", back: "adiós", tags: ["farewell", "spanish"])
-    ]
-}
 

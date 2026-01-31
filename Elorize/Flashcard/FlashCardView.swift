@@ -4,8 +4,11 @@ struct FlashCardView: View {
 	let card: FlashCard
 	var onWrong: () -> Void
 	var onCorrect: () -> Void
+	var onNext: () -> Void
 	
 	@State private var isShowingBack = false
+	@State private var dragOffset: CGSize = .zero
+	@State private var dragRotation: Double = 0
 	
 	var body: some View {
 		VStack(spacing: 24) {
@@ -45,6 +48,11 @@ struct FlashCardView: View {
 			}
 			.frame(maxWidth: .infinity)
 			.frame(height: 260)
+			.offset(x: dragOffset.width, y: dragOffset.height)
+			.rotationEffect(.degrees(dragRotation))
+			.gesture(dragGesture)
+			.animation(.spring(response: 0.25, dampingFraction: 0.8), value: dragOffset)
+			.animation(.spring(response: 0.25, dampingFraction: 0.8), value: dragRotation)
 			.onTapGesture { withAnimation(.spring()) { isShowingBack.toggle() } }
 			.padding(.horizontal)
 			
@@ -72,4 +80,32 @@ struct FlashCardView: View {
 		}
 		.padding(.vertical)
 	}
+	
+	// MARK: - Gestures
+	private var dragGesture: some Gesture {
+		DragGesture(minimumDistance: 10)
+			.onChanged { value in
+				dragOffset = value.translation
+				// Slight rotation based on horizontal drag
+				dragRotation = Double(value.translation.width / 20)
+			}
+			.onEnded { value in
+				let threshold: CGFloat = 80
+				if value.translation.width > threshold || value.translation.width < -threshold {
+					// Swipe left or right -> next card (no grading)
+					onNext()
+					resetCardPosition()
+					isShowingBack = false
+				} else {
+					// Snap back
+					resetCardPosition()
+				}
+			}
+	}
+	
+	private func resetCardPosition() {
+		dragOffset = .zero
+		dragRotation = 0
+	}
 }
+

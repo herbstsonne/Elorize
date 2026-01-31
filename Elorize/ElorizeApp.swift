@@ -4,9 +4,10 @@ import SwiftData
 @main
 struct ElorizeApp: App {
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            FlashCardEntity.self,
-        ])
+			let schema = Schema([
+				SubjectEntity.self,
+				FlashCardEntity.self
+			])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
