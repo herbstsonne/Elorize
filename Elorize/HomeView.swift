@@ -83,7 +83,6 @@ struct HomeView: View {
 				}
 			}
 			.padding()
-			.navigationTitle("Elorize")
 			.toolbar {
 				ToolbarItem(placement: .topBarLeading) {
 					Button {
