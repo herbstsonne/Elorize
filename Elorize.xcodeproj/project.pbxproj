@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		7CA3CE0F2F298B0600269B9D /* home.png in Resources */ = {isa = PBXBuildFile; fileRef = 7CA3CE0E2F298B0600269B9D /* home.png */; };
 		7CA3CE112F298BEA00269B9D /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 7CA3CE102F298BEA00269B9D /* README.md */; };
+		7CA3CE612F2E462200269B9D /* splash.png in Resources */ = {isa = PBXBuildFile; fileRef = 7CA3CE602F2E462200269B9D /* splash.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +35,7 @@
 		7C7FB7FF2F29791E00C9318C /* ElorizeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ElorizeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7CA3CE0E2F298B0600269B9D /* home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = home.png; sourceTree = "<group>"; };
 		7CA3CE102F298BEA00269B9D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		7CA3CE602F2E462200269B9D /* splash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = splash.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -105,6 +107,7 @@
 			isa = PBXGroup;
 			children = (
 				7CA3CE0E2F298B0600269B9D /* home.png */,
+				7CA3CE602F2E462200269B9D /* splash.png */,
 			);
 			path = Images;
 			sourceTree = "<group>";
@@ -229,6 +232,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7CA3CE612F2E462200269B9D /* splash.png in Resources */,
 				7CA3CE112F298BEA00269B9D /* README.md in Resources */,
 				7CA3CE0F2F298B0600269B9D /* home.png in Resources */,
 			);
