@@ -3,12 +3,17 @@
 **Elorize** 
 
 <p align="center">
-  <img src="Images/home.png" alt="Home" width="200" />
+  <img src="Images/splash.png" alt="Splash" width="240" style="margin-right:12px;" />
+  <img src="Images/home.png" alt="Home" width="240" />
 </p>
 
 ---
 
 ## 📱 Features
+
+- Elegant Parisian-inspired splash screen with animated title
+- Subject-based organization for flashcards
+- Add, review, and swipe through cards with spaced repetition
 
 ---
 
@@ -16,5 +21,4 @@
 
 ```bash
 git clone https://github.com/herbstsonne/Elorize.git
-
 
