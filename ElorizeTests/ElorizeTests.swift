@@ -1,10 +1,3 @@
-//
-//  ElorizeTests.swift
-//  ElorizeTests
-//
-//  Created by Miriam Sasse on 27.01.26.
-//
-
 import Testing
 @testable import Elorize
 
