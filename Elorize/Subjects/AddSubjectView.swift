@@ -4,26 +4,27 @@ import SwiftData
 struct AddSubjectView: View {
 	@Environment(\.dismiss) private var dismiss
 	@Environment(\.modelContext) private var context
-	@State private var name: String = ""
+	@StateObject private var viewModel = AddSubjectViewModel()
 	
 	var body: some View {
 		NavigationStack {
 			Form {
-				TextField("Subject name", text: $name)
+				TextField("Subject name", text: $viewModel.name)
+				if let error = viewModel.errorMessage {
+					Text(error).foregroundStyle(.red)
+				}
 			}
 			.navigationTitle("New Subject")
 			.toolbar {
 				ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
 				ToolbarItem(placement: .confirmationAction) {
 					Button("Save") {
-						let subject = SubjectEntity(name: name.trimmingCharacters(in: .whitespacesAndNewlines))
-						context.insert(subject)
-						try? context.save()
-						dismiss()
+						if viewModel.save() { dismiss() }
 					}
-					.disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+					.disabled(viewModel.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isSaving)
 				}
 			}
+			.onAppear { viewModel.setContext(context) }
 		}
 	}
 }

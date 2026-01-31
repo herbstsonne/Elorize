@@ -3,23 +3,16 @@ import SwiftData
 
 struct HomeView: View {
 
+	@StateObject private var viewModel = HomeViewModel(context: nil)
 	@Environment(\.modelContext) private var context
 	@Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
 	private var flashCardEntities: [FlashCardEntity]
-	@State private var showingAddSubject = false
-	@State private var showingAddSheet = false
-	@State private var currentIndex = 0
-	
-    enum ReviewFilter: String, CaseIterable, Identifiable { case all = "All", wrong = "Wrong", correct = "Correct"; var id: String { rawValue } }
-    @State private var reviewFilter: ReviewFilter = .all
-	
+
 	@Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
 	private var subjects: [SubjectEntity]
-	
-	@State private var selectedSubjectID: UUID?
-	
+
 	private var filteredFlashCardEntities: [FlashCardEntity] {
-		if let id = selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
+		if let id = viewModel.selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
 			return flashCardEntities.filter { $0.subject?.id == subject.id }
 		} else {
 			return flashCardEntities // All subjects
@@ -27,18 +20,15 @@ struct HomeView: View {
 	}
     
 	private var filteredByOutcome: [FlashCardEntity] {
-			switch reviewFilter {
-			case .all:
-					return filteredFlashCardEntities
-			case .wrong:
-					return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) <= 2 }
-			case .correct:
-					return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) >= 3 }
-			}
+		switch viewModel.reviewFilter {
+		case .all:
+			return filteredFlashCardEntities
+		case .wrong:
+			return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) <= 2 }
+		case .correct:
+			return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) >= 3 }
+		}
 	}
-	
-	@State private var generator = FlashcardGenerator()
-	@State private var reviewer = Reviewer()
 
 	var body: some View {
 		NavigationStack {
@@ -49,7 +39,7 @@ struct HomeView: View {
 					if subjects.isEmpty {
 						ContentUnavailableView("No Subjects", systemImage: "folder.badge.questionmark", description: Text("Add a subject to get started."))
 					} else {
-						Picker("Subject", selection: $selectedSubjectID) {
+						Picker("Subject", selection: $viewModel.selectedSubjectID) {
 							Text("All").tag(UUID?.none)
 							ForEach(subjects) { subject in
 								Text(subject.name).tag(Optional(subject.id))
@@ -58,24 +48,20 @@ struct HomeView: View {
 						.pickerStyle(.inline) // or .menu, depending on space
 					}
 				}
-				Picker("FilterByKnowledge", selection: $reviewFilter) {
-						ForEach(ReviewFilter.allCases) { f in Text(f.rawValue).tag(f) }
+				Picker("FilterByKnowledge", selection: $viewModel.reviewFilter) {
+					ForEach(ReviewFilter.allCases) { f in Text(f.rawValue).tag(f) }
 				}
 				.pickerStyle(.segmented)
 				.padding(.horizontal)
 				Spacer()
 				Group {
-					if let entity = generator.nextCardEntity(filteredByOutcome, index: currentIndex) {
+					if let entity = viewModel.nextEntity() {
 						FlashCardView(card: entity.value) {
-							reviewer.registerReview(for: entity, quality: 2)
-                            entity.lastQuality = 2
-							try? context.save()
+							viewModel.markWrong(entity)
 						} onCorrect: {
-							reviewer.registerReview(for: entity, quality: 5)
-                            entity.lastQuality = 5
-							try? context.save()
+							viewModel.markCorrect(entity)
 						} onNext: {
-							currentIndex = (currentIndex + 1) % max(1, filteredByOutcome.count)
+							viewModel.advanceIndex()
 						}
 					} else {
 						ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
@@ -86,22 +72,31 @@ struct HomeView: View {
 			.toolbar {
 				ToolbarItem(placement: .topBarLeading) {
 					Button {
-						showingAddSubject = true
+						viewModel.showingAddSubject = true
 					} label: {
 						Image(systemName: "folder.badge.plus")
 					}
 					.accessibilityLabel("Add subject")
 				}
 				ToolbarItem(placement: .topBarTrailing) {
-					Button { showingAddSheet = true } label: { Image(systemName: "plus") }
-							.accessibilityLabel("Add sample card")
+					Button {
+						viewModel.showingAddSheet = true
+					} label: {
+						Image(systemName: "plus")
+					}
+					.accessibilityLabel("Add sample card")
 				}
 			}
 		}
-		.sheet(isPresented: $showingAddSubject) {
+		.onAppear {
+			viewModel.setContext(context)
+			viewModel.flashCardEntities = flashCardEntities
+			viewModel.subjects = subjects
+		}
+		.sheet(isPresented: $viewModel.showingAddSubject) {
 			AddSubjectView()
 		}
-		.sheet(isPresented: $showingAddSheet) {
+		.sheet(isPresented: $viewModel.showingAddSheet) {
 			AddFlashCardView(subjects: subjects)
 		}
 	}

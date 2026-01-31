@@ -1,15 +1,14 @@
 import SwiftUI
 
 struct FlashCardView: View {
+
+  @StateObject private var viewModel = FlashCardViewModel()
+
 	let card: FlashCard
 	var onWrong: () -> Void
 	var onCorrect: () -> Void
 	var onNext: () -> Void
-	
-	@State private var isShowingBack = false
-	@State private var dragOffset: CGSize = .zero
-	@State private var dragRotation: Double = 0
-	
+
 	var body: some View {
 		VStack(spacing: 24) {
 			ZStack {
@@ -18,12 +17,12 @@ struct FlashCardView: View {
 					.shadow(radius: 4)
 				
 				VStack(spacing: 12) {
-					Text(isShowingBack ? card.back : card.front)
+					Text(viewModel.isFlipped ? card.back : card.front)
 						.font(.largeTitle).bold()
 						.multilineTextAlignment(.center)
 						.padding()
 					
-					if let note = card.note, !note.isEmpty, !isShowingBack {
+					if let note = card.note, !note.isEmpty, !viewModel.isFlipped {
 						Text(note)
 							.font(.subheadline)
 							.foregroundStyle(.secondary)
@@ -48,18 +47,18 @@ struct FlashCardView: View {
 			}
 			.frame(maxWidth: .infinity)
 			.frame(height: 260)
-			.offset(x: dragOffset.width, y: dragOffset.height)
-			.rotationEffect(.degrees(dragRotation))
+			.offset(x: viewModel.dragOffset.width, y: viewModel.dragOffset.height)
+			.rotationEffect(.degrees(viewModel.dragRotation))
 			.gesture(dragGesture)
-			.animation(.spring(response: 0.25, dampingFraction: 0.8), value: dragOffset)
-			.animation(.spring(response: 0.25, dampingFraction: 0.8), value: dragRotation)
-			.onTapGesture { withAnimation(.spring()) { isShowingBack.toggle() } }
+			.animation(.spring(response: 0.25, dampingFraction: 0.8), value: viewModel.dragOffset)
+			.animation(.spring(response: 0.25, dampingFraction: 0.8), value: viewModel.dragRotation)
+			.onTapGesture { withAnimation(.spring()) { viewModel.flip() } }
 			.padding(.horizontal)
 			
 			HStack(spacing: 16) {
 				Button {
 					onWrong()
-					isShowingBack = false
+					viewModel.isFlipped = false
 				} label: {
 					Label("Again", systemImage: "xmark")
 						.frame(maxWidth: .infinity)
@@ -69,7 +68,7 @@ struct FlashCardView: View {
 				
 				Button {
 					onCorrect()
-					isShowingBack = false
+					viewModel.isFlipped = false
 				} label: {
 					Label("Easy", systemImage: "checkmark")
 						.frame(maxWidth: .infinity)
@@ -85,9 +84,9 @@ struct FlashCardView: View {
 	private var dragGesture: some Gesture {
 		DragGesture(minimumDistance: 10)
 			.onChanged { value in
-				dragOffset = value.translation
+				viewModel.dragOffset = value.translation
 				// Slight rotation based on horizontal drag
-				dragRotation = Double(value.translation.width / 20)
+				viewModel.dragRotation = Double(value.translation.width / 20)
 			}
 			.onEnded { value in
 				let threshold: CGFloat = 80
@@ -95,7 +94,7 @@ struct FlashCardView: View {
 					// Swipe left or right -> next card (no grading)
 					onNext()
 					resetCardPosition()
-					isShowingBack = false
+					viewModel.isFlipped = false
 				} else {
 					// Snap back
 					resetCardPosition()
@@ -104,8 +103,8 @@ struct FlashCardView: View {
 	}
 	
 	private func resetCardPosition() {
-		dragOffset = .zero
-		dragRotation = 0
+		viewModel.dragOffset = .zero
+		viewModel.dragRotation = 0
 	}
 }
 
