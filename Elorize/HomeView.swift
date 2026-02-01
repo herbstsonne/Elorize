@@ -85,30 +85,38 @@ struct HomeView: View {
 								.textViewStyle(16)
 						}
 					}
-					Group {
-						if let entity = viewModel.nextEntity() {
-							FlashCardView(card: entity.value) {
-								viewModel.markWrong(entity)
-							} onCorrect: {
-								viewModel.markCorrect(entity)
-							} onNext: {
-								viewModel.advanceIndex()
-							}
-							.contextMenu {
-								Button(role: .destructive) {
-									entityPendingDeletion = entity
-									showingDeleteAlert = true
-								} label: {
-									Label("Delete", systemImage: "trash")
+					.pickerStyle(.segmented)
+					.padding(.horizontal)
+					ZStack {
+						Group {
+							if let entity = viewModel.nextEntity() {
+								FlashCardView(card: entity.value) {
+									viewModel.markWrong(entity)
+								} onCorrect: {
+									viewModel.markCorrect(entity)
+								} onNext: {
+									viewModel.advanceIndex()
 								}
+								.contextMenu {
+									Button(role: .destructive) {
+										entityPendingDeletion = entity
+										showingDeleteAlert = true
+									} label: {
+										Label("Delete", systemImage: "trash")
+									}
+								}
+								.frame(maxWidth: 560)
+								.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+							} else {
+								ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
+									.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
 							}
-						} else {
-							ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
 						}
+						.textViewStyle(16)
 					}
+					.foregroundStyle(Color.app(.accent_subtle))
 				}
 			}
-			.padding()
 			.alert("Do you really want to delete this flash card?", isPresented: $showingDeleteAlert, presenting: entityPendingDeletion) { pending in
 				Button("Delete", role: .destructive) {
 					delete(pending)
@@ -149,18 +157,17 @@ struct HomeView: View {
 					}
 				}
 			}
-		}
-		.padding()
-		.onAppear {
-			viewModel.setContext(context)
-			viewModel.flashCardEntities = flashCardEntities
-			viewModel.subjects = subjects
-		}
-		.sheet(isPresented: $viewModel.showingAddSubject) {
-			AddSubjectView()
-		}
-		.sheet(isPresented: $viewModel.showingAddSheet) {
-			AddFlashCardView(subjects: subjects)
+			.onAppear {
+				viewModel.setContext(context)
+				viewModel.flashCardEntities = flashCardEntities
+				viewModel.subjects = subjects
+			}
+			.sheet(isPresented: $viewModel.showingAddSubject) {
+				AddSubjectView()
+			}
+			.sheet(isPresented: $viewModel.showingAddSheet) {
+				AddFlashCardView(subjects: subjects)
+			}
 		}
 	}
 }
