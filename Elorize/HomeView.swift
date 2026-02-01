@@ -5,6 +5,8 @@ struct HomeView: View {
 
 	@StateObject private var viewModel = HomeViewModel(context: nil)
 	@Environment(\.modelContext) private var context
+	@State private var showingDeleteAlert = false
+	@State private var entityPendingDeletion: FlashCardEntity? = nil
 	@Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
 	private var flashCardEntities: [FlashCardEntity]
 
@@ -27,6 +29,15 @@ struct HomeView: View {
 			return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) <= 2 }
 		case .correct:
 			return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) >= 3 }
+		}
+	}
+
+	private func delete(_ entity: FlashCardEntity) {
+		context.delete(entity)
+		do { try context.save() } catch { /* handle save error if needed */ }
+		// Remove from local arrays used by the view model
+		if let index = viewModel.flashCardEntities.firstIndex(where: { $0.id == entity.id }) {
+			viewModel.flashCardEntities.remove(at: index)
 		}
 	}
 
@@ -63,12 +74,31 @@ struct HomeView: View {
 						} onNext: {
 							viewModel.advanceIndex()
 						}
+						.contextMenu {
+							Button(role: .destructive) {
+								entityPendingDeletion = entity
+								showingDeleteAlert = true
+							} label: {
+								Label("Delete", systemImage: "trash")
+							}
+						}
 					} else {
 						ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
 					}
 				}
 			}
 			.padding()
+			.alert("Do you really want to delete this flash card?", isPresented: $showingDeleteAlert, presenting: entityPendingDeletion) { pending in
+				Button("Delete", role: .destructive) {
+					delete(pending)
+					entityPendingDeletion = nil
+				}
+				Button("Cancel", role: .cancel) {
+					entityPendingDeletion = nil
+				}
+			} message: { _ in
+				Text("This action cannot be undone.")
+			}
 			.toolbar {
 				ToolbarItem(placement: .topBarLeading) {
 					Button {
@@ -85,6 +115,17 @@ struct HomeView: View {
 						Image(systemName: "plus")
 					}
 					.accessibilityLabel("Add sample card")
+				}
+				ToolbarItem(placement: .topBarTrailing) {
+					if let entity = viewModel.nextEntity() {
+						Button(role: .destructive) {
+							entityPendingDeletion = entity
+							showingDeleteAlert = true
+						} label: {
+							Image(systemName: "trash")
+						}
+						.accessibilityLabel("Delete current card")
+					}
 				}
 			}
 		}
