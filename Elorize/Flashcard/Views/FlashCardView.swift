@@ -13,7 +13,7 @@ struct FlashCardView: View {
 		VStack(spacing: 24) {
 			ZStack {
 				RoundedRectangle(cornerRadius: 16, style: .continuous)
-					.fill(.background)
+					.fill(Color.app(.card_background))
 					.shadow(radius: 4)
 				
 				VStack(spacing: 12) {
@@ -60,20 +60,21 @@ struct FlashCardView: View {
 					onWrong()
 					viewModel.isFlipped = false
 				} label: {
-					Label("Again", systemImage: "xmark")
+					Label("Wrong", systemImage: "xmark")
 						.frame(maxWidth: .infinity)
 				}
 				.buttonStyle(.bordered)
-				.tint(.red)
+				.tint(Color.app(.error))
 				
 				Button {
 					onCorrect()
 					viewModel.isFlipped = false
 				} label: {
-					Label("Easy", systemImage: "checkmark")
+					Label("Correct", systemImage: "checkmark")
 						.frame(maxWidth: .infinity)
 				}
 				.buttonStyle(.borderedProminent)
+				.tint(Color.app(.success))
 			}
 			.padding(.horizontal)
 		}

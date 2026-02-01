@@ -10,94 +10,125 @@ struct HomeView: View {
 
 	@Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
 	private var subjects: [SubjectEntity]
-
-	private var filteredFlashCardEntities: [FlashCardEntity] {
-		if let id = viewModel.selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
-			return flashCardEntities.filter { $0.subject?.id == subject.id }
-		} else {
-			return flashCardEntities // All subjects
-		}
-	}
-    
-	private var filteredByOutcome: [FlashCardEntity] {
-		switch viewModel.reviewFilter {
-		case .all:
-			return filteredFlashCardEntities
-		case .wrong:
-			return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) <= 2 }
-		case .correct:
-			return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) >= 3 }
-		}
+	
+	init() {
+		UISegmentedControl.appearance().setTitleTextAttributes(
+			[.foregroundColor: UIColor.app(.accent_default)],
+			for: .normal
+		)
+		
+		UISegmentedControl.appearance().setTitleTextAttributes(
+			[.foregroundColor: UIColor.app(.accent_pressed)],
+			for: .selected
+		)
 	}
 
 	var body: some View {
 		NavigationStack {
-			VStack {
-				HStack {
-					Text("Subject/category:")
-					Spacer()
-					if subjects.isEmpty {
-						ContentUnavailableView("No Subjects", systemImage: "folder.badge.questionmark", description: Text("Add a subject to get started."))
-					} else {
-						Picker("Subject", selection: $viewModel.selectedSubjectID) {
-							Text("All").tag(UUID?.none)
-							ForEach(subjects) { subject in
-								Text(subject.name).tag(Optional(subject.id))
+			ZStack {
+				// Deep, inky background with a subtle vignette
+				LinearGradient(
+					colors: [Color.app(.background_primary), Color.app(.background_secondary)],
+					startPoint: .topLeading,
+					endPoint: .bottomTrailing
+				)
+				.ignoresSafeArea()
+				
+				// Soft vignette glow
+				RadialGradient(
+					colors: [Color.app(.accent_default).opacity(0.1), .clear],
+					center: .center,
+					startRadius: 10,
+					endRadius: 380
+				)
+				.blendMode(.softLight)
+				.ignoresSafeArea()
+	
+				VStack(alignment: .leading) {
+					HStack {
+						Group {
+							if subjects.isEmpty {
+								ContentUnavailableView("No Subjects", systemImage: "folder.badge.questionmark", description: Text("Add a subject to get started."))
+							} else {
+								Picker("Subject", selection: $viewModel.selectedSubjectID) {
+									Text("All")
+										.tag(UUID?.none)
+										.foregroundStyle(Color.app(.accent_default))
+										.textViewStyle(16)
+									ForEach(subjects) { subject in
+										Text(subject.name)
+											.tag(Optional(subject.id))
+											.foregroundStyle(Color.app(.accent_default))
+											.textViewStyle(16)
+									}
+								}
+								.pickerStyle(.inline) // or .menu, depending on space
 							}
 						}
-						.pickerStyle(.inline) // or .menu, depending on space
 					}
-				}
-				Picker("FilterByKnowledge", selection: $viewModel.reviewFilter) {
-					ForEach(ReviewFilter.allCases) { f in Text(f.rawValue).tag(f) }
-				}
-				.pickerStyle(.segmented)
-				.padding(.horizontal)
-				Spacer()
-				Group {
-					if let entity = viewModel.nextEntity() {
-						FlashCardView(card: entity.value) {
-							viewModel.markWrong(entity)
-						} onCorrect: {
-							viewModel.markCorrect(entity)
-						} onNext: {
-							viewModel.advanceIndex()
+					Picker("FilterByKnowledge", selection: $viewModel.reviewFilter) {
+						ForEach(ReviewFilter.allCases) { f in
+							Text(f.rawValue)
+								.tag(f)
+								.foregroundStyle(Color.app(.accent_default))
+								.textViewStyle(16)
 						}
-					} else {
-						ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
+					}
+					.pickerStyle(.segmented)
+					.padding(.horizontal)
+					ZStack {
+						Group {
+							if let entity = viewModel.nextEntity() {
+								FlashCardView(card: entity.value) {
+									viewModel.markWrong(entity)
+								} onCorrect: {
+									viewModel.markCorrect(entity)
+								} onNext: {
+									viewModel.advanceIndex()
+								}
+								.frame(maxWidth: 560)
+								.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+							} else {
+								ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
+									.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+							}
+						}
+						.textViewStyle(16)
+					}
+					.foregroundStyle(Color.app(.accent_subtle))
+				}
+				.padding()
+				Spacer()
+				.toolbar {
+					ToolbarItem(placement: .topBarLeading) {
+						Button {
+							viewModel.showingAddSubject = true
+						} label: {
+							Image(systemName: "folder.badge.plus")
+						}
+						.accessibilityLabel("Add subject")
+					}
+					ToolbarItem(placement: .topBarTrailing) {
+						Button {
+							viewModel.showingAddSheet = true
+						} label: {
+							Image(systemName: "plus")
+						}
+						.accessibilityLabel("Add sample card")
 					}
 				}
 			}
-			.padding()
-			.toolbar {
-				ToolbarItem(placement: .topBarLeading) {
-					Button {
-						viewModel.showingAddSubject = true
-					} label: {
-						Image(systemName: "folder.badge.plus")
-					}
-					.accessibilityLabel("Add subject")
-				}
-				ToolbarItem(placement: .topBarTrailing) {
-					Button {
-						viewModel.showingAddSheet = true
-					} label: {
-						Image(systemName: "plus")
-					}
-					.accessibilityLabel("Add sample card")
-				}
+			.onAppear {
+				viewModel.setContext(context)
+				viewModel.flashCardEntities = flashCardEntities
+				viewModel.subjects = subjects
 			}
-		}
-		.onAppear {
-			viewModel.setContext(context)
-			viewModel.flashCardEntities = flashCardEntities
-			viewModel.subjects = subjects
-		}
-		.sheet(isPresented: $viewModel.showingAddSubject) {
-			AddSubjectView()
-		}
-		.sheet(isPresented: $viewModel.showingAddSheet) {
-			AddFlashCardView(subjects: subjects)
+			.sheet(isPresented: $viewModel.showingAddSubject) {
+				AddSubjectView()
+			}
+			.sheet(isPresented: $viewModel.showingAddSheet) {
+				AddFlashCardView(subjects: subjects)
+			}
 		}
 	}
 }
