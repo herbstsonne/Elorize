@@ -20,16 +20,6 @@ final class HomeViewModel: ObservableObject {
     @Published var selectedSubjectID: UUID? = nil
     @Published var reviewFilter: ReviewFilter = .all
 
-    init(context: ModelContext?, generator: FlashcardGenerator = FlashcardGenerator(), reviewer: Reviewer = Reviewer()) {
-        self.context = context
-        self.generator = generator
-        self.reviewer = reviewer
-    }
-
-    func setContext(_ context: ModelContext) {
-        self.context = context
-    }
-
     // Derived data
     var filteredFlashCardEntities: [FlashCardEntity] {
         if let id = selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
@@ -48,6 +38,16 @@ final class HomeViewModel: ObservableObject {
         case .correct:
             return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) >= 3 }
         }
+    }
+
+    init(context: ModelContext?, generator: FlashcardGenerator = FlashcardGenerator(), reviewer: Reviewer = Reviewer()) {
+        self.context = context
+        self.generator = generator
+        self.reviewer = reviewer
+    }
+
+    func setContext(_ context: ModelContext) {
+        self.context = context
     }
 
     func nextEntity() -> FlashCardEntity? {
@@ -70,3 +70,4 @@ final class HomeViewModel: ObservableObject {
         currentIndex = (currentIndex + 1) % max(1, filteredByOutcome.count)
     }
 }
+

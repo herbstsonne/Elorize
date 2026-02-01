@@ -27,7 +27,7 @@ struct SplashView: View {
         ZStack {
             // Deep, inky background with a subtle vignette
             LinearGradient(
-                colors: [Color(red: 0.08, green: 0.10, blue: 0.18), Color(red: 0.02, green: 0.03, blue: 0.08)],
+                colors: [Color.app(.background_primary), Color.app(.background_secondary)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -35,7 +35,7 @@ struct SplashView: View {
 
             // Soft vignette glow
             RadialGradient(
-                colors: [Color.white.opacity(0.08), .clear],
+                colors: [Color.app(.accent_default).opacity(0.12), .clear],
                 center: .center,
                 startRadius: 10,
                 endRadius: 380
@@ -48,13 +48,13 @@ struct SplashView: View {
                 let maxWidth = min(proxy.size.width - 48, 520)
                 VStack(spacing: 0) {
                     RoundedRectangle(cornerRadius: 40, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                        .strokeBorder(Color.app(.text_secondary).opacity(0.12), lineWidth: 1)
                         .frame(width: maxWidth, height: 260)
                         .overlay(
                             RoundedRectangle(cornerRadius: 40, style: .continuous)
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color.white.opacity(0.03), Color.white.opacity(0.0)],
+                                        colors: [Color.app(.text_secondary).opacity(0.08), Color.app(.text_secondary).opacity(0.0)],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
@@ -76,7 +76,7 @@ struct SplashView: View {
                     .kerning(1.5)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [Color(red: 0.92, green: 0.82, blue: 0.56), Color(red: 0.76, green: 0.64, blue: 0.34)],
+                            colors: [Color.app(.gold_primary), Color.app(.accent_default)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -87,7 +87,7 @@ struct SplashView: View {
                         Text("Elorize")
                             .font(.system(size: 192, weight: .semibold, design: .serif))
                             .kerning(1.5)
-                            .foregroundColor(.white.opacity(0.15))
+                            .foregroundColor(Color.app(.text_primary).opacity(0.15))
                             .blur(radius: 0.8)
                             .offset(y: -1.5)
                             .mask(
@@ -100,7 +100,7 @@ struct SplashView: View {
                     .font(.system(size: 22, weight: .regular, design: .serif))
                     .textCase(.lowercase)
                     .kerning(2)
-                    .foregroundStyle(Color.white.opacity(0.72))
+                    .foregroundStyle(Color.app(.text_secondary))
             }
             .padding(.horizontal, 24)
 						.opacity(viewModel.opacity)
@@ -117,7 +117,7 @@ struct SplashView: View {
                 Spacer()
                 Image(systemName: "leaf.fill")
                     .font(.system(size: 14, weight: .regular))
-                    .foregroundStyle(Color.white.opacity(0.22))
+                    .foregroundStyle(Color.app(.text_secondary).opacity(0.22))
                     .padding(.bottom, 28)
             }
             .ignoresSafeArea()
