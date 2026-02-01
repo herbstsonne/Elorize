@@ -25,15 +25,6 @@ struct HomeView: View {
 		)
 	}
 
-	private func delete(_ entity: FlashCardEntity) {
-		context.delete(entity)
-		do { try context.save() } catch { /* handle save error if needed */ }
-		// Remove from local arrays used by the view model
-		if let index = viewModel.flashCardEntities.firstIndex(where: { $0.id == entity.id }) {
-			viewModel.flashCardEntities.remove(at: index)
-		}
-	}
-
 	var body: some View {
 		NavigationStack {
 			ZStack {
@@ -119,7 +110,7 @@ struct HomeView: View {
 			}
 			.alert("Do you really want to delete this flash card?", isPresented: $showingDeleteAlert, presenting: entityPendingDeletion) { pending in
 				Button("Delete", role: .destructive) {
-					delete(pending)
+					viewModel.delete(pending)
 					entityPendingDeletion = nil
 				}
 				Button("Cancel", role: .cancel) {
@@ -167,6 +158,13 @@ struct HomeView: View {
 			}
 			.sheet(isPresented: $viewModel.showingAddSheet) {
 				AddFlashCardView(subjects: subjects)
+			}
+			.onChange(of: viewModel.showingAddSheet) { isPresented in
+				if !isPresented {
+					// Sheet was dismissed — re-sync from live @Query results
+					viewModel.flashCardEntities = flashCardEntities
+					viewModel.subjects = subjects
+				}
 			}
 		}
 	}
