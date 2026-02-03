@@ -20,16 +20,6 @@ final class HomeViewModel: ObservableObject {
     @Published var selectedSubjectID: UUID? = nil
     @Published var reviewFilter: ReviewFilter = .all
 
-    init(context: ModelContext?, generator: FlashcardGenerator = FlashcardGenerator(), reviewer: Reviewer = Reviewer()) {
-        self.context = context
-        self.generator = generator
-        self.reviewer = reviewer
-    }
-
-    func setContext(_ context: ModelContext) {
-        self.context = context
-    }
-
     // Derived data
     var filteredFlashCardEntities: [FlashCardEntity] {
         if let id = selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
@@ -50,9 +40,29 @@ final class HomeViewModel: ObservableObject {
         }
     }
 
+    init(context: ModelContext?, generator: FlashcardGenerator = FlashcardGenerator(), reviewer: Reviewer = Reviewer()) {
+        self.context = context
+        self.generator = generator
+        self.reviewer = reviewer
+    }
+
+    func setContext(_ context: ModelContext) {
+        self.context = context
+    }
+
     func nextEntity() -> FlashCardEntity? {
         generator.nextCardEntity(filteredByOutcome, index: currentIndex)
     }
+	
+		func delete(_ entity: FlashCardEntity) {
+			guard let context = context else { return }
+			context.delete(entity)
+			do { try context.save() } catch { /* handle save error if needed */ }
+			// Remove from local arrays used by the view model
+			if let index = flashCardEntities.firstIndex(where: { $0.id == entity.id }) {
+				flashCardEntities.remove(at: index)
+			}
+		}
 
     func markWrong(_ entity: FlashCardEntity) {
         reviewer.registerReview(for: entity, quality: 2)
@@ -70,3 +80,4 @@ final class HomeViewModel: ObservableObject {
         currentIndex = (currentIndex + 1) % max(1, filteredByOutcome.count)
     }
 }
+
