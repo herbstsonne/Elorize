@@ -53,6 +53,16 @@ final class HomeViewModel: ObservableObject {
     func nextEntity() -> FlashCardEntity? {
         generator.nextCardEntity(filteredByOutcome, index: currentIndex)
     }
+	
+		func delete(_ entity: FlashCardEntity) {
+			guard let context = context else { return }
+			context.delete(entity)
+			do { try context.save() } catch { /* handle save error if needed */ }
+			// Remove from local arrays used by the view model
+			if let index = flashCardEntities.firstIndex(where: { $0.id == entity.id }) {
+				flashCardEntities.remove(at: index)
+			}
+		}
 
     func markWrong(_ entity: FlashCardEntity) {
         reviewer.registerReview(for: entity, quality: 2)
