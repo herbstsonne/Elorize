@@ -25,7 +25,7 @@ struct HomeView: View {
 			ZStack {
 				BackgroundColorView()
 				VStack {
-					showPickerToFilterCards()
+					//showPickerToFilterCardsSection()
 					showFlashCardSection()
 				}
 			}
@@ -55,36 +55,6 @@ struct HomeView: View {
 	}
 }
 
-// MARK: Define background
-
-private extension HomeView {
-	
-	struct BackgroundColorView: View {
-		
-		var body: some View {
-			ZStack {
-				// Deep, inky background with a subtle vignette
-				LinearGradient(
-					colors: [Color.app(.background_primary), Color.app(.background_secondary)],
-					startPoint: .topLeading,
-					endPoint: .bottomTrailing
-				)
-				.ignoresSafeArea()
-				
-				// Soft vignette glow
-				RadialGradient(
-					colors: [Color.app(.accent_default).opacity(0.1), .clear],
-					center: .center,
-					startRadius: 10,
-					endRadius: 380
-				)
-				.blendMode(.softLight)
-				.ignoresSafeArea()
-			}
-		}
-	}
-}
-
 // MARK: Define appearance
 
 private extension HomeView {
@@ -107,8 +77,8 @@ private extension HomeView {
 private extension HomeView {
 
 	@ViewBuilder
-	func showPickerToFilterCards() -> some View {
-		VStack {
+	func showPickerToFilterCardsSection() -> some View {
+		HStack {
 			if subjects.isEmpty {
 				ContentUnavailableView("No Subjects", systemImage: "folder.badge.questionmark", description: Text("Add a subject to get started."))
 			} else {
@@ -133,6 +103,7 @@ private extension HomeView {
 			}
 			.pickerStyle(.segmented)
 		}
+		.padding()
 	}
 
 	@ViewBuilder
@@ -154,10 +125,8 @@ private extension HomeView {
 						Label("Delete", systemImage: "trash")
 					}
 				}
-				.centeredCardFrame()
 			} else {
 				ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
-					.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
 			}
 		}
 		.textViewStyle(16)
@@ -224,3 +193,4 @@ private extension HomeView {
 	return HomeView()
 		.modelContainer(container)
 }
+

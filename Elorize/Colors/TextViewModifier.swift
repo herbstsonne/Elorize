@@ -10,10 +10,7 @@ struct TextViewModifier: ViewModifier {
 			.kerning(1.5)
 			.foregroundStyle(
 				LinearGradient(
-					colors: [
-						Color(red: 0.92, green: 0.82, blue: 0.56),
-						Color(red: 0.76, green: 0.64, blue: 0.34)
-					],
+					colors: [Color.app(.gold_primary), Color.app(.accent_default)],
 					startPoint: .topLeading,
 					endPoint: .bottomTrailing
 				)

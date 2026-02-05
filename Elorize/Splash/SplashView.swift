@@ -7,7 +7,7 @@ struct SplashView: View {
     var body: some View {
         Group {
 					if viewModel.isActive {
-                HomeView()
+                HomeTabView()
                     .transition(.opacity)
             } else {
                 splashContent
@@ -25,48 +25,41 @@ struct SplashView: View {
 
     private var splashContent: some View {
         ZStack {
-            // Deep, inky background with a subtle vignette
-            LinearGradient(
-                colors: [Color.app(.background_primary), Color.app(.background_secondary)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-
-            // Soft vignette glow
-            RadialGradient(
-                colors: [Color.app(.accent_default).opacity(0.12), .clear],
-                center: .center,
-                startRadius: 10,
-                endRadius: 380
-            )
-            .blendMode(.softLight)
-            .ignoresSafeArea()
-
-            // Subtle decorative framing (arched hint)
-            GeometryReader { proxy in
-                let maxWidth = min(proxy.size.width - 48, 520)
-                VStack(spacing: 0) {
-                    RoundedRectangle(cornerRadius: 40, style: .continuous)
-                        .strokeBorder(Color.app(.text_secondary).opacity(0.12), lineWidth: 1)
-                        .frame(width: maxWidth, height: 260)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 40, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.app(.text_secondary).opacity(0.08), Color.app(.text_secondary).opacity(0.0)],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .blur(radius: 6)
-                        )
-                        .shadow(color: Color.black.opacity(0.25), radius: 16, x: 0, y: 8)
-                        .padding(.bottom, 0)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            }
-            .allowsHitTesting(false)
+					BackgroundColorView()
+					GeometryReader { proxy in
+						let maxWidth = min(proxy.size.width - 48, 520)
+						VStack(spacing: 0) {
+							RoundedRectangle(cornerRadius: 24, style: .continuous)
+							    // Base fill matching flash card surface
+							    .fill(Color.app(.card_background))
+							    // Subtle border similar to flash card edge
+							    .overlay(
+							        RoundedRectangle(cornerRadius: 24, style: .continuous)
+							            .stroke(Color.app(.background_primary).opacity(0.35), lineWidth: 1)
+							    )
+							    .frame(width: maxWidth, height: 260)
+							    // Gentle highlight like the flash card sheen
+							    .overlay(
+							        RoundedRectangle(cornerRadius: 24, style: .continuous)
+							            .fill(
+							                LinearGradient(
+							                    colors: [
+							                        Color.app(.accent_subtle).opacity(0.06),
+							                        Color.app(.accent_subtle).opacity(0.0)
+							                    ],
+							                    startPoint: .top,
+							                    endPoint: .bottom
+							                )
+							            )
+							            .blur(radius: 4)
+							    )
+							    // Softer elevation shadow to match card
+							    .shadow(color: Color.black.opacity(0.35), radius: 12, x: 0, y: 6)
+							    .padding(.bottom, 0)
+						}
+						.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+					}
+					.allowsHitTesting(false)
 
             // Title and tagline
             VStack(spacing: 14) {
@@ -81,7 +74,7 @@ struct SplashView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .shadow(color: Color.black.opacity(0.35), radius: 10, x: 0, y: 6)
+                    .shadow(color: Color.black.opacity(0.5), radius: 20, x: 0, y: 6)
                     .overlay {
                         // Subtle top highlight
                         Text("Elorize")
@@ -100,7 +93,7 @@ struct SplashView: View {
                     .font(.system(size: 22, weight: .regular, design: .serif))
                     .textCase(.lowercase)
                     .kerning(2)
-                    .foregroundStyle(Color.app(.text_secondary))
+                    .foregroundStyle(Color.app(.accent_subtle))
             }
             .padding(.horizontal, 24)
 						.opacity(viewModel.opacity)
