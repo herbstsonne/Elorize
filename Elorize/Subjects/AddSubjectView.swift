@@ -8,13 +8,18 @@ struct AddSubjectView: View {
 	
 	var body: some View {
 		NavigationStack {
-			Form {
-				TextField("Subject name", text: $viewModel.name)
-				if let error = viewModel.errorMessage {
-					Text(error).foregroundStyle(.red)
+			ZStack {
+				BackgroundColorView()
+				Form {
+					TextField("Subject/Category", text: $viewModel.name)
+					if let error = viewModel.errorMessage {
+						Text(error).foregroundStyle(.red)
+					}
 				}
+				.scrollContentBackground(.hidden)
+				.listStyle(.plain)
+				.textViewStyle(16)
 			}
-			.navigationTitle("New Subject")
 			.toolbar {
 				ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
 				ToolbarItem(placement: .confirmationAction) {

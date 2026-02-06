@@ -16,36 +16,41 @@ struct AddFlashCardView: View {
 	
 	var body: some View {
 		NavigationStack {
-			Form {
-				Section("Front") {
-					TextField("e.g. hello", text: $viewModel.front)
-						.textInputAutocapitalization(.never)
-						.autocorrectionDisabled()
+			ZStack {
+				BackgroundColorView()
+				Form {
+					Section("Front") {
+						TextField("e.g. hello", text: $viewModel.front)
+							.textInputAutocapitalization(.never)
+							.autocorrectionDisabled()
+					}
+					Section("Back") {
+						TextField("e.g. hola", text: $viewModel.back)
+							.textInputAutocapitalization(.never)
+							.autocorrectionDisabled()
+					}
+					Section("Tags") {
+						TextField("Comma-separated (e.g. greeting, spanish)", text: $viewModel.tagsText)
+					}
+					Section("Subject") {
+						if subjects.isEmpty {
+							Text("No subjects yet. Create one from the Home screen.")
+								.font(.footnote)
+								.foregroundStyle(.secondary)
+						} else {
+							Picker("Subject", selection: $viewModel.selectedSubjectID) {
+								Text("None").tag(UUID?.none)
+								ForEach(subjects) { subject in
+									Text(subject.name).tag(Optional(subject.id))
+								}
+							}
+						}
+					}
 				}
-				Section("Back") {
-					TextField("e.g. hola", text: $viewModel.back)
-						.textInputAutocapitalization(.never)
-						.autocorrectionDisabled()
-				}
-				Section("Tags") {
-					TextField("Comma-separated (e.g. greeting, spanish)", text: $viewModel.tagsText)
-				}
-                Section("Subject") {
-                    if subjects.isEmpty {
-                        Text("No subjects yet. Create one from the Home screen.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Picker("Subject", selection: $viewModel.selectedSubjectID) {
-                            Text("None").tag(UUID?.none)
-                            ForEach(subjects) { subject in
-                                Text(subject.name).tag(Optional(subject.id))
-                            }
-                        }
-                    }
-                }
+				.scrollContentBackground(.hidden)
+				.listStyle(.plain)
+				.textViewStyle(16)
 			}
-			.navigationTitle("New Card")
 			.toolbar {
 				ToolbarItem(placement: .cancellationAction) {
 					Button("Cancel") { dismiss() }

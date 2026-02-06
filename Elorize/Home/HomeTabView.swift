@@ -22,11 +22,8 @@ struct HomeTabView: View {
                     Label("Home", systemImage: "house")
                 }
 
-            FilterView(
-                subjects: subjects,
-                selectedSubjectID: $viewModel.selectedSubjectID,
-                reviewFilter: $viewModel.reviewFilter
-            )
+            FilterView()
+						.environmentObject(viewModel)
             .tabItem {
                 Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
             }

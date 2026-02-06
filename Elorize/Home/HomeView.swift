@@ -5,7 +5,7 @@ struct HomeView: View {
 
 	@Environment(\.modelContext) private var context
 
-	@StateObject private var viewModel = HomeViewModel(context: nil)
+	@EnvironmentObject var viewModel: HomeViewModel
 
 	@State private var showingDeleteAlert = false
 	@State private var entityPendingDeletion: FlashCardEntity? = nil
@@ -25,7 +25,6 @@ struct HomeView: View {
 			ZStack {
 				BackgroundColorView()
 				VStack {
-					//showPickerToFilterCardsSection()
 					showFlashCardSection()
 				}
 			}
@@ -34,7 +33,6 @@ struct HomeView: View {
 				trailingToolbarItems()
 			}
 			.onAppear {
-				viewModel.setContext(context)
 				viewModel.flashCardEntities = flashCardEntities
 				viewModel.subjects = subjects
 			}
@@ -44,12 +42,25 @@ struct HomeView: View {
 			.sheet(isPresented: $viewModel.showingAddSheet) {
 				AddFlashCardView(subjects: subjects)
 			}
-			.onChange(of: viewModel.showingAddSheet) { oldValue, newValue in
+			.onChange(of: viewModel.showingAddSubject) { oldValue, newValue in
 				if oldValue == true && newValue == false {
-					// Sheet was dismissed — re-sync from live @Query results
 					viewModel.flashCardEntities = flashCardEntities
 					viewModel.subjects = subjects
 				}
+			}
+			.onChange(of: viewModel.showingAddSheet) { oldValue, newValue in
+				if oldValue == true && newValue == false {
+					viewModel.flashCardEntities = flashCardEntities
+					viewModel.subjects = subjects
+				}
+			}
+			.onChange(of: viewModel.reviewFilter) { _, _ in
+				viewModel.flashCardEntities = flashCardEntities
+				viewModel.subjects = subjects
+			}
+			.onChange(of: viewModel.selectedSubjectID) { _, _ in
+				viewModel.flashCardEntities = flashCardEntities
+				viewModel.subjects = subjects
 			}
 		}
 	}
@@ -75,36 +86,6 @@ private extension HomeView {
 // MARK: Extract parts of HomeView like Picker section, Flashcard section and Toolbar
 
 private extension HomeView {
-
-	@ViewBuilder
-	func showPickerToFilterCardsSection() -> some View {
-		HStack {
-			if subjects.isEmpty {
-				ContentUnavailableView("No Subjects", systemImage: "folder.badge.questionmark", description: Text("Add a subject to get started."))
-			} else {
-				Picker("Subject", selection: $viewModel.selectedSubjectID) {
-					Text("All")
-						.tag(UUID?.none)
-						.accentText()
-					ForEach(subjects) { subject in
-						Text(subject.name)
-							.tag(Optional(subject.id))
-							.accentText()
-					}
-				}
-				.pickerStyle(.inline)
-			}
-			Picker("FilterByKnowledge", selection: $viewModel.reviewFilter) {
-				ForEach(ReviewFilter.allCases) { f in
-					Text(f.rawValue)
-						.tag(f)
-						.accentText()
-				}
-			}
-			.pickerStyle(.segmented)
-		}
-		.padding()
-	}
 
 	@ViewBuilder
 	func showFlashCardSection() -> some View {
@@ -151,7 +132,7 @@ private extension HomeView {
 			} label: {
 				Image(systemName: "folder.badge.plus")
 			}
-			.accessibilityLabel("Add subject")
+			.accessibilityLabel("Add subject/category")
 		}
 	}
 	
