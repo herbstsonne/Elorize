@@ -2,19 +2,19 @@ import SwiftUI
 import SwiftData
 
 struct AddFlashCardView: View {
-
-	@Environment(\.dismiss) private var dismiss
-	@Environment(\.modelContext) private var context
-	
-	@StateObject private var viewModel = AddFlashCardViewModel()
-	
-	private var subjects: [SubjectEntity]
-	
-	init(subjects: [SubjectEntity]) {
-			self.subjects = subjects
-	}
-	
-	var body: some View {
+  
+  @Environment(\.dismiss) private var dismiss
+  @Environment(\.modelContext) private var context
+  
+  @StateObject private var viewModel = AddFlashCardViewModel()
+  
+  private var subjects: [SubjectEntity]
+  
+  init(subjects: [SubjectEntity]) {
+    self.subjects = subjects
+  }
+  
+  var body: some View {
 		NavigationStack {
 			ZStack {
 				BackgroundColorView()
@@ -71,5 +71,5 @@ struct AddFlashCardView: View {
 				}
 			}
 		}
-	}
+  }
 }

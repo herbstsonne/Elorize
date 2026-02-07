@@ -2,12 +2,11 @@ import SwiftUI
 
 struct FlashCardView: View {
 
-  @StateObject private var viewModel = FlashCardViewModel()
+	private var viewModel: FlashCardViewModel
 
-	let card: FlashCard
-	var onWrong: () -> Void
-	var onCorrect: () -> Void
-	var onNext: () -> Void
+	init(viewModel: FlashCardViewModel) {
+		self.viewModel = viewModel
+	}
 
 	var body: some View {
 		VStack(spacing: 24) {
@@ -17,21 +16,26 @@ struct FlashCardView: View {
 					.shadow(radius: 4)
 				
 				VStack(spacing: 12) {
-					Text(viewModel.isFlipped ? card.back : card.front)
-						.font(.largeTitle).bold()
-						.multilineTextAlignment(.center)
-						.padding()
 					
-					if let note = card.note, !note.isEmpty, !viewModel.isFlipped {
+					ScrollView {
+						Text((viewModel.isFlipped ? viewModel.card?.back : viewModel.card?.front) ?? "")
+							.font(.largeTitle).bold()
+							.multilineTextAlignment(.center)
+							.lineLimit(10)
+							.minimumScaleFactor(0.5)
+							.padding()
+					}
+					
+					if let note = viewModel.card?.note, !note.isEmpty, !viewModel.isFlipped {
 						Text(note)
 							.font(.subheadline)
 							.foregroundStyle(.secondary)
 					}
 					
-					if !card.tags.isEmpty {
+					if !(viewModel.card?.tags.isEmpty ?? true) {
 						ScrollView(.horizontal, showsIndicators: false) {
 							HStack(spacing: 8) {
-								ForEach(card.tags, id: \.self) { tag in
+								ForEach(viewModel.card?.tags ?? [], id: \.self) { tag in
 									Text(tag)
 										.font(.caption)
 										.padding(.horizontal, 8)
@@ -57,7 +61,7 @@ struct FlashCardView: View {
 			
 			HStack(spacing: 16) {
 				Button {
-					onWrong()
+					viewModel.onWrong()
 					viewModel.isFlipped = false
 				} label: {
 					Label("Wrong", systemImage: "xmark")
@@ -67,7 +71,7 @@ struct FlashCardView: View {
 				.tint(Color.app(.error))
 				
 				Button {
-					onCorrect()
+					viewModel.onCorrect()
 					viewModel.isFlipped = false
 				} label: {
 					Label("Correct", systemImage: "checkmark")
@@ -93,7 +97,7 @@ struct FlashCardView: View {
 				let threshold: CGFloat = 80
 				if value.translation.width > threshold || value.translation.width < -threshold {
 					// Swipe left or right -> next card (no grading)
-					onNext()
+					viewModel.onNext()
 					resetCardPosition()
 					viewModel.isFlipped = false
 				} else {
