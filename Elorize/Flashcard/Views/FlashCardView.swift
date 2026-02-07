@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct FlashCardView: View {
-	
+
 	@ObservedObject private var viewModel: FlashCardViewModel
 	
 	init(viewModel: FlashCardViewModel) {
@@ -29,7 +29,6 @@ struct FlashCardView: View {
 							HStack(spacing: 8) {
 								ForEach(viewModel.card?.tags ?? [], id: \.self) { tag in
 									Text(tag)
-										.font(.caption)
 										.padding(.horizontal, 8)
 										.padding(.vertical, 4)
 										.background(Capsule().fill(Color.accentColor.opacity(0.15)))
@@ -47,6 +46,7 @@ struct FlashCardView: View {
 						VStack(alignment: .leading, spacing: 10) {
 							fontFamilyRow()
 							fontSizeRow()
+                            alignmentRow()
 						}
 						.overlayBoxStyle()
 						.transition(.move(edge: .top).combined(with: .opacity))
@@ -124,19 +124,15 @@ struct FlashCardView: View {
 				}
 			}
 	}
-	
+}
+
+// MARK: Private functions
+
+private extension FlashCardView {
+
 	private func resetCardPosition() {
 		viewModel.dragOffset = .zero
 		viewModel.dragRotation = 0
-	}
-	
-	// MARK: - Font helpers
-	private func selectedFont() -> Font {
-		if viewModel.fontName == "System" {
-			return .system(size: viewModel.fontSize)
-		} else {
-			return .custom(viewModel.fontName, size: viewModel.fontSize)
-		}
 	}
 	
 	private func previewFont(name: String, size: CGFloat) -> Font {
@@ -148,15 +144,16 @@ struct FlashCardView: View {
 	}
 }
 
+// MARK: ViewBuilder
+
 private extension FlashCardView {
 
 	@ViewBuilder
-	private func cardTextArea() -> some View {
+	func cardTextArea() -> some View {
 		ScrollView {
 			Text((viewModel.isFlipped ? viewModel.card?.back : viewModel.card?.front) ?? "")
-				.font(selectedFont())
-				.bold()
-				.multilineTextAlignment(.center)
+				.font(viewModel.selectedFont())
+				.multilineTextAlignment(viewModel.textAlignment)
 				.lineLimit(10)
 				.minimumScaleFactor(0.5)
 				.padding()
@@ -191,7 +188,7 @@ private extension FlashCardView {
 	}
 	
 	@ViewBuilder
-	private func fontSizeRow() -> some View {
+	func fontSizeRow() -> some View {
 		HStack(spacing: 8) {
 			Image(systemName: "textformat.size")
 				.foregroundStyle(.secondary)
@@ -209,9 +206,24 @@ private extension FlashCardView {
 				.frame(width: 32, alignment: .trailing)
 		}
 	}
+
+    @ViewBuilder
+    func alignmentRow() -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "text.alignleft")
+                .foregroundStyle(.secondary)
+            Picker("Alignment", selection: $viewModel.textAlignment) {
+                Text("Left").tag(TextAlignment.leading)
+                Text("Center").tag(TextAlignment.center)
+                Text("Right").tag(TextAlignment.trailing)
+            }
+            .pickerStyle(.segmented)
+            .accessibilityLabel("Text alignment")
+        }
+    }
 	
 	@ViewBuilder
-	private func textControlsToggleButton() -> some View {
+	func textControlsToggleButton() -> some View {
 		Button {
 			withAnimation(.spring()) {
 				viewModel.showsTextControls.toggle()

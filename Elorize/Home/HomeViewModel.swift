@@ -4,10 +4,6 @@ internal import Combine
 
 @MainActor
 final class HomeViewModel: ObservableObject {
-  // Inputs (injected)
-  private(set) var context: ModelContext?
-  private let generator: FlashcardGenerator
-  private let reviewer: Reviewer
   
   // Source data provided by the view via SwiftData @Query
   @Published var flashCardEntities: [FlashCardEntity] = []
@@ -21,6 +17,11 @@ final class HomeViewModel: ObservableObject {
   @Published var reviewFilter: ReviewFilter = .all
 	@Published var showingDeleteAlert = false
 	@Published var entityPendingDeletion: FlashCardEntity? = nil
+
+	// Inputs (injected)
+	private(set) var context: ModelContext?
+	private let generator: FlashcardGenerator
+	private let reviewer: Reviewer
   
   // Derived data
   var filteredFlashCardEntities: [FlashCardEntity] {
@@ -41,8 +42,12 @@ final class HomeViewModel: ObservableObject {
       return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) >= 3 }
     }
   }
-  
-  init(context: ModelContext?, generator: FlashcardGenerator = FlashcardGenerator(), reviewer: Reviewer = Reviewer()) {
+
+  init(
+		context: ModelContext?,
+		generator: FlashcardGenerator = FlashcardGenerator(),
+		reviewer: Reviewer = Reviewer()
+	) {
     self.context = context
     self.generator = generator
     self.reviewer = reviewer

@@ -26,9 +26,11 @@ final class FlashCardViewModel: ObservableObject {
 
 	@Published var showsTextControls: Bool = false
 	@Published var isInteracting: Bool = false
+	@Published var textAlignment: TextAlignment = .center
 
 	@AppStorage("flashcard.fontName") private var storedFontName: String = "System"
 	@AppStorage("flashcard.fontSize") private var storedFontSize: Double = 34
+	@AppStorage("flashcard.textAlignment") private var storedTextAlignment: String = "center"
 
 	private var cancellables = Set<AnyCancellable>()
 
@@ -42,6 +44,7 @@ final class FlashCardViewModel: ObservableObject {
 		 availableFonts: [String] = [
 			"System",
 			"Georgia",
+			"Tahoma",
 			"Times New Roman",
 			"Avenir-Book",
 			"HelveticaNeue",
@@ -58,6 +61,15 @@ final class FlashCardViewModel: ObservableObject {
 		self.fontSize = CGFloat(initialSize)
 		self.availableFonts = availableFonts
 
+        switch storedTextAlignment.lowercased() {
+        case "leading", "left":
+            self.textAlignment = .leading
+        case "trailing", "right":
+            self.textAlignment = .trailing
+        default:
+            self.textAlignment = .center
+        }
+
 		$fontName
 				.dropFirst()
 				.sink { [weak self] newValue in
@@ -72,10 +84,34 @@ final class FlashCardViewModel: ObservableObject {
 						self?.storedFontSize = newValue
 				}
 				.store(in: &cancellables)
+
+        $textAlignment
+            .dropFirst()
+            .sink { [weak self] newValue in
+                switch newValue {
+                case .leading:
+                    self?.storedTextAlignment = "leading"
+                case .center:
+                    self?.storedTextAlignment = "center"
+                case .trailing:
+                    self?.storedTextAlignment = "trailing"
+                default:
+                    self?.storedTextAlignment = "center"
+                }
+            }
+            .store(in: &cancellables)
 	}
 	
 	func flip() {
 		isFlipped = !isFlipped
+	}
+	
+	func selectedFont() -> Font {
+		if storedFontName == "System" {
+			return .system(size: storedFontSize)
+		} else {
+			return .custom(storedFontName, size: storedFontSize)
+		}
 	}
 }
 
