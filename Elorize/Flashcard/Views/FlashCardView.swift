@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct FlashCardView: View {
-
-	private var viewModel: FlashCardViewModel
-
+	
+	@ObservedObject private var viewModel: FlashCardViewModel
+	
 	init(viewModel: FlashCardViewModel) {
 		self.viewModel = viewModel
 	}
-
+	
 	var body: some View {
 		VStack(spacing: 24) {
 			ZStack {
@@ -16,15 +16,7 @@ struct FlashCardView: View {
 					.shadow(radius: 4)
 				
 				VStack(spacing: 12) {
-					
-					ScrollView {
-						Text((viewModel.isFlipped ? viewModel.card?.back : viewModel.card?.front) ?? "")
-							.font(.largeTitle).bold()
-							.multilineTextAlignment(.center)
-							.lineLimit(10)
-							.minimumScaleFactor(0.5)
-							.padding()
-					}
+					cardTextArea()
 					
 					if let note = viewModel.card?.note, !note.isEmpty, !viewModel.isFlipped {
 						Text(note)
@@ -48,9 +40,32 @@ struct FlashCardView: View {
 					}
 				}
 				.padding()
+				
+				VStack {
+					Spacer()
+					if viewModel.showsTextControls && !viewModel.isInteracting {
+						VStack(alignment: .leading, spacing: 10) {
+							fontFamilyRow()
+							fontSizeRow()
+						}
+						.overlayBoxStyle()
+						.transition(.move(edge: .top).combined(with: .opacity))
+					}
+				}
+				.frame(maxWidth: 360, alignment: .bottom)
+				.padding([.bottom, .horizontal], 12)
+				
+				VStack {
+					HStack {
+						Spacer()
+						textControlsToggleButton()
+					}
+					Spacer()
+				}
+				.padding([.top, .trailing], 12)
 			}
+			.aspectRatio(7.0/5.0, contentMode: .fit)
 			.frame(maxWidth: .infinity)
-			.frame(height: 260)
 			.offset(x: viewModel.dragOffset.width, y: viewModel.dragOffset.height)
 			.rotationEffect(.degrees(viewModel.dragRotation))
 			.gesture(dragGesture)
@@ -92,6 +107,7 @@ struct FlashCardView: View {
 				viewModel.dragOffset = value.translation
 				// Slight rotation based on horizontal drag
 				viewModel.dragRotation = Double(value.translation.width / 20)
+				viewModel.isInteracting = true
 			}
 			.onEnded { value in
 				let threshold: CGFloat = 80
@@ -99,10 +115,12 @@ struct FlashCardView: View {
 					// Swipe left or right -> next card (no grading)
 					viewModel.onNext()
 					resetCardPosition()
+					viewModel.isInteracting = false
 					viewModel.isFlipped = false
 				} else {
 					// Snap back
 					resetCardPosition()
+					viewModel.isInteracting = false
 				}
 			}
 	}
@@ -110,6 +128,100 @@ struct FlashCardView: View {
 	private func resetCardPosition() {
 		viewModel.dragOffset = .zero
 		viewModel.dragRotation = 0
+	}
+	
+	// MARK: - Font helpers
+	private func selectedFont() -> Font {
+		if viewModel.fontName == "System" {
+			return .system(size: viewModel.fontSize)
+		} else {
+			return .custom(viewModel.fontName, size: viewModel.fontSize)
+		}
+	}
+	
+	private func previewFont(name: String, size: CGFloat) -> Font {
+		if name == "System" {
+			return .system(size: size)
+		} else {
+			return .custom(name, size: size)
+		}
+	}
+}
+
+private extension FlashCardView {
+
+	@ViewBuilder
+	private func cardTextArea() -> some View {
+		ScrollView {
+			Text((viewModel.isFlipped ? viewModel.card?.back : viewModel.card?.front) ?? "")
+				.font(selectedFont())
+				.bold()
+				.multilineTextAlignment(.center)
+				.lineLimit(10)
+				.minimumScaleFactor(0.5)
+				.padding()
+		}
+	}
+
+	@ViewBuilder
+	func fontFamilyRow() -> some View {
+		HStack(spacing: 8) {
+			Image(systemName: "textformat")
+				.foregroundStyle(.secondary)
+			Text(viewModel.fontName == "System" ? "System" : viewModel.fontName)
+				.font(.callout)
+				.lineLimit(1)
+			Spacer(minLength: 8)
+			Menu {
+				Picker("Font", selection: $viewModel.fontName) {
+					ForEach(viewModel.availableFonts, id: \.self) { name in
+						Text(name == "System" ? "System" : name)
+							.font(previewFont(name: name, size: 14))
+							.tag(name)
+					}
+				}
+			} label: {
+				Label("Change Font", systemImage: "chevron.down")
+					.labelStyle(.iconOnly)
+					.padding(6)
+					.background(.thinMaterial, in: Capsule())
+			}
+			.accessibilityLabel("Change font family")
+		}
+	}
+	
+	@ViewBuilder
+	private func fontSizeRow() -> some View {
+		HStack(spacing: 8) {
+			Image(systemName: "textformat.size")
+				.foregroundStyle(.secondary)
+			Slider(value: $viewModel.fontSize, in: 18...60, step: 1) {
+				Text("Font Size")
+			} minimumValueLabel: {
+				Text("A").font(.system(size: 12))
+			} maximumValueLabel: {
+				Text("A").font(.system(size: 18))
+			}
+			.accessibilityLabel("Font size")
+			Text("\(Int(viewModel.fontSize))")
+				.monospacedDigit()
+				.foregroundStyle(.secondary)
+				.frame(width: 32, alignment: .trailing)
+		}
+	}
+	
+	@ViewBuilder
+	private func textControlsToggleButton() -> some View {
+		Button {
+			withAnimation(.spring()) {
+				viewModel.showsTextControls.toggle()
+			}
+		} label: {
+			Image(systemName: "textformat.size.smaller")
+				.padding(8)
+				.background(.ultraThinMaterial, in: Circle())
+		}
+		.accessibilityLabel("Toggle text controls")
 	}
 }
 
