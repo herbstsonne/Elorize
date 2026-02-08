@@ -2,11 +2,18 @@
 
 Elegant, minimalist flashcards with a Parisian-inspired design.
 
+## iPhone
+
 <p align="center">
   <img src="Images/splash.png" alt="Splash" width="240" style="margin-right:12px;" />
   <img src="Images/home.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/text_controls.png" alt="Home" width="240"   style="margin-right:12px;" />
   <img src="Images/filter.png" alt="Home" width="240" style="margin-right:12px;" />
+  </p>
+
+  ## iPad
+
+  <p align="center">
   <img src="Images/home_ipad_h.png" alt="Home iPad H" width="240" style="margin-right:12px;" />
   <img src="Images/home_ipad_v.png" alt="Home iPad V" width="240" />
 </p>
