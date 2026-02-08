@@ -10,7 +10,6 @@ public final class FlashCardEntity {
 	// Content
 	public var front: String
 	public var back: String
-	public var note: String?
 
 	// Tags as a simple array (SwiftData supports [String])
 	public var tags: [String]
@@ -29,7 +28,6 @@ public final class FlashCardEntity {
 		id: UUID = UUID(),
 		front: String,
 		back: String,
-		note: String? = nil,
 		tags: [String] = [],
 		createdAt: Date = Date(),
 		lastReviewedAt: Date? = nil,
@@ -41,7 +39,6 @@ public final class FlashCardEntity {
 		self.id = id
 		self.front = front
 		self.back = back
-		self.note = note
 		self.tags = tags
 		self.createdAt = createdAt
 		self.lastReviewedAt = lastReviewedAt
@@ -59,7 +56,6 @@ public extension FlashCardEntity {
 			id: card.id,
 			front: card.front,
 			back: card.back,
-			note: card.note,
 			tags: card.tags,
 			createdAt: card.createdAt,
 			lastReviewedAt: card.lastReviewedAt,
@@ -76,7 +72,6 @@ public extension FlashCardEntity {
 			id: id,
 			front: front,
 			back: back,
-			note: note,
 			tags: tags,
 			createdAt: createdAt,
 			lastReviewedAt: lastReviewedAt,
