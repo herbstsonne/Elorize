@@ -13,7 +13,7 @@ struct SplashView: View {
                 splashContent
                     .transition(.opacity)
                     .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                             withAnimation(.easeOut(duration: 0.35)) {
 															viewModel.isActive = true
                             }
