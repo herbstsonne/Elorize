@@ -15,14 +15,7 @@ final class FlashCardViewModel: ObservableObject {
 	@Published var dragRotation: Double = 0
 	@Published var fontSize: CGFloat = 34
 	@Published var fontName: String = "System"
-	@Published var availableFonts: [String] = [
-			"System",
-			"Georgia",
-			"Times New Roman",
-			"Avenir-Book",
-			"HelveticaNeue",
-			"Courier New"
-	]
+	@Published var availableFonts: [String] = FlashCardViewModel.fontNameList
 
 	@Published var showsTextControls: Bool = false
 	@Published var isInteracting: Bool = false
@@ -33,23 +26,23 @@ final class FlashCardViewModel: ObservableObject {
 	@AppStorage("flashcard.textAlignment") private var storedTextAlignment: String = "center"
 
 	private var cancellables = Set<AnyCancellable>()
+	static let fontNameList: [String] = [
+		"System",
+		"Georgia",
+		"Times New Roman",
+		"Avenir-Book",
+		"HelveticaNeue",
+		"Courier New"
+	]
 
 	init(
 		card: FlashCard? = nil,
 		onWrong: @escaping () -> Void = {},
 		onCorrect: @escaping () -> Void = {},
 		onNext: @escaping () -> Void = {},
-		 fontSize: CGFloat = 34,
-		 fontName: String = "System",
-		 availableFonts: [String] = [
-			"System",
-			"Georgia",
-			"Tahoma",
-			"Times New Roman",
-			"Avenir-Book",
-			"HelveticaNeue",
-			"Courier New"
-		 ]
+		fontSize: CGFloat = 34,
+		fontName: String = "System",
+		availableFonts: [String] = FlashCardViewModel.fontNameList
 	) {
 		self.card = card
 		self.onWrong = onWrong
@@ -61,45 +54,8 @@ final class FlashCardViewModel: ObservableObject {
 		self.fontSize = CGFloat(initialSize)
 		self.availableFonts = availableFonts
 
-        switch storedTextAlignment.lowercased() {
-        case "leading", "left":
-            self.textAlignment = .leading
-        case "trailing", "right":
-            self.textAlignment = .trailing
-        default:
-            self.textAlignment = .center
-        }
-
-		$fontName
-				.dropFirst()
-				.sink { [weak self] newValue in
-						self?.storedFontName = newValue
-				}
-				.store(in: &cancellables)
-
-		$fontSize
-				.dropFirst()
-				.map { Double($0) }
-				.sink { [weak self] newValue in
-						self?.storedFontSize = newValue
-				}
-				.store(in: &cancellables)
-
-        $textAlignment
-            .dropFirst()
-            .sink { [weak self] newValue in
-                switch newValue {
-                case .leading:
-                    self?.storedTextAlignment = "leading"
-                case .center:
-                    self?.storedTextAlignment = "center"
-                case .trailing:
-                    self?.storedTextAlignment = "trailing"
-                default:
-                    self?.storedTextAlignment = "center"
-                }
-            }
-            .store(in: &cancellables)
+		setTextAlignment()
+		loadData()
 	}
 	
 	func flip() {
@@ -115,3 +71,52 @@ final class FlashCardViewModel: ObservableObject {
 	}
 }
 
+private extension FlashCardViewModel {
+	func setTextAlignment() {
+		switch storedTextAlignment.lowercased() {
+			case "leading", "left":
+				self.textAlignment = .leading
+			case "trailing", "right":
+				self.textAlignment = .trailing
+			default:
+				self.textAlignment = .center
+		}
+	}
+	
+	func loadData() {
+        $fontName
+            .dropFirst()
+            .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newValue in
+                self?.storedFontName = newValue
+            }
+            .store(in: &cancellables)
+
+        $fontSize
+            .dropFirst()
+            .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
+            .map { Double($0) }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newValue in
+                self?.storedFontSize = newValue
+            }
+            .store(in: &cancellables)
+		
+        $textAlignment
+            .dropFirst()
+            .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
+            .map { alignment -> String in
+                switch alignment {
+                case .leading: return "leading"
+                case .center: return "center"
+                case .trailing: return "trailing"
+                }
+            }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] value in
+                self?.storedTextAlignment = value
+            }
+            .store(in: &cancellables)
+	}
+}

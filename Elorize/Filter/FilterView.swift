@@ -9,31 +9,11 @@ struct FilterView: View {
       BackgroundColorView()
       VStack {
         if viewModel.subjects.isEmpty {
-          ContentUnavailableView("No Subjects", systemImage: "folder.badge.questionmark", description: Text("Add a subject to get started."))
-            .padding()
+          showContentUnavailableView()
         } else {
           Form {
-            Picker("FilterByKnowledge", selection: $viewModel.reviewFilter) {
-              ForEach(ReviewFilter.allCases) { f in
-                Text(f.rawValue)
-                  .tag(f)
-                  .accentText()
-              }
-            }
-            .pickerStyle(.segmented)
-            .tint(Color.app(.accent_default))
-            
-            Picker("Subject", selection: $viewModel.selectedSubjectID) {
-              Text("All")
-                .tag(UUID?.none)
-                .accentText()
-              ForEach(viewModel.subjects) { subject in
-                Text(subject.name)
-                  .tag(Optional(subject.id))
-                  .accentText()
-              }
-            }
-            .pickerStyle(.inline)
+            showPickerFilterByKnowledge()
+						showPickerSubject()
           }
           .scrollContentBackground(.hidden)
           .listStyle(.plain)
@@ -44,3 +24,39 @@ struct FilterView: View {
   }
 }
 
+private extension FilterView {
+	
+	@ViewBuilder
+	func showPickerFilterByKnowledge() -> some View {
+		Picker("FilterByKnowledge", selection: $viewModel.reviewFilter) {
+			ForEach(ReviewFilter.allCases) { f in
+				Text(f.rawValue)
+					.tag(f)
+					.accentText()
+			}
+		}
+		.pickerStyle(.segmented)
+		.tint(Color.app(.accent_default))
+	}
+	
+	@ViewBuilder
+	func showPickerSubject() -> some View {
+		Picker("Subject", selection: $viewModel.selectedSubjectID) {
+			Text("All")
+				.tag(UUID?.none)
+				.accentText()
+			ForEach(viewModel.subjects) { subject in
+				Text(subject.name)
+					.tag(Optional(subject.id))
+					.accentText()
+			}
+		}
+		.pickerStyle(.inline)
+	}
+	
+	@ViewBuilder
+	func showContentUnavailableView() -> some View {
+		ContentUnavailableView("No Subjects", systemImage: "folder.badge.questionmark", description: Text("Add a subject to get started."))
+			.padding()
+	}
+}
