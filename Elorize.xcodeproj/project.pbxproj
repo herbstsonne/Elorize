@@ -13,8 +13,10 @@
 		7C1A29B12F38CBF500BAF031 /* filter.png in Resources */ = {isa = PBXBuildFile; fileRef = 7C1A29AD2F38CBF500BAF031 /* filter.png */; };
 		7C1A29B22F38CBF500BAF031 /* text_controls.png in Resources */ = {isa = PBXBuildFile; fileRef = 7C1A29AF2F38CBF500BAF031 /* text_controls.png */; };
 		7C1A29B42F38CC0D00BAF031 /* home.png in Resources */ = {isa = PBXBuildFile; fileRef = 7C1A29B32F38CC0D00BAF031 /* home.png */; };
+		7C1A29B72F38CEF100BAF031 /* add_card.png in Resources */ = {isa = PBXBuildFile; fileRef = 7C1A29B52F38CEF100BAF031 /* add_card.png */; };
+		7C1A29B82F38CEF100BAF031 /* add_subject.png in Resources */ = {isa = PBXBuildFile; fileRef = 7C1A29B62F38CEF100BAF031 /* add_subject.png */; };
+		7C1A29BA2F38CF6D00BAF031 /* splash.png in Resources */ = {isa = PBXBuildFile; fileRef = 7C1A29B92F38CF6D00BAF031 /* splash.png */; };
 		7CA3CE112F298BEA00269B9D /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 7CA3CE102F298BEA00269B9D /* README.md */; };
-		7CA3CE612F2E462200269B9D /* splash.png in Resources */ = {isa = PBXBuildFile; fileRef = 7CA3CE602F2E462200269B9D /* splash.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,11 +43,13 @@
 		7C1A29AD2F38CBF500BAF031 /* filter.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = filter.png; sourceTree = "<group>"; };
 		7C1A29AF2F38CBF500BAF031 /* text_controls.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = text_controls.png; sourceTree = "<group>"; };
 		7C1A29B32F38CC0D00BAF031 /* home.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = home.png; sourceTree = "<group>"; };
+		7C1A29B52F38CEF100BAF031 /* add_card.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = add_card.png; sourceTree = "<group>"; };
+		7C1A29B62F38CEF100BAF031 /* add_subject.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = add_subject.png; sourceTree = "<group>"; };
+		7C1A29B92F38CF6D00BAF031 /* splash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = splash.png; sourceTree = "<group>"; };
 		7C7FB7E62F29791C00C9318C /* Elorize.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Elorize.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C7FB7F52F29791E00C9318C /* ElorizeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ElorizeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7C7FB7FF2F29791E00C9318C /* ElorizeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ElorizeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7CA3CE102F298BEA00269B9D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		7CA3CE602F2E462200269B9D /* splash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = splash.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -116,10 +120,12 @@
 		7CA3CE0D2F298AF500269B9D /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				7C1A29B92F38CF6D00BAF031 /* splash.png */,
+				7C1A29B52F38CEF100BAF031 /* add_card.png */,
+				7C1A29B62F38CEF100BAF031 /* add_subject.png */,
 				7C1A29B32F38CC0D00BAF031 /* home.png */,
 				7C1A29AD2F38CBF500BAF031 /* filter.png */,
 				7C1A29AF2F38CBF500BAF031 /* text_controls.png */,
-				7CA3CE602F2E462200269B9D /* splash.png */,
 				7C1A29A72F38CAD400BAF031 /* filter_ipad_v.png */,
 				7C1A29A82F38CAD400BAF031 /* home_ipad_h.png */,
 				7C1A29A92F38CAD400BAF031 /* home_ipad_v.png */,
@@ -247,12 +253,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7CA3CE612F2E462200269B9D /* splash.png in Resources */,
 				7CA3CE112F298BEA00269B9D /* README.md in Resources */,
 				7C1A29B42F38CC0D00BAF031 /* home.png in Resources */,
+				7C1A29B72F38CEF100BAF031 /* add_card.png in Resources */,
+				7C1A29B82F38CEF100BAF031 /* add_subject.png in Resources */,
 				7C1A29AA2F38CAD400BAF031 /* home_ipad_h.png in Resources */,
 				7C1A29AB2F38CAD400BAF031 /* home_ipad_v.png in Resources */,
 				7C1A29AC2F38CAD400BAF031 /* filter_ipad_v.png in Resources */,
+				7C1A29BA2F38CF6D00BAF031 /* splash.png in Resources */,
 				7C1A29B12F38CBF500BAF031 /* filter.png in Resources */,
 				7C1A29B22F38CBF500BAF031 /* text_controls.png in Resources */,
 			);
