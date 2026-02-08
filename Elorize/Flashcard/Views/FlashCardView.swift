@@ -10,60 +10,7 @@ struct FlashCardView: View {
 	
 	var body: some View {
 		VStack(spacing: 24) {
-			ZStack {
-				RoundedRectangle(cornerRadius: 16, style: .continuous)
-					.fill(Color.app(.card_background))
-					.shadow(radius: 4)
-				
-				VStack(spacing: 12) {
-					cardTextArea()
-					
-					if let note = viewModel.card?.note, !note.isEmpty, !viewModel.isFlipped {
-						Text(note)
-							.font(.subheadline)
-							.foregroundStyle(.secondary)
-					}
-					
-					if !(viewModel.card?.tags.isEmpty ?? true) {
-						ScrollView(.horizontal, showsIndicators: false) {
-							HStack(spacing: 8) {
-								ForEach(viewModel.card?.tags ?? [], id: \.self) { tag in
-									Text(tag)
-										.padding(.horizontal, 8)
-										.padding(.vertical, 4)
-										.background(Capsule().fill(Color.accentColor.opacity(0.15)))
-								}
-							}
-							.padding(.horizontal)
-						}
-					}
-				}
-				.padding()
-				
-				VStack {
-					Spacer()
-					if viewModel.showsTextControls && !viewModel.isInteracting {
-						VStack(alignment: .leading, spacing: 10) {
-							fontFamilyRow()
-							fontSizeRow()
-                            alignmentRow()
-						}
-						.overlayBoxStyle()
-						.transition(.move(edge: .top).combined(with: .opacity))
-					}
-				}
-				.frame(maxWidth: 360, alignment: .bottom)
-				.padding([.bottom, .horizontal], 12)
-				
-				VStack {
-					HStack {
-						Spacer()
-						textControlsToggleButton()
-					}
-					Spacer()
-				}
-				.padding([.top, .trailing], 12)
-			}
+			card()
 			.aspectRatio(7.0/5.0, contentMode: .fit)
 			.frame(maxWidth: .infinity)
 			.offset(x: viewModel.dragOffset.width, y: viewModel.dragOffset.height)
@@ -75,25 +22,8 @@ struct FlashCardView: View {
 			.padding(.horizontal)
 			
 			HStack(spacing: 16) {
-				Button {
-					viewModel.onWrong()
-					viewModel.isFlipped = false
-				} label: {
-					Label("Wrong", systemImage: "xmark")
-						.frame(maxWidth: .infinity)
-				}
-				.buttonStyle(.bordered)
-				.tint(Color.app(.error))
-				
-				Button {
-					viewModel.onCorrect()
-					viewModel.isFlipped = false
-				} label: {
-					Label("Correct", systemImage: "checkmark")
-						.frame(maxWidth: .infinity)
-				}
-				.buttonStyle(.borderedProminent)
-				.tint(Color.app(.success))
+				buttonWrong()
+				buttonCorrect()
 			}
 			.padding(.horizontal)
 		}
@@ -101,6 +31,7 @@ struct FlashCardView: View {
 	}
 	
 	// MARK: - Gestures
+
 	private var dragGesture: some Gesture {
 		DragGesture(minimumDistance: 10)
 			.onChanged { value in
@@ -149,6 +80,71 @@ private extension FlashCardView {
 private extension FlashCardView {
 
 	@ViewBuilder
+	func card() -> some View {
+		ZStack {
+			RoundedRectangle(cornerRadius: 16, style: .continuous)
+				.fill(Color.app(.card_background))
+				.shadow(radius: 4)
+			
+			VStack(spacing: 12) {
+				cardTextArea()
+				cardTags()
+			}
+			.padding()
+			
+			VStack {
+				Spacer()
+				if viewModel.showsTextControls && !viewModel.isInteracting {
+					VStack(alignment: .leading, spacing: 10) {
+						fontFamilyRow()
+						fontSizeRow()
+						alignmentRow()
+					}
+					.overlayBoxStyle()
+					.transition(.move(edge: .top).combined(with: .opacity))
+				}
+			}
+			.frame(maxWidth: 360, alignment: .bottom)
+			.padding([.bottom, .horizontal], 12)
+			
+			VStack {
+				HStack {
+					Spacer()
+					textControlsToggleButton()
+				}
+				Spacer()
+			}
+			.padding([.top, .trailing], 12)
+		}
+	}
+
+	@ViewBuilder
+	func buttonWrong() -> some View {
+		Button {
+			viewModel.onWrong()
+			viewModel.isFlipped = false
+		} label: {
+			Label("Wrong", systemImage: "xmark")
+				.frame(maxWidth: .infinity)
+		}
+		.buttonStyle(.bordered)
+		.tint(Color.app(.error))
+	}
+
+	@ViewBuilder
+	func buttonCorrect() -> some View {
+		Button {
+			viewModel.onCorrect()
+			viewModel.isFlipped = false
+		} label: {
+			Label("Correct", systemImage: "checkmark")
+				.frame(maxWidth: .infinity)
+		}
+		.buttonStyle(.borderedProminent)
+		.tint(Color.app(.success))
+	}
+
+	@ViewBuilder
 	func cardTextArea() -> some View {
 		ScrollView {
 			Text((viewModel.isFlipped ? viewModel.card?.back : viewModel.card?.front) ?? "")
@@ -157,6 +153,23 @@ private extension FlashCardView {
 				.lineLimit(10)
 				.minimumScaleFactor(0.5)
 				.padding()
+		}
+	}
+
+	@ViewBuilder
+	func cardTags() -> some View {
+		if !(viewModel.card?.tags.isEmpty ?? true) {
+			ScrollView(.horizontal, showsIndicators: false) {
+				HStack(spacing: 8) {
+					ForEach(viewModel.card?.tags ?? [], id: \.self) { tag in
+						Text(tag)
+							.padding(.horizontal, 8)
+							.padding(.vertical, 4)
+							.background(Capsule().fill(Color.accentColor.opacity(0.15)))
+					}
+				}
+				.padding(.horizontal)
+			}
 		}
 	}
 
@@ -207,20 +220,20 @@ private extension FlashCardView {
 		}
 	}
 
-    @ViewBuilder
-    func alignmentRow() -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: "text.alignleft")
-                .foregroundStyle(.secondary)
-            Picker("Alignment", selection: $viewModel.textAlignment) {
-                Text("Left").tag(TextAlignment.leading)
-                Text("Center").tag(TextAlignment.center)
-                Text("Right").tag(TextAlignment.trailing)
-            }
-            .pickerStyle(.segmented)
-            .accessibilityLabel("Text alignment")
-        }
-    }
+	@ViewBuilder
+	func alignmentRow() -> some View {
+			HStack(spacing: 8) {
+					Image(systemName: "text.alignleft")
+							.foregroundStyle(.secondary)
+					Picker("Alignment", selection: $viewModel.textAlignment) {
+							Text("Left").tag(TextAlignment.leading)
+							Text("Center").tag(TextAlignment.center)
+							Text("Right").tag(TextAlignment.trailing)
+					}
+					.pickerStyle(.segmented)
+					.accessibilityLabel("Text alignment")
+			}
+	}
 	
 	@ViewBuilder
 	func textControlsToggleButton() -> some View {
