@@ -1,26 +1,42 @@
 # Elorize
 
-**Elorize** 
+Elegant, minimalist flashcards with a Parisian-inspired design.
 
 <p align="center">
   <img src="Images/splash.png" alt="Splash" width="240" style="margin-right:12px;" />
   <img src="Images/home.png" alt="Home" width="240" style="margin-right:12px;" />
-  <img src="Images/home_ipad_horizontal" alt="Home iPad H" width="240" />
-  <img src="Images/home_ipad_vertical" alt="Home iPad V" width="240" />
+  <img src="Images/text_controls.png" alt="Home" width="240"   style="margin-right:12px;" />
+  <img src="Images/filter.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/home_ipad_h.png" alt="Home iPad H" width="240" style="margin-right:12px;" />
+  <img src="Images/home_ipad_v.png" alt="Home iPad V" width="240" />
 </p>
 
 ---
 
 ## 📱 Features
 
-- Elegant Parisian-inspired splash screen with animated title
+- Elegant splash screen with animated, serif logotype
 - Subject-based organization for flashcards
-- Add, review, and swipe through cards with spaced repetition
+- Create flashcards with front/back multi-line text editors
+- Add comma-separated tags to cards for easy filtering
+- iPhone and iPad support with adaptive layouts
+- Smooth toolbar actions for Cancel/Save throughout the app
+- Background styling consistent across views
 
 ---
 
-## Installation
+## 🔧 Requirements
+
+- Xcode 26+
+- iOS 17+
+- Swift 5.9+
+
+---
+
+## 🚀 Installation
 
 ```bash
 git clone https://github.com/herbstsonne/Elorize.git
+cd Elorize
+open Elorize.xcodeproj
 
