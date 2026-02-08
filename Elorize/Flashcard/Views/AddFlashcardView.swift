@@ -19,50 +19,17 @@ struct AddFlashCardView: View {
 			ZStack {
 				BackgroundColorView()
 				Form {
-					Section("Front") {
-						TextField("e.g. hello", text: $viewModel.front)
-							.textInputAutocapitalization(.never)
-							.autocorrectionDisabled()
-					}
-					Section("Back") {
-						TextField("e.g. hola", text: $viewModel.back)
-							.textInputAutocapitalization(.never)
-							.autocorrectionDisabled()
-					}
-					Section("Tags") {
-						TextField("Comma-separated (e.g. greeting, spanish)", text: $viewModel.tagsText)
-					}
-					Section("Subject") {
-						if subjects.isEmpty {
-							Text("No subjects yet. Create one from the Home screen.")
-								.font(.footnote)
-								.foregroundStyle(.secondary)
-						} else {
-							Picker("Subject", selection: $viewModel.selectedSubjectID) {
-								Text("None").tag(UUID?.none)
-								ForEach(subjects) { subject in
-									Text(subject.name).tag(Optional(subject.id))
-								}
-							}
-						}
-					}
+					showSectionFrontText()
+					showSectionBackText()
+					showSectionTags()
+					showSectionSubject()
 				}
 				.scrollContentBackground(.hidden)
 				.listStyle(.plain)
 				.textViewStyle(16)
 			}
 			.toolbar {
-				ToolbarItem(placement: .cancellationAction) {
-					Button("Cancel") { dismiss() }
-				}
-				ToolbarItem(placement: .confirmationAction) {
-					Button("Save") {
-						if viewModel.save(with: subjects) {
-							dismiss()
-						}
-					}
-					.disabled(viewModel.front.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.back.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-				}
+				showToolBar()
 			}
 			.onAppear {
 				viewModel.setContext(context)
@@ -72,4 +39,83 @@ struct AddFlashCardView: View {
 			}
 		}
   }
+}
+
+private extension AddFlashCardView {
+	
+	@ViewBuilder
+	func showSectionFrontText() -> some View {
+		Section("Front") {
+			ZStack(alignment: .topLeading) {
+				if viewModel.front.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+					Text("e.g. hello")
+						.foregroundStyle(.secondary)
+						.padding(.horizontal, 5)
+						.padding(.vertical, 8)
+				}
+				TextEditor(text: $viewModel.front)
+					.textInputAutocapitalization(.never)
+					.autocorrectionDisabled()
+					.frame(minHeight: 80)
+			}
+		}
+	}
+
+	@ViewBuilder
+	func showSectionBackText() -> some View {
+		Section("Back") {
+			ZStack(alignment: .topLeading) {
+				if viewModel.back.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+					Text("e.g. hola")
+						.foregroundStyle(.secondary)
+						.padding(.horizontal, 5)
+						.padding(.vertical, 8)
+				}
+				TextEditor(text: $viewModel.back)
+					.textInputAutocapitalization(.never)
+					.autocorrectionDisabled()
+					.frame(minHeight: 80)
+			}
+		}
+	}
+
+	@ViewBuilder
+	func showSectionSubject() -> some View {
+		Section("Subject") {
+			if subjects.isEmpty {
+				Text("No subjects yet. Create one from the Home screen.")
+					.font(.footnote)
+					.foregroundStyle(.secondary)
+			} else {
+				Picker("Subject", selection: $viewModel.selectedSubjectID) {
+					Text("None").tag(UUID?.none)
+					ForEach(subjects) { subject in
+						Text(subject.name).tag(Optional(subject.id))
+					}
+				}
+			}
+		}
+	}
+
+	@ViewBuilder
+	func showSectionTags() -> some View {
+		Section("Tags") {
+			TextField("Comma-separated (e.g. greeting, spanish)", text: $viewModel.tagsText)
+		}
+	}
+
+	@ToolbarContentBuilder
+	func showToolBar() -> some ToolbarContent {
+		ToolbarItem(placement: .cancellationAction) {
+			Button("Cancel") { dismiss() }
+		}
+		ToolbarItem(placement: .confirmationAction) {
+			Button("Save") {
+				if viewModel.save(with: subjects) {
+					dismiss()
+				}
+			}
+			.disabled(viewModel.front.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.back.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+		}
+	}
 }
