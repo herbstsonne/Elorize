@@ -9,9 +9,6 @@ public struct FlashCard: Identifiable, Codable, Hashable {
     public var front: String
     public var back: String
 
-    /// Optional note or explanation for the card.
-    public var note: String?
-
     /// Optional tags to group or filter cards.
     public var tags: [String]
 
@@ -34,7 +31,6 @@ public struct FlashCard: Identifiable, Codable, Hashable {
         id: UUID = UUID(),
         front: String,
         back: String,
-        note: String? = nil,
         tags: [String] = [],
         createdAt: Date = Date(),
         lastReviewedAt: Date? = nil,
@@ -45,7 +41,6 @@ public struct FlashCard: Identifiable, Codable, Hashable {
         self.id = id
         self.front = front
         self.back = back
-        self.note = note
         self.tags = tags
         self.createdAt = createdAt
         self.lastReviewedAt = lastReviewedAt
