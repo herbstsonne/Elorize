@@ -152,6 +152,9 @@ private extension FlashCardView {
 				.multilineTextAlignment(viewModel.textAlignment)
 				.lineLimit(10)
 				.minimumScaleFactor(0.5)
+				.frame(maxWidth: .infinity, alignment: {
+					viewModel.alignment
+				}())
 				.padding()
 		}
 	}

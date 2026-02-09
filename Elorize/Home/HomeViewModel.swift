@@ -13,17 +13,15 @@ final class HomeViewModel: ObservableObject {
   @Published var showingAddSubject = false
   @Published var showingAddSheet = false
   @Published var currentIndex = 0
-  @Published var selectedSubjectID: UUID? = nil
+  @Published var selectedSubjectID: UUID?
   @Published var reviewFilter: ReviewFilter = .all
 	@Published var showingDeleteAlert = false
-	@Published var entityPendingDeletion: FlashCardEntity? = nil
+	@Published var entityPendingDeletion: FlashCardEntity?
 
-	// Inputs (injected)
 	private(set) var context: ModelContext?
 	private let generator: FlashcardGenerator
 	private let reviewer: Reviewer
-  
-  // Derived data
+
   var filteredFlashCardEntities: [FlashCardEntity] {
     if let id = selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
       return flashCardEntities.filter { $0.subject?.id == subject.id }
@@ -64,8 +62,6 @@ final class HomeViewModel: ObservableObject {
   func delete(_ entity: FlashCardEntity) {
     guard let context = context else { return }
     context.delete(entity)
-    do { try context.save() } catch { /* handle save error if needed */ }
-    // Remove from local arrays used by the view model
     if let index = flashCardEntities.firstIndex(where: { $0.id == entity.id }) {
       flashCardEntities.remove(at: index)
     }

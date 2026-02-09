@@ -20,6 +20,13 @@ final class FlashCardViewModel: ObservableObject {
 	@Published var showsTextControls: Bool = false
 	@Published var isInteracting: Bool = false
 	@Published var textAlignment: TextAlignment = .center
+	var alignment: Alignment {
+		switch textAlignment {
+			case .leading: .leading
+			case .center: .center
+			case .trailing: .trailing
+		}
+	}
 
 	@AppStorage("flashcard.fontName") private var storedFontName: String = "System"
 	@AppStorage("flashcard.fontSize") private var storedFontSize: Double = 34
