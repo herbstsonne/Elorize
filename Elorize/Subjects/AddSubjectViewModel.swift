@@ -4,18 +4,15 @@ internal import Combine
 
 @MainActor
 final class AddSubjectViewModel: ObservableObject {
-	private(set) var context: ModelContext?
 
 	@Published var name: String = ""
 	@Published var isSaving = false
 	@Published var errorMessage: String?
+	
+	private var repository: SubjectRepository?
 
-	init(context: ModelContext? = nil) {
-			self.context = context
-	}
-
-	func setContext(_ context: ModelContext) {
-			self.context = context
+	func setRepository(_ repository: SubjectRepository) {
+		self.repository = repository
 	}
 
 	func save() -> Bool {
@@ -29,9 +26,8 @@ final class AddSubjectViewModel: ObservableObject {
 		defer { isSaving = false }
 
 		let subject = SubjectEntity(name: trimmed)
-		context?.insert(subject)
 		do {
-			try context?.save()
+			try repository?.insert(subject)
 			name = ""
 			return true
 		} catch {

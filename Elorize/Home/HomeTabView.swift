@@ -6,13 +6,15 @@ struct HomeTabView: View {
   
   @Environment(\.modelContext) private var context
   
-  @StateObject private var viewModel = HomeViewModel(context: nil)
+	@StateObject private var viewModel = HomeViewModel()
   
   @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
   private var flashCardEntities: [FlashCardEntity]
   
   @Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
   private var subjects: [SubjectEntity]
+	
+	@State private var repository: SwiftDataFlashCardRepository?
   
   var body: some View {
 		TabView {
@@ -33,7 +35,7 @@ struct HomeTabView: View {
 		}
 		.tint(Color.app(.accent_subtle))
 		.onAppear {
-			viewModel.setContext(context)
+			viewModel.setRepository(SwiftDataFlashCardRepository(context: context))
 			viewModel.flashCardEntities = flashCardEntities
 			viewModel.subjects = subjects
 		}

@@ -18,7 +18,7 @@ final class HomeViewModel: ObservableObject {
 	@Published var showingDeleteAlert = false
 	@Published var entityPendingDeletion: FlashCardEntity?
 
-	private(set) var context: ModelContext?
+	private var repository: FlashCardRepository?
 	private let generator: FlashcardGenerator
 	private let reviewer: Reviewer
 
@@ -42,26 +42,23 @@ final class HomeViewModel: ObservableObject {
   }
 
   init(
-		context: ModelContext?,
 		generator: FlashcardGenerator = FlashcardGenerator(),
 		reviewer: Reviewer = Reviewer()
 	) {
-    self.context = context
     self.generator = generator
     self.reviewer = reviewer
   }
   
-  func setContext(_ context: ModelContext) {
-    self.context = context
-  }
-  
+	func setRepository(_ repository: FlashCardRepository) {
+		self.repository = repository
+	}
+	
   func nextEntity() -> FlashCardEntity? {
     generator.nextCardEntity(filteredByOutcome, index: currentIndex)
   }
   
   func delete(_ entity: FlashCardEntity) {
-    guard let context = context else { return }
-    context.delete(entity)
+		repository?.delete(entity)
     if let index = flashCardEntities.firstIndex(where: { $0.id == entity.id }) {
       flashCardEntities.remove(at: index)
     }
@@ -69,14 +66,12 @@ final class HomeViewModel: ObservableObject {
   
   func markWrong(_ entity: FlashCardEntity) {
     reviewer.registerReview(for: entity, quality: 2)
-    entity.lastQuality = 2
-    try? context?.save()
+		repository?.saveWrongAnswered(entity)
   }
   
   func markCorrect(_ entity: FlashCardEntity) {
     reviewer.registerReview(for: entity, quality: 5)
-    entity.lastQuality = 5
-    try? context?.save()
+		repository?.saveCorrectAnswered(entity)
   }
   
   func advanceIndex() {

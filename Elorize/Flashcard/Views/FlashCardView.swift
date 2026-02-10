@@ -44,7 +44,7 @@ struct FlashCardView: View {
 				let threshold: CGFloat = 80
 				if value.translation.width > threshold || value.translation.width < -threshold {
 					// Swipe left or right -> next card (no grading)
-					viewModel.onNext()
+					viewModel.actions.onNext()
 					resetCardPosition()
 					viewModel.isInteracting = false
 					viewModel.isFlipped = false
@@ -121,7 +121,7 @@ private extension FlashCardView {
 	@ViewBuilder
 	func buttonWrong() -> some View {
 		Button {
-			viewModel.onWrong()
+			viewModel.actions.onWrong()
 			viewModel.isFlipped = false
 		} label: {
 			Label("Wrong", systemImage: "xmark")
@@ -134,7 +134,7 @@ private extension FlashCardView {
 	@ViewBuilder
 	func buttonCorrect() -> some View {
 		Button {
-			viewModel.onCorrect()
+			viewModel.actions.onCorrect()
 			viewModel.isFlipped = false
 		} label: {
 			Label("Correct", systemImage: "checkmark")
