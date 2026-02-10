@@ -2,8 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
-  
-  @Environment(\.modelContext) private var context
+
   @EnvironmentObject var viewModel: HomeViewModel
   
   @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
@@ -86,23 +85,19 @@ private extension HomeView {
     Group {
       if let entity = viewModel.nextEntity() {
         FlashCardView(
-					viewModel: FlashCardViewModel(
-						card: entity.value,
-						onWrong: {
-							viewModel.markWrong(entity)
-						},
-						onCorrect: {
-							viewModel.markCorrect(entity)
-						},
-						onNext: {
-							viewModel.advanceIndex()
-						}
-					)
+          viewModel: FlashCardViewModel(
+            card: entity.value,
+            actions: .init(
+              onWrong: { viewModel.markWrong(entity) },
+              onCorrect: { viewModel.markCorrect(entity) },
+              onNext: { viewModel.advanceIndex() }
+            )
+          )
         )
         .contextMenu {
           Button(role: .destructive) {
-						viewModel.entityPendingDeletion = entity
-						viewModel.showingDeleteAlert = true
+            viewModel.entityPendingDeletion = entity
+            viewModel.showingDeleteAlert = true
           } label: {
             Label("Delete", systemImage: "trash")
           }
@@ -112,17 +107,17 @@ private extension HomeView {
       }
     }
     .textViewStyle(16)
-		.alert(
-			"Do you really want to delete this flash card?",
-			isPresented: $viewModel.showingDeleteAlert,
-			presenting: viewModel.entityPendingDeletion
-		) { pending in
+    .alert(
+      "Do you really want to delete this flash card?",
+      isPresented: $viewModel.showingDeleteAlert,
+      presenting: viewModel.entityPendingDeletion
+    ) { pending in
       Button("Delete", role: .destructive) {
         viewModel.delete(pending)
-				viewModel.entityPendingDeletion = nil
+        viewModel.entityPendingDeletion = nil
       }
       Button("Cancel", role: .cancel) {
-				viewModel.entityPendingDeletion = nil
+        viewModel.entityPendingDeletion = nil
       }
     } message: { _ in
       Text("This action cannot be undone.")
@@ -154,8 +149,8 @@ private extension HomeView {
     ToolbarItem(placement: .topBarTrailing) {
       if let entity = viewModel.nextEntity() {
         Button(role: .destructive) {
-					viewModel.entityPendingDeletion = entity
-					viewModel.showingDeleteAlert = true
+          viewModel.entityPendingDeletion = entity
+          viewModel.showingDeleteAlert = true
         } label: {
           Image(systemName: "trash")
         }

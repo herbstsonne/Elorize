@@ -1,10 +1,8 @@
 import Foundation
-import SwiftData
 internal import Combine
 
 @MainActor
 final class AddFlashCardViewModel: ObservableObject {
-	private(set) var context: ModelContext?
 
 	@Published var front: String = ""
 	@Published var back: String = ""
@@ -13,12 +11,10 @@ final class AddFlashCardViewModel: ObservableObject {
 	@Published var isSaving = false
 	@Published var errorMessage: String?
 
-	init(context: ModelContext? = nil) {
-			self.context = context
-	}
-
-	func setContext(_ context: ModelContext) {
-			self.context = context
+	private var repository: FlashCardRepository?
+	
+	func setRepository(_ repository: FlashCardRepository) {
+		self.repository = repository
 	}
 
 	func save(with subjects: [SubjectEntity]) -> Bool {
@@ -41,15 +37,14 @@ final class AddFlashCardViewModel: ObservableObject {
 		isSaving = true
 		defer { isSaving = false }
 
-		context?.insert(entity)
 		do {
-				try context?.save()
-				// Reset inputs on success
-				front = ""
-				back = ""
-				tagsText = ""
-				selectedSubjectID = nil
-				return true
+			try repository?.insert(entity)
+			// Reset inputs on success
+			front = ""
+			back = ""
+			tagsText = ""
+			selectedSubjectID = nil
+			return true
 		} catch {
 				errorMessage = "Failed to save card."
 				return false

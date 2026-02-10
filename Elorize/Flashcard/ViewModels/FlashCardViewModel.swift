@@ -5,10 +5,14 @@ internal import Combine
 @MainActor
 final class FlashCardViewModel: ObservableObject {
 
+	struct Actions {
+		var onWrong: () -> Void = {}
+		var onCorrect: () -> Void = {}
+		var onNext: () -> Void = {}
+	}
+
 	let card: FlashCard?
-	var onWrong: () -> Void
-	var onCorrect: () -> Void
-	var onNext: () -> Void
+	var actions: Actions
 
 	@Published var isFlipped: Bool = false
 	@Published var dragOffset: CGSize = .zero
@@ -44,17 +48,13 @@ final class FlashCardViewModel: ObservableObject {
 
 	init(
 		card: FlashCard? = nil,
-		onWrong: @escaping () -> Void = {},
-		onCorrect: @escaping () -> Void = {},
-		onNext: @escaping () -> Void = {},
+		actions: Actions = Actions(),
 		fontSize: CGFloat = 34,
 		fontName: String = "System",
 		availableFonts: [String] = FlashCardViewModel.fontNameList
 	) {
 		self.card = card
-		self.onWrong = onWrong
-		self.onCorrect = onCorrect
-		self.onNext = onNext
+		self.actions = actions
 		let initialName = storedFontName.isEmpty ? fontName : storedFontName
 		let initialSize = storedFontSize <= 0 ? Double(fontSize) : storedFontSize
 		self.fontName = initialName
@@ -64,7 +64,7 @@ final class FlashCardViewModel: ObservableObject {
 		setTextAlignment()
 		loadData()
 	}
-	
+
 	func flip() {
 		isFlipped = !isFlipped
 	}
@@ -127,3 +127,4 @@ private extension FlashCardViewModel {
             .store(in: &cancellables)
 	}
 }
+

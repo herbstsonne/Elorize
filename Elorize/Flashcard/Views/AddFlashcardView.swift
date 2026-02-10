@@ -3,8 +3,8 @@ import SwiftData
 
 struct AddFlashCardView: View {
   
+	@Environment(\.modelContext) private var context
   @Environment(\.dismiss) private var dismiss
-  @Environment(\.modelContext) private var context
   
   @StateObject private var viewModel = AddFlashCardViewModel()
   
@@ -32,7 +32,7 @@ struct AddFlashCardView: View {
 				showToolBar()
 			}
 			.onAppear {
-				viewModel.setContext(context)
+				viewModel.setRepository(SwiftDataFlashCardRepository(context: context))
 				if viewModel.selectedSubjectID == nil {
 					viewModel.selectedSubjectID = subjects.first?.id
 				}

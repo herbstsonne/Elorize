@@ -2,8 +2,9 @@ import SwiftUI
 import SwiftData
 
 struct AddSubjectView: View {
+
+	@Environment(\.modelContext) private var context
   @Environment(\.dismiss) private var dismiss
-  @Environment(\.modelContext) private var context
   @StateObject private var viewModel = AddSubjectViewModel()
   
   var body: some View {
@@ -20,7 +21,9 @@ struct AddSubjectView: View {
       .toolbar {
         showToolBar()
       }
-      .onAppear { viewModel.setContext(context) }
+			.onAppear {
+				viewModel.setRepository(SwiftDataSubjectRepository(context: context))
+			}
     }
   }
 }
