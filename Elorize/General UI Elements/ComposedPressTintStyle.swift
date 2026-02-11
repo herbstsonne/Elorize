@@ -1,6 +1,6 @@
 import SwiftUI
 
-private struct ComposedPressTintStyle: ButtonStyle {
+struct ComposedPressTintStyle: ButtonStyle {
 	enum Kind { case bordered, borderedProminent }
 	let kind: Kind
 	let normalTint: Color
