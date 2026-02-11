@@ -124,11 +124,16 @@ private extension FlashCardView {
 			viewModel.actions.onWrong()
 			viewModel.isFlipped = false
 		} label: {
-			Label("Review", systemImage: "xmark")
+			Label("Repeat", systemImage: "xmark")
 				.frame(maxWidth: .infinity)
 		}
-		.buttonStyle(.bordered)
-		.tint(Color.app(.error))
+		.buttonStyle(
+			ComposedPressTintStyle(
+				kind: .borderedProminent,
+				normalTint: Color.app(.button_default),
+				pressedTint: Color.app(.button_pressed)
+			)
+		)
 	}
 
 	@ViewBuilder
@@ -140,8 +145,13 @@ private extension FlashCardView {
 			Label("Got it", systemImage: "checkmark")
 				.frame(maxWidth: .infinity)
 		}
-		.buttonStyle(.borderedProminent)
-		.tint(Color.app(.success))
+		.buttonStyle(
+			ComposedPressTintStyle(
+				kind: .borderedProminent,
+				normalTint: Color.app(.button_default),
+				pressedTint: Color.app(.button_pressed)
+			)
+		)
 	}
 
 	@ViewBuilder
