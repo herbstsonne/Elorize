@@ -1,5 +1,4 @@
 import Foundation
-import SwiftData
 internal import Combine
 
 @MainActor

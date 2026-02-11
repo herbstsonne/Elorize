@@ -15,12 +15,14 @@ final class HomeViewModel: ObservableObject {
   @Published var currentIndex = 0
   @Published var selectedSubjectID: UUID?
   @Published var reviewFilter: ReviewFilter = .all
-	@Published var showingDeleteAlert = false
-	@Published var entityPendingDeletion: FlashCardEntity?
-
-	private var repository: FlashCardRepository?
-	private let generator: FlashcardGenerator
-	private let reviewer: Reviewer
+  @Published var showingDeleteAlert = false
+  @Published var entityPendingDeletion: FlashCardEntity?
+  @Published var selectedSubjectIDs: Set<UUID> = []
+  
+  private var subjectRepository: SubjectRepository?
+  private var flashCardRepository: FlashCardRepository?
+  private let generator: FlashcardGenerator
+  private let reviewer: Reviewer
 
   var filteredFlashCardEntities: [FlashCardEntity] {
     if let id = selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
@@ -42,23 +44,24 @@ final class HomeViewModel: ObservableObject {
   }
 
   init(
-		generator: FlashcardGenerator = FlashcardGenerator(),
-		reviewer: Reviewer = Reviewer()
-	) {
+    generator: FlashcardGenerator = FlashcardGenerator(),
+    reviewer: Reviewer = Reviewer()
+  ) {
     self.generator = generator
     self.reviewer = reviewer
   }
   
-	func setRepository(_ repository: FlashCardRepository) {
-		self.repository = repository
-	}
-	
+  func setRepository(_ fcRepository: FlashCardRepository, _ sRepository: SubjectRepository) {
+    self.flashCardRepository = fcRepository
+    self.subjectRepository = sRepository
+  }
+  
   func nextEntity() -> FlashCardEntity? {
     generator.nextCardEntity(filteredByOutcome, index: currentIndex)
   }
   
   func delete(_ entity: FlashCardEntity) {
-		repository?.delete(entity)
+    flashCardRepository?.delete(entity)
     if let index = flashCardEntities.firstIndex(where: { $0.id == entity.id }) {
       flashCardEntities.remove(at: index)
     }
@@ -66,16 +69,37 @@ final class HomeViewModel: ObservableObject {
   
   func markWrong(_ entity: FlashCardEntity) {
     reviewer.registerReview(for: entity, quality: 2)
-		repository?.saveWrongAnswered(entity)
+    flashCardRepository?.saveWrongAnswered(entity)
   }
   
   func markCorrect(_ entity: FlashCardEntity) {
     reviewer.registerReview(for: entity, quality: 5)
-		repository?.saveCorrectAnswered(entity)
+    flashCardRepository?.saveCorrectAnswered(entity)
   }
   
   func advanceIndex() {
     currentIndex = (currentIndex + 1) % max(1, filteredByOutcome.count)
+  }
+  
+  func deleteSelectedSubjects() {
+    let idsToDelete = selectedSubjectIDs
+    guard !idsToDelete.isEmpty else { return }
+    // Build a list of entities matching the selected IDs
+    let toDelete = subjects.filter { idsToDelete.contains($0.id) }
+    for subject in toDelete {
+      do {
+        try subjectRepository?.delete(subject)
+      } catch {
+        // You might want to surface an error to the UI in the future
+      }
+    }
+    // Clear selection and update local subjects array by removing deleted items
+    selectedSubjectIDs.removeAll()
+    subjects.removeAll { idsToDelete.contains($0.id) }
+    // Also clear subject filter if it points to a deleted subject
+    if let current = selectedSubjectID, idsToDelete.contains(current) {
+      selectedSubjectID = nil
+    }
   }
 }
 

@@ -35,7 +35,10 @@ struct HomeTabView: View {
 		}
 		.tint(Color.app(.accent_subtle))
 		.onAppear {
-			viewModel.setRepository(SwiftDataFlashCardRepository(context: context))
+			viewModel.setRepository(
+				SwiftDataFlashCardRepository(context: context),
+				SwiftDataSubjectRepository(context: context)
+			)
 			viewModel.flashCardEntities = flashCardEntities
 			viewModel.subjects = subjects
 		}
