@@ -1,3 +1,5 @@
+<p align="center"><img src="Images/elorize_icon.png" alt="Elorize Icon" width="96" /></p>
+
 # Elorize
 
 Elegant, minimalist flashcards with a Parisian-inspired design.
@@ -9,6 +11,8 @@ Elegant, minimalist flashcards with a Parisian-inspired design.
   <img src="Images/home.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/text_controls.png" alt="Home" width="240"   style="margin-right:12px;" />
   <img src="Images/filter.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/filter_editmode.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/filter_editmode_delete.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/add_card.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/add_subject.png" alt="Home" width="240" style="margin-right:12px;" />
   </p>
@@ -48,4 +52,5 @@ Elegant, minimalist flashcards with a Parisian-inspired design.
 git clone https://github.com/herbstsonne/Elorize.git
 cd Elorize
 open Elorize.xcodeproj
+
 
