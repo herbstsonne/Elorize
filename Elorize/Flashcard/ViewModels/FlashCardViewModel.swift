@@ -40,6 +40,7 @@ final class FlashCardViewModel: ObservableObject {
 	static let fontNameList: [String] = [
 		"System",
 		"Georgia",
+		"Tahoma",
 		"Times New Roman",
 		"Avenir-Book",
 		"HelveticaNeue",

@@ -1,8 +1,10 @@
 import SwiftUI
+import SwiftData
 
 struct FilterView: View {
   
   @EnvironmentObject var viewModel: HomeViewModel
+  @State private var editMode: EditMode = .inactive
   
   var body: some View {
     ZStack {
@@ -11,16 +13,43 @@ struct FilterView: View {
         if viewModel.subjects.isEmpty {
           showContentUnavailableView()
         } else {
-          Form {
-            showPickerFilterByKnowledge()
-						showPickerSubject()
+          if editMode.isEditing {
+            // Show selectable list when editing
+            List(selection: $viewModel.selectedSubjectIDs) {
+              ForEach(viewModel.subjects) { subject in
+                Text(subject.name)
+                  .accentText()
+                  .contentShape(Rectangle())
+              }
+            }
+            .listStyle(.plain)
+          } else {
+            // Show original form when not editing
+            Form {
+              showPickerFilterByKnowledge()
+              showPickerSubject()
+            }
+            .scrollContentBackground(.hidden)
+            .listStyle(.plain)
           }
-          .scrollContentBackground(.hidden)
-          .listStyle(.plain)
         }
         Spacer()
       }
+			.toolbar {
+				ToolbarItem(placement: .topBarLeading) {
+					EditButton()
+				}
+				ToolbarItem(placement: .topBarTrailing) {
+					Button(role: .destructive) {
+						viewModel.deleteSelectedSubjects()
+					} label: {
+						Label("Delete Selected", systemImage: "trash")
+					}
+					.disabled(viewModel.selectedSubjectIDs.isEmpty)
+				}
+			}
     }
+    .environment(\.editMode, $editMode)
   }
 }
 
@@ -39,20 +68,20 @@ private extension FilterView {
 		.tint(Color.app(.accent_default))
 	}
 	
-	@ViewBuilder
-	func showPickerSubject() -> some View {
-		Picker("Subject", selection: $viewModel.selectedSubjectID) {
-			Text("All")
-				.tag(UUID?.none)
-				.accentText()
-			ForEach(viewModel.subjects) { subject in
-				Text(subject.name)
-					.tag(Optional(subject.id))
-					.accentText()
-			}
-		}
-		.pickerStyle(.inline)
-	}
+  @ViewBuilder
+  func showPickerSubject() -> some View {
+    Picker("Subject", selection: $viewModel.selectedSubjectID) {
+      Text("All")
+        .tag(UUID?.none)
+        .accentText()
+      ForEach(viewModel.subjects) { subject in
+        Text(subject.name)
+          .tag(Optional(subject.id))
+          .accentText()
+      }
+    }
+    .pickerStyle(.inline)
+  }
 	
 	@ViewBuilder
 	func showContentUnavailableView() -> some View {
