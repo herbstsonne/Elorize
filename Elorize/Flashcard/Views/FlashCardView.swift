@@ -271,10 +271,10 @@ private extension FlashCardView {
 				viewModel.showsTextControls.toggle()
 			}
 		} label: {
-			Image(systemName: "textformat.size.smaller")
-				.foregroundStyle(Color.app(.text_primary))
+			Image(systemName: "character.text.justify")
+				.foregroundStyle(Color.app(.text_highlight))
 				.frame(width: 44, height: 44)
-				.background(.regularMaterial, in: Circle())
+				.background(Color.app(.background_primary), in: Circle())
 		}
 		.accessibilityLabel("Toggle text controls")
 	}
