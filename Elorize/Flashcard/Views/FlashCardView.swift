@@ -124,7 +124,7 @@ private extension FlashCardView {
 			viewModel.actions.onWrong()
 			viewModel.isFlipped = false
 		} label: {
-			Label("Wrong", systemImage: "xmark")
+			Label("Review", systemImage: "xmark")
 				.frame(maxWidth: .infinity)
 		}
 		.buttonStyle(.bordered)
@@ -137,7 +137,7 @@ private extension FlashCardView {
 			viewModel.actions.onCorrect()
 			viewModel.isFlipped = false
 		} label: {
-			Label("Correct", systemImage: "checkmark")
+			Label("Got it", systemImage: "checkmark")
 				.frame(maxWidth: .infinity)
 		}
 		.buttonStyle(.borderedProminent)

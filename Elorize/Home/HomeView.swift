@@ -108,7 +108,7 @@ private extension HomeView {
     }
     .textViewStyle(16)
     .alert(
-      "Do you really want to delete this flash card?",
+      "Do you really want to delete the current flash card?",
       isPresented: $viewModel.showingDeleteAlert,
       presenting: viewModel.entityPendingDeletion
     ) { pending in

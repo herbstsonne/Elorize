@@ -26,20 +26,26 @@ struct FilterView: View {
         }
         Spacer()
       }
-			.toolbar {
-				ToolbarItem(placement: .topBarLeading) {
-					EditButton()
-				}
-				ToolbarItem(placement: .topBarTrailing) {
-					Button(role: .destructive) {
-						showingDeleteSubjectsAlert = true
-					} label: {
-						Label("Delete Selected", systemImage: "trash")
-					}
-					.disabled(viewModel.selectedSubjectIDs.isEmpty)
-				}
-			}
+      if showingDeleteSubjectsAlert {
+        Color.black.opacity(0.35)
+          .ignoresSafeArea()
+          .transition(.opacity)
+          .animation(.easeInOut(duration: 0.2), value: showingDeleteSubjectsAlert)
+      }
     }
+		.toolbar {
+			ToolbarItem(placement: .topBarLeading) {
+				EditButton()
+			}
+			ToolbarItem(placement: .topBarTrailing) {
+				Button(role: .destructive) {
+					showingDeleteSubjectsAlert = true
+				} label: {
+					Label("Delete Selected", systemImage: "trash")
+				}
+				.disabled(viewModel.selectedSubjectIDs.isEmpty)
+			}
+		}
     .environment(\.editMode, $editMode)
     .alert(
       "Confirm Deletion",
