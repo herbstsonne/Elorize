@@ -6,7 +6,7 @@ extension View {
 			.padding(10)
 			.background(
 				RoundedRectangle(cornerRadius: 12, style: .continuous)
-					.fill(.ultraThinMaterial)
+					.fill(Color.app(.background_primary))
 			)
 			.overlay(
 				RoundedRectangle(cornerRadius: 12, style: .continuous)
