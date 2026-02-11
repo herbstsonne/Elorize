@@ -5,6 +5,7 @@ struct FilterView: View {
   
   @EnvironmentObject var viewModel: HomeViewModel
   @State private var editMode: EditMode = .inactive
+  @State private var showingDeleteSubjectsAlert = false
   
   var body: some View {
     ZStack {
@@ -14,17 +15,8 @@ struct FilterView: View {
           showContentUnavailableView()
         } else {
           if editMode.isEditing {
-            // Show selectable list when editing
-            List(selection: $viewModel.selectedSubjectIDs) {
-              ForEach(viewModel.subjects) { subject in
-                Text(subject.name)
-                  .accentText()
-                  .contentShape(Rectangle())
-              }
-            }
-            .listStyle(.plain)
+						showEditableSubjectListView()
           } else {
-            // Show original form when not editing
             Form {
               showPickerFilterByKnowledge()
               showPickerSubject()
@@ -41,7 +33,7 @@ struct FilterView: View {
 				}
 				ToolbarItem(placement: .topBarTrailing) {
 					Button(role: .destructive) {
-						viewModel.deleteSelectedSubjects()
+						showingDeleteSubjectsAlert = true
 					} label: {
 						Label("Delete Selected", systemImage: "trash")
 					}
@@ -50,6 +42,17 @@ struct FilterView: View {
 			}
     }
     .environment(\.editMode, $editMode)
+    .alert(
+      "Confirm Deletion",
+      isPresented: $showingDeleteSubjectsAlert
+    ) {
+      Button("Delete", role: .destructive) {
+        viewModel.deleteSelectedSubjects()
+      }
+      Button("Cancel", role: .cancel) { }
+    } message: {
+      Text("This will delete all related cards. Do you want to proceed?")
+    }
   }
 }
 
@@ -80,6 +83,7 @@ private extension FilterView {
           .accentText()
       }
     }
+		.labelsHidden()
     .pickerStyle(.inline)
   }
 	
@@ -88,4 +92,23 @@ private extension FilterView {
 		ContentUnavailableView("No Subjects", systemImage: "folder.badge.questionmark", description: Text("Add a subject to get started."))
 			.padding()
 	}
+	
+	@ViewBuilder
+	func showEditableSubjectListView() -> some View {
+		List(selection: $viewModel.selectedSubjectIDs) {
+			Section {
+				showPickerFilterByKnowledge()
+			}
+			Section {
+				ForEach(viewModel.subjects) { subject in
+					Text(subject.name)
+						.accentText()
+						.contentShape(Rectangle())
+				}
+			}
+		}
+		.scrollContentBackground(.hidden)
+		.listStyle(.insetGrouped)
+	}
 }
+
