@@ -44,7 +44,11 @@ struct FlashCardView: View {
 				let threshold: CGFloat = 80
 				if value.translation.width > threshold || value.translation.width < -threshold {
 					// Swipe left or right -> next card (no grading)
-					viewModel.actions.onNext()
+					// Show a brief neutral highlight-less transition
+					// Delay advancing slightly to allow any prior highlight to be visible
+					DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+						viewModel.actions.onNext()
+					}
 					resetCardPosition()
 					viewModel.isInteracting = false
 					viewModel.isFlipped = false
@@ -82,9 +86,17 @@ private extension FlashCardView {
 	@ViewBuilder
 	func card() -> some View {
 		ZStack {
-			RoundedRectangle(cornerRadius: 16, style: .continuous)
-				.fill(Color.app(.card_background))
-				.shadow(radius: 4)
+      let bgColor: Color = {
+        switch viewModel.highlightState {
+        case .success: return Color.app(.success)
+        case .error: return Color.app(.error)
+        case .none: return Color.app(.card_background)
+        }
+      }()
+      RoundedRectangle(cornerRadius: 16, style: .continuous)
+        .fill(bgColor)
+        .shadow(radius: 4)
+        .animation(.easeInOut(duration: 0.2), value: viewModel.highlightState)
 			
 			VStack(spacing: 12) {
 				cardTextArea()
@@ -121,27 +133,41 @@ private extension FlashCardView {
 	@ViewBuilder
 	func buttonWrong() -> some View {
 		Button {
-			viewModel.actions.onWrong()
-			viewModel.isFlipped = false
+			viewModel.flashErrorHighlight {
+				viewModel.actions.onWrong()
+				viewModel.isFlipped = false
+			}
 		} label: {
-			Label("Review", systemImage: "xmark")
+			Label("Repeat", systemImage: "xmark")
 				.frame(maxWidth: .infinity)
 		}
-		.buttonStyle(.bordered)
-		.tint(Color.app(.error))
+		.buttonStyle(
+			ComposedPressTintStyle(
+				kind: .borderedProminent,
+				normalTint: Color.app(.button_default),
+				pressedTint: Color.app(.button_pressed)
+			)
+		)
 	}
 
 	@ViewBuilder
 	func buttonCorrect() -> some View {
 		Button {
-			viewModel.actions.onCorrect()
-			viewModel.isFlipped = false
+			viewModel.flashSuccessHighlight {
+				viewModel.actions.onCorrect()
+				viewModel.isFlipped = false
+			}
 		} label: {
 			Label("Got it", systemImage: "checkmark")
 				.frame(maxWidth: .infinity)
 		}
-		.buttonStyle(.borderedProminent)
-		.tint(Color.app(.success))
+		.buttonStyle(
+			ComposedPressTintStyle(
+				kind: .borderedProminent,
+				normalTint: Color.app(.button_default),
+				pressedTint: Color.app(.button_pressed)
+			)
+		)
 	}
 
 	@ViewBuilder
@@ -245,9 +271,10 @@ private extension FlashCardView {
 				viewModel.showsTextControls.toggle()
 			}
 		} label: {
-			Image(systemName: "textformat.size.smaller")
-				.padding(8)
-				.background(.ultraThinMaterial, in: Circle())
+			Image(systemName: "character.text.justify")
+				.foregroundStyle(Color.app(.text_highlight))
+				.frame(width: 44, height: 44)
+				.background(Color.app(.background_primary), in: Circle())
 		}
 		.accessibilityLabel("Toggle text controls")
 	}

@@ -5,6 +5,12 @@ internal import Combine
 @MainActor
 final class FlashCardViewModel: ObservableObject {
 
+	enum HighlightState {
+		case none
+		case success
+		case error
+	}
+
 	struct Actions {
 		var onWrong: () -> Void = {}
 		var onCorrect: () -> Void = {}
@@ -24,6 +30,7 @@ final class FlashCardViewModel: ObservableObject {
 	@Published var showsTextControls: Bool = false
 	@Published var isInteracting: Bool = false
 	@Published var textAlignment: TextAlignment = .center
+	@Published var highlightState: HighlightState = .none
 	var alignment: Alignment {
 		switch textAlignment {
 			case .leading: .leading
@@ -75,6 +82,24 @@ final class FlashCardViewModel: ObservableObject {
 			return .system(size: storedFontSize)
 		} else {
 			return .custom(storedFontName, size: storedFontSize)
+		}
+	}
+
+	func flashSuccessHighlight(completion: (() -> Void)? = nil) {
+		highlightState = .success
+		Task { @MainActor in
+			try? await Task.sleep(nanoseconds: 1_000_000_000)
+			withAnimation(.easeInOut) { self.highlightState = .none }
+			completion?()
+		}
+	}
+
+	func flashErrorHighlight(completion: (() -> Void)? = nil) {
+		highlightState = .error
+		Task { @MainActor in
+			try? await Task.sleep(nanoseconds: 1_000_000_000)
+			withAnimation(.easeInOut) { self.highlightState = .none }
+			completion?()
 		}
 	}
 }
