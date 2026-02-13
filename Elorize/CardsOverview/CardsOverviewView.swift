@@ -14,46 +14,53 @@ struct CardsOverviewView: View {
 
   var body: some View {
     NavigationStack {
-      List {
-        ForEach(subjects) { subject in
-          Section(header: subjectHeader(for: subject)) {
-            // Show cards for this subject, sorted by createdAt desc
-            let cards = (subject.flashCardsArray).sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
-            if cards.isEmpty {
-              Text("No cards in this subject")
-                .foregroundStyle(.secondary)
-            } else {
-              ForEach(cards) { card in
-                NavigationLink {
-                  CardDetailEditor(card: card)
-                } label: {
-                  VStack(alignment: .leading, spacing: 4) {
-                    Text(card.front)
-                      .font(.headline)
-                    Text(card.back)
-                      .font(.subheadline)
-                      .foregroundStyle(.secondary)
-                    if !card.tags.isEmpty {
-                      Text(card.tags.joined(separator: ", "))
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+      VStack {
+        List {
+          ForEach(subjects) { subject in
+            Section(header: subjectHeader(for: subject)) {
+              // Show cards for this subject, sorted by createdAt desc
+              let cards = (subject.flashCardsArray).sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+              if cards.isEmpty {
+                Text("No cards in this subject")
+                  .foregroundStyle(.secondary)
+              } else {
+                ForEach(cards) { card in
+                  NavigationLink {
+                    CardDetailEditor(card: card)
+                  } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                      Text(card.front)
+                        .font(.headline)
+                      Text(card.back)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                      if !card.tags.isEmpty {
+                        Text(card.tags.joined(separator: ", "))
+                          .font(.caption)
+                          .foregroundStyle(.tertiary)
+                      }
                     }
+                    .padding(.vertical, 4)
                   }
-                  .padding(.vertical, 4)
                 }
-              }
-              .onDelete { indexSet in
-                deleteCards(at: indexSet, in: cards)
+                .onDelete { indexSet in
+                  deleteCards(at: indexSet, in: cards)
+                }
               }
             }
           }
+          .onDelete(perform: deleteSubjects)
         }
-        .onDelete(perform: deleteSubjects)
+        .foregroundStyle(Color.app(.accent_subtle))
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .background(BackgroundColorView().ignoresSafeArea())
       }
-      .navigationTitle("Cards")
-      .toolbar { EditButton() }
-      .tint(Color.app(.accent_subtle))
     }
+    .toolbar { EditButton() }
+    .toolbarBackground(.visible, for: .navigationBar)
+    .toolbarBackground(Color.clear, for: .navigationBar)
+    .tint(Color.app(.accent_subtle))
   }
 
   // MARK: - Helpers
@@ -134,13 +141,18 @@ private struct CardDetailEditor: View {
         ))
       }
     }
-    .navigationTitle("Edit Card")
+    .foregroundStyle(Color.app(.accent_subtle))
     .navigationBarTitleDisplayMode(.inline)
+    .scrollContentBackground(.hidden)
+    .background(BackgroundColorView().ignoresSafeArea())
     .toolbar {
       ToolbarItem(placement: .confirmationAction) {
         Button("Save") { try? context.save() }
       }
     }
+    .toolbarBackground(.visible, for: .navigationBar)
+    .toolbarBackground(Color.clear, for: .navigationBar)
+    .tint(Color.app(.accent_subtle))
   }
 }
 
@@ -158,3 +170,4 @@ private extension SubjectEntity {
     }
   }
 }
+
