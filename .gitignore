@@ -1,3 +1,5 @@
 
 Elorize.xcodeproj/xcuserdata/mirisasse.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist
 *.xcbkptlist
+.DS_Store
+*.xcuserstate

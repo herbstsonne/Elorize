@@ -42,10 +42,18 @@ struct FlashCardView: View {
 			}
 			.onEnded { value in
 				let threshold: CGFloat = 80
-				if value.translation.width > threshold || value.translation.width < -threshold {
-					// Swipe left or right -> next card (no grading)
-					// Show a brief neutral highlight-less transition
-					// Delay advancing slightly to allow any prior highlight to be visible
+				let translation = value.translation.width
+
+				if translation <= -threshold {
+					// Swipe right-to-left -> previous card
+					DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+						viewModel.actions.onPrevious()
+					}
+					resetCardPosition()
+					viewModel.isInteracting = false
+					viewModel.isFlipped = false
+				} else if translation >= threshold {
+					// Swipe left-to-right -> next card
 					DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
 						viewModel.actions.onNext()
 					}
