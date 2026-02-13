@@ -15,6 +15,7 @@ final class FlashCardViewModel: ObservableObject {
 		var onWrong: () -> Void = {}
 		var onCorrect: () -> Void = {}
 		var onNext: () -> Void = {}
+        var onPrevious: () -> Void = {}
 	}
 
 	let card: FlashCard?

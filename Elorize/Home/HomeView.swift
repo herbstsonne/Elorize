@@ -90,7 +90,8 @@ private extension HomeView {
             actions: .init(
               onWrong: { viewModel.markWrong(entity) },
               onCorrect: { viewModel.markCorrect(entity) },
-              onNext: { viewModel.advanceIndex() }
+              onNext: { viewModel.advanceIndex() },
+              onPrevious: { viewModel.previousIndex() }
             )
           )
         )
