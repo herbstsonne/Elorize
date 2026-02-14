@@ -32,6 +32,13 @@ struct HomeTabView: View {
 			.tabItem {
 				Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
 			}
+      NavigationStack {
+        CardsOverviewView()
+          .environmentObject(viewModel)
+      }
+      .tabItem {
+        Label("Cards", systemImage: "rectangle.on.rectangle.angled")
+      }
 		}
 		.tint(Color.app(.accent_subtle))
 		.onAppear {
