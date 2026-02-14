@@ -20,7 +20,7 @@ struct CardsOverviewView: View {
             Section {
               DisclosureGroup {
                 // Show cards for this subject, sorted by createdAt desc
-                let cards = (subject.flashCardsArray).sorted { ($0.createdAt ?? .distantPast) > ($1.createdAt ?? .distantPast) }
+                let cards = (subject.flashCardsArray).sorted { ($0.createdAt) > ($1.createdAt) }
                 if cards.isEmpty {
                   Text("No cards in this subject")
                     .foregroundStyle(.secondary)
