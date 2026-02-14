@@ -17,6 +17,8 @@ Elegant, minimalist flashcards with a Parisian-inspired design.
   <img src="Images/filter_editmode_delete.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/add_card.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/add_subject.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/card_overview.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/card_overview_edit.png" alt="Home" width="240" style="margin-right:12px;" />
   </p>
 
   ## iPad
