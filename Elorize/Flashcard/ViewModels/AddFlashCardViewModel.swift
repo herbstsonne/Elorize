@@ -11,9 +11,9 @@ final class AddFlashCardViewModel: ObservableObject {
 	@Published var isSaving = false
 	@Published var errorMessage: String?
 
-	private var repository: FlashCardRepository?
+	private var repository: ExerciseRepository?
 	
-	func setRepository(_ repository: FlashCardRepository) {
+	func setRepository(_ repository: ExerciseRepository) {
 		self.repository = repository
 	}
 

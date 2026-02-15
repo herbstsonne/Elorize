@@ -1,15 +1,14 @@
 import Foundation
 import SwiftData
 
-protocol FlashCardRepository {
+protocol ExerciseRepository {
 	func saveWrongAnswered(_ entity: FlashCardEntity)
 	func saveCorrectAnswered(_ entity: FlashCardEntity)
-	func delete(_ entity: FlashCardEntity)
 	func insert(_ entity: FlashCardEntity) throws
 	func save()
 }
 
-final class SwiftDataFlashCardRepository: FlashCardRepository {
+final class SwiftDataExerciseRepository: ExerciseRepository {
 
 	private let context: ModelContext
 
@@ -25,10 +24,6 @@ final class SwiftDataFlashCardRepository: FlashCardRepository {
 	func saveCorrectAnswered(_ entity: FlashCardEntity) {
 		entity.lastQuality = 5
 		save()
-	}
-	
-	func delete(_ entity: FlashCardEntity) {
-		context.delete(entity)
 	}
 
 	func insert(_ entity: FlashCardEntity) throws {
