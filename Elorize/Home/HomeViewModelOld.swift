@@ -9,7 +9,7 @@ enum HomeTab: Hashable {
 }
 
 @MainActor
-final class HomeViewModel: ObservableObject {
+final class HomeViewModelOld: ObservableObject {
   
   // Source data provided by the view via SwiftData @Query
   @Published var flashCardEntities: [FlashCardEntity] = []

@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct CardsOverviewView: View {
-  @EnvironmentObject var viewModel: HomeViewModel
+  @StateObject var viewModel: CardsViewModel = CardsViewModel()
   
   // Fetch all subjects sorted by name
   @Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])

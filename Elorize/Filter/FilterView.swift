@@ -2,7 +2,7 @@ import SwiftUI
 
 struct FilterView: View {
   
-  @EnvironmentObject var viewModel: HomeViewModel
+  @StateObject var viewModel = FilterViewModel()
   
   var body: some View {
     ZStack {
@@ -19,6 +19,12 @@ struct FilterView: View {
         .listStyle(.plain)
         }
         Spacer()
+      }
+    }
+    .onChange(of: viewModel.subjects) { oldValue, newValue in
+      // If the currently selected subject was deleted, reset selection to All (nil)
+      if let selected = viewModel.selectedSubjectID, newValue.first(where: { $0.id == selected }) == nil {
+        viewModel.selectedSubjectID = nil
       }
     }
   }

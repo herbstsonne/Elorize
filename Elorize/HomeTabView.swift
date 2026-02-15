@@ -6,8 +6,6 @@ struct HomeTabView: View {
   
   @Environment(\.modelContext) private var context
   
-	@StateObject private var viewModel = HomeViewModel()
-  
   @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
   private var flashCardEntities: [FlashCardEntity]
   
@@ -20,36 +18,24 @@ struct HomeTabView: View {
 		TabView {
 			NavigationStack {
 				HomeView()
-					.environmentObject(viewModel)
 			}
 			.tabItem {
 				Label("Exercise", systemImage: "brain.head.profile")
 			}
 			NavigationStack {
 				FilterView()
-					.environmentObject(viewModel)
 			}
 			.tabItem {
 				Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
 			}
       NavigationStack {
         CardsOverviewView()
-          .environmentObject(viewModel)
       }
       .tabItem {
         Label("Cards", systemImage: "rectangle.on.rectangle.angled")
       }
 		}
 		.tint(Color.app(.accent_subtle))
-		.onAppear {
-			viewModel.setRepository(
-				SwiftDataExerciseRepository(context: context),
-				SwiftDataSubjectRepository(context: context),
-        FlashcardRepository(context: context)
-			)
-			viewModel.flashCardEntities = flashCardEntities
-			viewModel.subjects = subjects
-		}
   }
 }
 

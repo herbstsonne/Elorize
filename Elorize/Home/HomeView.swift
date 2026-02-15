@@ -3,7 +3,7 @@ import SwiftData
 
 struct HomeView: View {
 
-  @EnvironmentObject var viewModel: HomeViewModel
+  @StateObject var viewModel: HomeViewModel = HomeViewModel()
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
   
   @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
@@ -23,30 +23,6 @@ struct HomeView: View {
         showFlashCardSection()
       }
     }
-    .onAppear {
-      viewModel.flashCardEntities = flashCardEntities
-      viewModel.subjects = subjects
-    }
-    .onChange(of: viewModel.showingAddSubject) { oldValue, newValue in
-      if oldValue == true && newValue == false {
-        viewModel.flashCardEntities = flashCardEntities
-        viewModel.subjects = subjects
-      }
-    }
-    .onChange(of: viewModel.showingAddSheet) { oldValue, newValue in
-      if oldValue == true && newValue == false {
-        viewModel.flashCardEntities = flashCardEntities
-        viewModel.subjects = subjects
-      }
-    }
-    .onChange(of: viewModel.reviewFilter) { _, _ in
-      viewModel.flashCardEntities = flashCardEntities
-      viewModel.subjects = subjects
-    }
-    .onChange(of: viewModel.selectedSubjectID) { _, _ in
-      viewModel.flashCardEntities = flashCardEntities
-      viewModel.subjects = subjects
-    }
     .fullScreenCover(isPresented: .constant(!hasSeenOnboarding)) {
       OnboardingView(
         isPresented: Binding(
@@ -59,8 +35,8 @@ struct HomeView: View {
         onGetStarted: {
           hasSeenOnboarding = true
           // Navigate to Cards tab and open Add Subject
-          viewModel.selectedTab = .cards // adapt to your tab type
-          viewModel.showingAddSubject = true
+          //viewModel.selectedTab = .cards // adapt to your tab type
+          //viewModel.showingAddSubject = true
         }
       )
     }
