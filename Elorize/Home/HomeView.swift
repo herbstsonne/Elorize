@@ -4,6 +4,7 @@ import SwiftData
 struct HomeView: View {
 
   @EnvironmentObject var viewModel: HomeViewModel
+  @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
   
   @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
   private var flashCardEntities: [FlashCardEntity]
@@ -45,6 +46,23 @@ struct HomeView: View {
     .onChange(of: viewModel.selectedSubjectID) { _, _ in
       viewModel.flashCardEntities = flashCardEntities
       viewModel.subjects = subjects
+    }
+    .fullScreenCover(isPresented: .constant(!hasSeenOnboarding)) {
+      OnboardingView(
+        isPresented: Binding(
+          get: { !hasSeenOnboarding },
+          set: { newValue in
+            // newValue false -> dismiss
+            hasSeenOnboarding = !newValue
+          }
+        ),
+        onGetStarted: {
+          hasSeenOnboarding = true
+          // Navigate to Cards tab and open Add Subject
+          viewModel.selectedTab = .cards // adapt to your tab type
+          viewModel.showingAddSubject = true
+        }
+      )
     }
   }
 }

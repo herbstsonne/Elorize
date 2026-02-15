@@ -2,6 +2,12 @@ import Foundation
 import SwiftData
 internal import Combine
 
+enum HomeTab: Hashable {
+  case home
+  case filter
+  case cards
+}
+
 @MainActor
 final class HomeViewModel: ObservableObject {
   
@@ -18,6 +24,9 @@ final class HomeViewModel: ObservableObject {
   @Published var showingDeleteAlert = false
   @Published var entityPendingDeletion: FlashCardEntity?
   @Published var selectedSubjectIDs: Set<UUID> = []
+  @Published var selectedTab: HomeTab = .home {
+    didSet { handleTabChange(selectedTab) }
+  }
   
   private var flashcardsRepository: FlashcardRepository?
   private var subjectRepository: SubjectRepository?
@@ -111,6 +120,22 @@ final class HomeViewModel: ObservableObject {
   
   func deleteSubjects(at offsets: IndexSet, subjects: [SubjectEntity]) {
     flashcardsRepository?.deleteSubjects(at: offsets, subjects: subjects)
+  }
+  
+  private func handleTabChange(_ tab: HomeTab) {
+    switch tab {
+    case .home:
+      // Reset any Cards UI sheets when returning home
+      showingAddSubject = false
+      showingAddSheet = false
+    case .filter:
+      // Close transient UI when navigating to settings
+      showingAddSubject = false
+      showingAddSheet = false
+    case .cards:
+      // Prepare Cards state if needed; do not auto-open sheets here
+      break
+    }
   }
 }
 
