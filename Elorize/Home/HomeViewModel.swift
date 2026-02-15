@@ -19,8 +19,9 @@ final class HomeViewModel: ObservableObject {
   @Published var entityPendingDeletion: FlashCardEntity?
   @Published var selectedSubjectIDs: Set<UUID> = []
   
+  private var flashcardsRepository: FlashcardRepository?
   private var subjectRepository: SubjectRepository?
-  private var flashCardRepository: FlashCardRepository?
+  private var exerciseRepository: ExerciseRepository?
   private let generator: FlashcardGenerator
   private let reviewer: Reviewer
 
@@ -51,30 +52,28 @@ final class HomeViewModel: ObservableObject {
     self.reviewer = reviewer
   }
   
-  func setRepository(_ fcRepository: FlashCardRepository, _ sRepository: SubjectRepository) {
-    self.flashCardRepository = fcRepository
-    self.subjectRepository = sRepository
+  func setRepository(_ exRepository: ExerciseRepository, _ subRepository: SubjectRepository, _ flashcardsRepository: FlashcardRepository?) {
+    self.exerciseRepository = exRepository
+    self.subjectRepository = subRepository
+    self.flashcardsRepository = flashcardsRepository
   }
   
   func nextEntity() -> FlashCardEntity? {
     generator.nextCardEntity(filteredByOutcome, index: currentIndex)
   }
   
-  func delete(_ entity: FlashCardEntity) {
-    flashCardRepository?.delete(entity)
-    if let index = flashCardEntities.firstIndex(where: { $0.id == entity.id }) {
-      flashCardEntities.remove(at: index)
-    }
+  func save() {
+    flashcardsRepository?.save()
   }
   
   func markWrong(_ entity: FlashCardEntity) {
     reviewer.registerReview(for: entity, quality: 2)
-    flashCardRepository?.saveWrongAnswered(entity)
+    exerciseRepository?.saveWrongAnswered(entity)
   }
   
   func markCorrect(_ entity: FlashCardEntity) {
     reviewer.registerReview(for: entity, quality: 5)
-    flashCardRepository?.saveCorrectAnswered(entity)
+    exerciseRepository?.saveCorrectAnswered(entity)
   }
   
   func advanceIndex() {
@@ -82,7 +81,7 @@ final class HomeViewModel: ObservableObject {
   }
     
   func previousIndex() {
-      currentIndex = (currentIndex - 1) % max(1, filteredByOutcome.count)
+    currentIndex = (currentIndex - 1) % max(1, filteredByOutcome.count)
   }
   
   func deleteSelectedSubjects() {
@@ -91,11 +90,7 @@ final class HomeViewModel: ObservableObject {
     // Build a list of entities matching the selected IDs
     let toDelete = subjects.filter { idsToDelete.contains($0.id) }
     for subject in toDelete {
-      do {
-        try subjectRepository?.delete(subject)
-      } catch {
-        // You might want to surface an error to the UI in the future
-      }
+      subjectRepository?.delete(subject)
     }
     // Clear selection and update local subjects array by removing deleted items
     selectedSubjectIDs.removeAll()
@@ -104,6 +99,18 @@ final class HomeViewModel: ObservableObject {
     if let current = selectedSubjectID, idsToDelete.contains(current) {
       selectedSubjectID = nil
     }
+  }
+
+  func commitSubjectEdit(_ subject: SubjectEntity, newName: String) {
+    flashcardsRepository?.commitSubjectEdit(subject, newName: newName)
+  }
+  
+  func deleteCards(at offsets: IndexSet, in cards: [FlashCardEntity]) {
+    flashcardsRepository?.deleteCards(at: offsets, in: cards)
+  }
+  
+  func deleteSubjects(at offsets: IndexSet, subjects: [SubjectEntity]) {
+    flashcardsRepository?.deleteSubjects(at: offsets, subjects: subjects)
   }
 }
 

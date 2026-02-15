@@ -22,19 +22,9 @@ struct HomeView: View {
         showFlashCardSection()
       }
     }
-    .toolbar {
-      leadingToolbarItems()
-      trailingToolbarItems()
-    }
     .onAppear {
       viewModel.flashCardEntities = flashCardEntities
       viewModel.subjects = subjects
-    }
-    .sheet(isPresented: $viewModel.showingAddSubject) {
-      AddSubjectView()
-    }
-    .sheet(isPresented: $viewModel.showingAddSheet) {
-      AddFlashCardView(subjects: subjects)
     }
     .onChange(of: viewModel.showingAddSubject) { oldValue, newValue in
       if oldValue == true && newValue == false {
@@ -95,69 +85,11 @@ private extension HomeView {
             )
           )
         )
-        .contextMenu {
-          Button(role: .destructive) {
-            viewModel.entityPendingDeletion = entity
-            viewModel.showingDeleteAlert = true
-          } label: {
-            Label("Delete", systemImage: "trash")
-          }
-        }
       } else {
-        ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
+        ContentUnavailableView("No flashcards so far", systemImage: "rectangle.on.rectangle.slash", description: Text("Add cards in Cards tab."))
       }
     }
     .textViewStyle(16)
-    .alert(
-      "Do you really want to delete the current flash card?",
-      isPresented: $viewModel.showingDeleteAlert,
-      presenting: viewModel.entityPendingDeletion
-    ) { pending in
-      Button("Delete", role: .destructive) {
-        viewModel.delete(pending)
-        viewModel.entityPendingDeletion = nil
-      }
-      Button("Cancel", role: .cancel) {
-        viewModel.entityPendingDeletion = nil
-      }
-    } message: { _ in
-      Text("This action cannot be undone.")
-    }
-  }
-  
-  @ToolbarContentBuilder
-  func leadingToolbarItems() -> some ToolbarContent {
-    ToolbarItem(placement: .topBarLeading) {
-      Button {
-        viewModel.showingAddSubject = true
-      } label: {
-        Image(systemName: "folder.badge.plus")
-      }
-      .accessibilityLabel("Add subject/category")
-    }
-  }
-  
-  @ToolbarContentBuilder
-  func trailingToolbarItems() -> some ToolbarContent {
-    ToolbarItem(placement: .topBarTrailing) {
-      Button {
-        viewModel.showingAddSheet = true
-      } label: {
-        Image(systemName: "plus")
-      }
-      .accessibilityLabel("Add sample card")
-    }
-    ToolbarItem(placement: .topBarTrailing) {
-      if let entity = viewModel.nextEntity() {
-        Button(role: .destructive) {
-          viewModel.entityPendingDeletion = entity
-          viewModel.showingDeleteAlert = true
-        } label: {
-          Image(systemName: "trash")
-        }
-        .accessibilityLabel("Delete current card")
-      }
-    }
   }
 }
 

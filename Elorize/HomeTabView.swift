@@ -14,7 +14,7 @@ struct HomeTabView: View {
   @Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
   private var subjects: [SubjectEntity]
 	
-	@State private var repository: SwiftDataFlashCardRepository?
+	@State private var repository: SwiftDataExerciseRepository?
   
   var body: some View {
 		TabView {
@@ -23,7 +23,7 @@ struct HomeTabView: View {
 					.environmentObject(viewModel)
 			}
 			.tabItem {
-				Label("Home", systemImage: "house")
+				Label("Exercise", systemImage: "brain.head.profile")
 			}
 			NavigationStack {
 				FilterView()
@@ -43,8 +43,9 @@ struct HomeTabView: View {
 		.tint(Color.app(.accent_subtle))
 		.onAppear {
 			viewModel.setRepository(
-				SwiftDataFlashCardRepository(context: context),
-				SwiftDataSubjectRepository(context: context)
+				SwiftDataExerciseRepository(context: context),
+				SwiftDataSubjectRepository(context: context),
+        FlashcardRepository(context: context)
 			)
 			viewModel.flashCardEntities = flashCardEntities
 			viewModel.subjects = subjects
