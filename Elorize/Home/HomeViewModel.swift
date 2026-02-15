@@ -1,9 +1,10 @@
 import SwiftUI
 internal import Combine
+import SwiftData
 
 final class HomeViewModel: ObservableObject {
 
-  @Published var subjects: [Subject] = []
+  @Published var subjects: [SubjectEntity] = []
   @Published var flashcards: [Flashcard] = []
   @Published var currentIndex = 0
   @Published var flashCardEntities: [FlashCardEntity] = []
@@ -11,12 +12,14 @@ final class HomeViewModel: ObservableObject {
   @Published var reviewFilter: ReviewFilter = .all
 
   private var cancellables = Set<AnyCancellable>()
-  private let store: AppDataStore
   private let generator: FlashcardGenerator
   private let reviewer: Reviewer
   
   private var flashcardsRepository: FlashcardRepository?
   private var exerciseRepository: ExerciseRepository?
+  private var cardsViewModel: CardsViewModel?
+
+  private weak var modelContext: ModelContext?
 
   var filteredFlashCardEntities: [FlashCardEntity] {
     if let id = selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
@@ -37,37 +40,14 @@ final class HomeViewModel: ObservableObject {
     }
   }
 
-  convenience init(store: AppDataStore = .shared) {
-      self.init(store: store,
-                generator: FlashcardGenerator(),
-                reviewer: Reviewer(),
-                flashcardsRepository: nil,
-                exerciseRepository: nil)
-  }
-
-  init(store: AppDataStore,
-       generator: FlashcardGenerator,
-       reviewer: Reviewer,
-       flashcardsRepository: FlashcardRepository?,
-       exerciseRepository: ExerciseRepository?) {
-      self.store = store
+  init(generator: FlashcardGenerator = FlashcardGenerator(),
+       reviewer: Reviewer = Reviewer(),
+       flashcardsRepository: FlashcardRepository? = nil,
+       exerciseRepository: ExerciseRepository? = nil) {
       self.generator = generator
       self.reviewer = reviewer
       self.flashcardsRepository = flashcardsRepository
       self.exerciseRepository = exerciseRepository
-      
-      // Now that all stored properties are initialized, set up bindings
-      setupBindings()
-  }
-
-  private func setupBindings() {
-      store.$subjects
-          .receive(on: DispatchQueue.main)
-          .assign(to: &$subjects)
-      
-      store.$flashcards
-          .receive(on: DispatchQueue.main)
-          .assign(to: &$flashcards)
   }
   
   func nextEntity() -> FlashCardEntity? {
@@ -94,5 +74,24 @@ final class HomeViewModel: ObservableObject {
     
   func previousIndex() {
     currentIndex = (currentIndex - 1) % max(1, filteredByOutcome.count)
+  }
+
+  // MARK: - SwiftData attachment and fetching
+  func attach(modelContext: ModelContext) {
+    self.modelContext = modelContext
+    refetchAll()
+  }
+
+  func refetchAll() {
+    guard let context = modelContext else { return }
+    let subjectsDescriptor = FetchDescriptor<SubjectEntity>(sortBy: [SortDescriptor(\.name, order: .forward)])
+    let cardsDescriptor = FetchDescriptor<FlashCardEntity>(sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
+    do {
+      subjects = try context.fetch(subjectsDescriptor)
+      flashCardEntities = try context.fetch(cardsDescriptor)
+    } catch {
+      // You may want to surface this error to the UI or log it
+      print("HomeViewModel refetchAll error: \(error)")
+    }
   }
 }

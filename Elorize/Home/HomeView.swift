@@ -5,6 +5,7 @@ struct HomeView: View {
 
   @StateObject var viewModel: HomeViewModel = HomeViewModel()
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
+  @Environment(\.modelContext) private var context
   
   @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
   private var flashCardEntities: [FlashCardEntity]
@@ -39,6 +40,9 @@ struct HomeView: View {
           //viewModel.showingAddSubject = true
         }
       )
+    }
+    .onAppear {
+      viewModel.attach(modelContext: context)
     }
   }
 }

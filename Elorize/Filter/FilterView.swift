@@ -1,7 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct FilterView: View {
   
+  @Environment(\.modelContext) private var context
   @StateObject var viewModel = FilterViewModel()
   
   var body: some View {
@@ -26,6 +28,9 @@ struct FilterView: View {
       if let selected = viewModel.selectedSubjectID, newValue.first(where: { $0.id == selected }) == nil {
         viewModel.selectedSubjectID = nil
       }
+    }
+    .onAppear {
+      viewModel.attach(modelContext: context)
     }
   }
 }
