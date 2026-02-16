@@ -111,7 +111,8 @@ final class HomeViewModel: ObservableObject {
   }
     
   func previousIndex() {
-    currentIndex = (currentIndex - 1) % max(1, filteredByOutcome.count)
+    let count = max(1, filteredByOutcome.count)
+    currentIndex = (currentIndex - 1 + count) % count
   }
   
   func deleteSelectedSubjects() {
