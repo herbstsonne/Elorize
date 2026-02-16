@@ -6,50 +6,70 @@ struct HomeTabView: View {
   
   @Environment(\.modelContext) private var context
   
-	@StateObject private var viewModel = HomeViewModel()
+  @ObservedObject private var viewModel = HomeViewModel()
+  @State private var editMode: EditMode = .inactive
   
   @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
   private var flashCardEntities: [FlashCardEntity]
   
   @Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
   private var subjects: [SubjectEntity]
-	
-	@State private var repository: SwiftDataExerciseRepository?
-  
+
   var body: some View {
-		TabView {
-			NavigationStack {
-				HomeView()
-					.environmentObject(viewModel)
-			}
-			.tabItem {
-				Label("Exercise", systemImage: "brain.head.profile")
-			}
-			NavigationStack {
-				FilterView()
-					.environmentObject(viewModel)
-			}
-			.tabItem {
-				Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
-			}
+    TabView(selection: $viewModel.currentTab) {
+      NavigationStack {
+        HomeView()
+          .environmentObject(viewModel)
+          .environment(\.editMode, $editMode)
+      }
+      .tag(AppTab.exercise)
+      .tabItem {
+        Label("Exercise", systemImage: "brain.head.profile")
+      }
+      
+      NavigationStack {
+        FilterView()
+          .environmentObject(viewModel)
+          .environment(\.editMode, $editMode)
+      }
+      .tag(AppTab.filter)
+      .tabItem {
+        Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
+      }
+      
       NavigationStack {
         CardsOverviewView()
           .environmentObject(viewModel)
+          .environment(\.editMode, $editMode)
       }
+      .tag(AppTab.cards)
       .tabItem {
         Label("Cards", systemImage: "rectangle.on.rectangle.angled")
       }
-		}
-		.tint(Color.app(.accent_subtle))
-		.onAppear {
-			viewModel.setRepository(
-				SwiftDataExerciseRepository(context: context),
-				SwiftDataSubjectRepository(context: context),
+    }
+    .onChange(of: viewModel.currentTab) { _, _ in
+      // Refresh local data when the tab changes and exit edit mode
+      viewModel.flashCardEntities = flashCardEntities
+      viewModel.subjects = subjects
+      editMode = .inactive
+    }
+    .onChange(of: subjects) { _, newSubjects in
+      // End edit mode when there are no subjects left and clear selection
+      if newSubjects.isEmpty {
+        editMode = .inactive
+        viewModel.selectedSubjectIDs.removeAll()
+      }
+    }
+    .tint(Color.app(.accent_subtle))
+    .onAppear {
+      viewModel.setRepository(
+        SwiftDataExerciseRepository(context: context),
+        SwiftDataSubjectRepository(context: context),
         FlashcardRepository(context: context)
-			)
-			viewModel.flashCardEntities = flashCardEntities
-			viewModel.subjects = subjects
-		}
+      )
+      viewModel.flashCardEntities = flashCardEntities
+      viewModel.subjects = subjects
+    }
   }
 }
 
@@ -66,3 +86,4 @@ struct HomeTabView: View {
   return HomeTabView()
     .modelContainer(container)
 }
+
