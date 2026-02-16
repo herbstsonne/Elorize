@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 internal import Combine
+import SwiftUI
 
 enum HomeTab: Hashable {
   case home
@@ -28,6 +29,11 @@ final class HomeViewModel: ObservableObject {
     didSet { handleTabChange(selectedTab) }
   }
   
+  @AppStorage("app.currentTab") private var storedTabRaw: String = AppTab.exercise.rawValue
+  @Published var currentTab: AppTab = .exercise {
+    didSet { storedTabRaw = currentTab.rawValue }
+  }
+  
   private var flashcardsRepository: FlashcardRepository?
   private var subjectRepository: SubjectRepository?
   private var exerciseRepository: ExerciseRepository?
@@ -45,11 +51,20 @@ final class HomeViewModel: ObservableObject {
   var filteredByOutcome: [FlashCardEntity] {
     switch reviewFilter {
     case .all:
+      // Include every card regardless of review outcome, including those never reviewed (nil)
       return filteredFlashCardEntities
     case .wrong:
-      return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) <= 2 }
+      // Only include cards that have been explicitly reviewed with a low quality (<= 2)
+      return filteredFlashCardEntities.filter { quality in
+        if let q = quality.lastQuality { return q <= 2 }
+        return false
+      }
     case .correct:
-      return filteredFlashCardEntities.filter { ($0.lastQuality ?? 0) >= 3 }
+      // Only include cards that have been explicitly reviewed with a high quality (>= 3)
+      return filteredFlashCardEntities.filter { quality in
+        if let q = quality.lastQuality { return q >= 3 }
+        return false
+      }
     }
   }
 
@@ -57,8 +72,14 @@ final class HomeViewModel: ObservableObject {
     generator: FlashcardGenerator = FlashcardGenerator(),
     reviewer: Reviewer = Reviewer()
   ) {
+    // First assign stored properties to satisfy initialization rules
     self.generator = generator
     self.reviewer = reviewer
+
+    // Now it's safe to read from @AppStorage via `self`
+    if let stored = AppTab(rawValue: self.storedTabRaw) {
+      self.currentTab = stored
+    }
   }
   
   func setRepository(_ exRepository: ExerciseRepository, _ subRepository: SubjectRepository, _ flashcardsRepository: FlashcardRepository?) {
@@ -136,6 +157,10 @@ final class HomeViewModel: ObservableObject {
       // Prepare Cards state if needed; do not auto-open sheets here
       break
     }
+  }
+  
+  func selectTab(_ tab: AppTab) {
+    currentTab = tab
   }
 }
 

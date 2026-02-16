@@ -6,50 +6,58 @@ struct HomeTabView: View {
   
   @Environment(\.modelContext) private var context
   
-	@StateObject private var viewModel = HomeViewModel()
+  @ObservedObject private var viewModel = HomeViewModel()
   
   @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
   private var flashCardEntities: [FlashCardEntity]
   
   @Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
   private var subjects: [SubjectEntity]
-	
-	@State private var repository: SwiftDataExerciseRepository?
-  
+
   var body: some View {
-		TabView {
-			NavigationStack {
-				HomeView()
-					.environmentObject(viewModel)
-			}
-			.tabItem {
-				Label("Exercise", systemImage: "brain.head.profile")
-			}
-			NavigationStack {
-				FilterView()
-					.environmentObject(viewModel)
-			}
-			.tabItem {
-				Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
-			}
+    TabView(selection: $viewModel.currentTab) {
+      NavigationStack {
+        HomeView()
+          .environmentObject(viewModel)
+      }
+      .tag(AppTab.exercise)
+      .tabItem {
+        Label("Exercise", systemImage: "brain.head.profile")
+      }
+      
+      NavigationStack {
+        FilterView()
+          .environmentObject(viewModel)
+      }
+      .tag(AppTab.filter)
+      .tabItem {
+        Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
+      }
+      
       NavigationStack {
         CardsOverviewView()
           .environmentObject(viewModel)
       }
+      .tag(AppTab.cards)
       .tabItem {
         Label("Cards", systemImage: "rectangle.on.rectangle.angled")
       }
-		}
-		.tint(Color.app(.accent_subtle))
-		.onAppear {
-			viewModel.setRepository(
-				SwiftDataExerciseRepository(context: context),
-				SwiftDataSubjectRepository(context: context),
+    }
+    .onChange(of: viewModel.currentTab) { _, _ in
+      // Refresh local data when the tab changes
+      viewModel.flashCardEntities = flashCardEntities
+      viewModel.subjects = subjects
+    }
+    .tint(Color.app(.accent_subtle))
+    .onAppear {
+      viewModel.setRepository(
+        SwiftDataExerciseRepository(context: context),
+        SwiftDataSubjectRepository(context: context),
         FlashcardRepository(context: context)
-			)
-			viewModel.flashCardEntities = flashCardEntities
-			viewModel.subjects = subjects
-		}
+      )
+      viewModel.flashCardEntities = flashCardEntities
+      viewModel.subjects = subjects
+    }
   }
 }
 

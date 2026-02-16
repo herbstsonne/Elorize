@@ -4,6 +4,9 @@ struct FilterView: View {
   
   @EnvironmentObject var viewModel: HomeViewModel
   
+  @AppStorage("filters.selectedSubjectID") private var storedSelectedSubjectID: String = ""
+  @AppStorage("filters.reviewFilter") private var storedReviewFilter: String = ReviewFilter.all.rawValue
+  
   var body: some View {
     ZStack {
       BackgroundColorView()
@@ -11,12 +14,24 @@ struct FilterView: View {
         if viewModel.subjects.isEmpty {
           showContentUnavailableView()
         } else {
-        Form {
-          showPickerFilterByKnowledge()
-          showPickerSubject()
-        }
-        .scrollContentBackground(.hidden)
-        .listStyle(.plain)
+          Form {
+            showPickerFilterByKnowledge()
+            showPickerSubject()
+          }
+          .scrollContentBackground(.hidden)
+          .listStyle(.plain)
+          .onChange(of: viewModel.subjects) { oldValue, newValue in
+            // If the currently selected subject was deleted, reset selection to All (nil)
+            if let selected = viewModel.selectedSubjectID, newValue.first(where: { $0.id == selected }) == nil {
+              viewModel.selectedSubjectID = nil
+              storedSelectedSubjectID = ""
+            }
+            // If there are no subjects at all, clear selection and storage
+            if newValue.isEmpty {
+              viewModel.selectedSubjectID = nil
+              storedSelectedSubjectID = ""
+            }
+          }
         }
         Spacer()
       }
