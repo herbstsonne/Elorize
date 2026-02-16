@@ -7,6 +7,7 @@ struct HomeTabView: View {
   @Environment(\.modelContext) private var context
   
   @ObservedObject private var viewModel = HomeViewModel()
+  @State private var editMode: EditMode = .inactive
   
   @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
   private var flashCardEntities: [FlashCardEntity]
@@ -19,6 +20,7 @@ struct HomeTabView: View {
       NavigationStack {
         HomeView()
           .environmentObject(viewModel)
+          .environment(\.editMode, $editMode)
       }
       .tag(AppTab.exercise)
       .tabItem {
@@ -28,6 +30,7 @@ struct HomeTabView: View {
       NavigationStack {
         FilterView()
           .environmentObject(viewModel)
+          .environment(\.editMode, $editMode)
       }
       .tag(AppTab.filter)
       .tabItem {
@@ -37,6 +40,7 @@ struct HomeTabView: View {
       NavigationStack {
         CardsOverviewView()
           .environmentObject(viewModel)
+          .environment(\.editMode, $editMode)
       }
       .tag(AppTab.cards)
       .tabItem {
@@ -44,9 +48,17 @@ struct HomeTabView: View {
       }
     }
     .onChange(of: viewModel.currentTab) { _, _ in
-      // Refresh local data when the tab changes
+      // Refresh local data when the tab changes and exit edit mode
       viewModel.flashCardEntities = flashCardEntities
       viewModel.subjects = subjects
+      editMode = .inactive
+    }
+    .onChange(of: subjects) { _, newSubjects in
+      // End edit mode when there are no subjects left and clear selection
+      if newSubjects.isEmpty {
+        editMode = .inactive
+        viewModel.selectedSubjectIDs.removeAll()
+      }
     }
     .tint(Color.app(.accent_subtle))
     .onAppear {
@@ -74,3 +86,4 @@ struct HomeTabView: View {
   return HomeTabView()
     .modelContainer(container)
 }
+
