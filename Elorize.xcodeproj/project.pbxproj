@@ -66,9 +66,22 @@
 		7CA3CE102F298BEA00269B9D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		55D3990A2F436C3000D25755 /* Exceptions for "Elorize" folder in "Elorize" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7C7FB7E52F29791C00C9318C /* Elorize */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7C7FB7E82F29791C00C9318C /* Elorize */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				55D3990A2F436C3000D25755 /* Exceptions for "Elorize" folder in "Elorize" target */,
+			);
 			path = Elorize;
 			sourceTree = "<group>";
 		};
@@ -480,7 +493,9 @@
 				DEVELOPMENT_TEAM = P3A79QA83K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Elorize/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Elorize;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -520,7 +535,9 @@
 				DEVELOPMENT_TEAM = P3A79QA83K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Elorize/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Elorize;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
