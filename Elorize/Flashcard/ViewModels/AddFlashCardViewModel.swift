@@ -36,27 +36,46 @@ final class AddFlashCardViewModel: ObservableObject {
         }
     }
 
-    func createSubject() {
-        let name = newSubjectName.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        guard !name.isEmpty, let context else { return }
-        let subject = SubjectEntity(name: name)
-        context.insert(subject)
-        do { try context.save() } catch {
-            errorMessage = "Failed to save subject."
-            return
-        }
-        subjects.append(subject)
-        selectedSubjectID = subject.id
-        newSubjectName = ""
-    }
-
     private var tagsArray: [String] {
         tagsText
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
     }
+  
 
+  func insertFlashcard() {
+    isSaving = true
+    // Trim inputs
+    let front = front.trimmingCharacters(in: .whitespacesAndNewlines)
+    let back = back.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !front.isEmpty, !back.isEmpty else {
+      isSaving = false
+      return
+    }
+    let tags = tagsText
+      .split(separator: ",")
+      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+      .filter { !$0.isEmpty }
+    let card = FlashCardEntity(front: front, back: back, tags: tags)
+    if let selectedID = selectedSubjectID,
+       let subject = localSubjects.first(where: { $0.id == selectedID }) {
+      card.subject = subject
+    }
+    // Insert and save
+    context?.insert(card)  }
+
+  func createSubject() {
+    let trimmed = newSubjectName.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return }
+    let subject = SubjectEntity(name: trimmed)
+    context?.insert(subject)
+    do { try context?.save() } catch { /* handle save error if needed */ }
+    // Update local subjects and selection
+    localSubjects.append(subject)
+    selectedSubjectID = subject.id
+    newSubjectName = ""
+  }
     // Save a new flashcard using the SwiftData context directly
     func save(subject: SubjectEntity? = nil) -> FlashCardEntity? {
         let trimmedFront = front.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)

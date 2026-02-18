@@ -9,6 +9,8 @@ struct CardsOverviewView: View {
   @Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
   private var subjects: [SubjectEntity]
   
+  @State private var expandedSubjectIDs: Set<PersistentIdentifier> = []
+  
   var body: some View {
     NavigationStack {
       VStack {
@@ -20,7 +22,16 @@ struct CardsOverviewView: View {
             } else {
               ForEach(subjects) { subject in
                 Section {
-                  DisclosureGroup {
+                  DisclosureGroup(isExpanded: Binding(
+                    get: { expandedSubjectIDs.contains(subject.persistentModelID) },
+                    set: { isExpanded in
+                      if isExpanded {
+                        expandedSubjectIDs.insert(subject.persistentModelID)
+                      } else {
+                        expandedSubjectIDs.remove(subject.persistentModelID)
+                      }
+                    }
+                  )) {
                     // Show cards for this subject, sorted by createdAt desc
                     let cards = (subject.flashCardsArray).sorted { ($0.createdAt) > ($1.createdAt) }
                     if cards.isEmpty {
@@ -52,17 +63,6 @@ struct CardsOverviewView: View {
           .listStyle(.insetGrouped)
           .scrollContentBackground(.hidden)
           .background(BackgroundColorView().ignoresSafeArea())
-          .onReceive(NotificationCenter.default.publisher(for: Notification.Name("FlashcardCreated"))) { note in
-            if let id = note.userInfo?["cardID"] as? UUID {
-              viewModel.highlightedCardID = id
-              withAnimation(.easeInOut) {
-                proxy.scrollTo(id, anchor: .top)
-              }
-              DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                if viewModel.highlightedCardID == id { viewModel.highlightedCardID = nil }
-              }
-            }
-          }
         }
       }
     }
@@ -168,14 +168,6 @@ private extension CardsOverviewView {
       .foregroundStyle(.secondary)
     }
     .padding(.vertical, 4)
-    .background(
-      RoundedRectangle(cornerRadius: 8)
-        .fill(Color.yellow.opacity(viewModel.highlightedCardID == card.id ? 0.25 : 0.0))
-    )
-    .overlay(
-      RoundedRectangle(cornerRadius: 8)
-        .stroke(viewModel.highlightedCardID == card.id ? Color.yellow.opacity(0.8) : Color.clear, lineWidth: 2)
-    )
   }
 }
 
@@ -267,3 +259,4 @@ private struct CardDetailEditor: View {
     .tint(Color.app(.accent_subtle))
   }
 }
+
