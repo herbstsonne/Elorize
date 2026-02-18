@@ -3,6 +3,7 @@ import SwiftData
 
 struct CardsOverviewView: View {
   @EnvironmentObject var viewModel: HomeViewModel
+  @Environment(\.editMode) private var editMode
   
   // Fetch all subjects sorted by name
   @Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
@@ -80,6 +81,18 @@ struct CardsOverviewView: View {
     .toolbarBackground(.visible, for: .navigationBar)
     .toolbarBackground(Color.clear, for: .navigationBar)
     .tint(Color.app(.accent_subtle))
+    .onChange(of: editMode?.wrappedValue) { _, newValue in
+      switch newValue {
+      case .active:
+        if let first = subjects.first {
+          editingSubjectID = first.persistentModelID
+          editedSubjectName = first.name
+        }
+      default:
+        editingSubjectID = nil
+        editedSubjectName = ""
+      }
+    }
   }
 }
 
@@ -101,16 +114,14 @@ private extension CardsOverviewView {
           .font(.headline)
       }
       Spacer()
-      Button(editingSubjectID == subject.persistentModelID ? "Done" : "Edit") {
-        if editingSubjectID == subject.persistentModelID {
-          commitSubjectEdit(subject)
-        } else {
-          editingSubjectID = subject.persistentModelID
-          editedSubjectName = subject.name
-        }
+    }
+    .contentShape(Rectangle())
+    .onTapGesture {
+      // Only allow switching into inline edit while in edit mode
+      if editMode?.wrappedValue == .active {
+        editingSubjectID = subject.persistentModelID
+        editedSubjectName = subject.name
       }
-      .buttonStyle(.borderless)
-      .font(.callout)
     }
   }
 
@@ -164,6 +175,7 @@ private extension CardsOverviewView {
 private struct CardDetailEditor: View {
   
   @EnvironmentObject var viewModel: HomeViewModel
+  @Environment(\.dismiss) private var dismiss
 
   @State var card: FlashCardEntity
 
@@ -188,7 +200,10 @@ private struct CardDetailEditor: View {
     .background(BackgroundColorView().ignoresSafeArea())
     .toolbar {
       ToolbarItem(placement: .confirmationAction) {
-        Button("Save") { viewModel.save() }
+        Button("Save") {
+          viewModel.save()
+          dismiss()
+        }
       }
     }
     .toolbarBackground(.visible, for: .navigationBar)
