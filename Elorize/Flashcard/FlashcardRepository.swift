@@ -43,4 +43,14 @@ final class FlashcardRepository {
     }
     try? context.save()
   }
+
+  /// Inserts a new FlashCardEntity into the context. Call `save()` to persist changes.
+  func saveNew(_ entity: FlashCardEntity) {
+    context.insert(entity)
+  }
+
+  /// Backwards-compatible alias to insert a new FlashCardEntity.
+  func insert(_ entity: FlashCardEntity) {
+    saveNew(entity)
+  }
 }

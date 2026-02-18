@@ -29,10 +29,12 @@ struct AddFlashCardView: View {
 				.textViewStyle(16)
 			}
 			.onAppear {
-				viewModel.setRepository(SwiftDataExerciseRepository(context: context))
-				if viewModel.selectedSubjectID == nil {
-					viewModel.selectedSubjectID = subjects.first?.id
-				}
+        viewModel.localSubjects = subjects
+        if viewModel.selectedSubjectID == nil {
+          viewModel.selectedSubjectID = viewModel.localSubjects.first?.id
+        }
+        viewModel.setContext(context)
+        viewModel.loadSubjects(subjects)
 			}
       .toolbar {
         ToolbarItem(placement: .topBarLeading) {
@@ -40,13 +42,19 @@ struct AddFlashCardView: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
           Button("Save") {
-            if viewModel.save(with: subjects) {
+            viewModel.insertFlashcard()
+            do {
+              try context.save()
               dismiss()
+            } catch {
+              // Revert saving state on error
+              viewModel.isSaving = false
             }
+
           }
           .disabled(viewModel.front.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                     viewModel.back.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                    (subjects.isEmpty && viewModel.selectedSubjectID == nil))
+                    (viewModel.localSubjects.isEmpty && viewModel.selectedSubjectID == nil))
         }
       }
 		}
@@ -94,18 +102,35 @@ private extension AddFlashCardView {
   @ViewBuilder
   func showSectionSubject() -> some View {
     Section("Subject/Category") {
-      if subjects.isEmpty {
-        Text("No subjects/categories yet. Create one from the Card screen.")
-          .font(.footnote)
-          .foregroundStyle(.secondary)
+      if viewModel.localSubjects.isEmpty {
+        Button {
+          viewModel.showingNewSubjectPrompt = true
+        } label: {
+          Label("Create new subject/category…", systemImage: "folder.badge.plus")
+        }
+        .buttonStyle(.borderless)
+        .font(.body)
       } else {
         Picker("Subject/Category", selection: $viewModel.selectedSubjectID) {
           Text("None").tag(UUID?.none)
-          ForEach(subjects) { subject in
+          ForEach(viewModel.localSubjects) { subject in
             Text(subject.name).tag(Optional(subject.id))
           }
         }
+        Button {
+          viewModel.showingNewSubjectPrompt = true
+        } label: {
+          Label("+ New subject/category…", systemImage: "folder.badge.plus")
+        }
+        .buttonStyle(.borderless)
       }
+    }
+    .alert("New subject/category", isPresented: $viewModel.showingNewSubjectPrompt) {
+      TextField("Name", text: $viewModel.newSubjectName)
+      Button("Create") { viewModel.createSubject() }
+      Button("Cancel", role: .cancel) { viewModel.newSubjectName = "" }
+    } message: {
+      Text("Enter a name for the new subject/category.")
     }
   }
   
