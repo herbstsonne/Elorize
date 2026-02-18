@@ -97,11 +97,13 @@ final class HomeViewModel: ObservableObject {
   }
   
   func markWrong(_ entity: FlashCardEntity) {
+    entity.wrongCount += 1
     reviewer.registerReview(for: entity, quality: 2)
     exerciseRepository?.saveWrongAnswered(entity)
   }
   
   func markCorrect(_ entity: FlashCardEntity) {
+    entity.correctCount += 1
     reviewer.registerReview(for: entity, quality: 5)
     exerciseRepository?.saveCorrectAnswered(entity)
   }

@@ -46,6 +46,18 @@ struct CardsOverviewView: View {
                               .font(.caption)
                               .foregroundStyle(.tertiary)
                           }
+                          // Stats row
+                          HStack(spacing: 12) {
+                            Text("✅ \(card.correctCount)")
+                            Text("❌ \(card.wrongCount)")
+                            if let last = card.lastReviewedAt {
+                              Text("Last: \(last.formatted(date: .abbreviated, time: .shortened))")
+                            } else {
+                              Text("Last: —")
+                            }
+                          }
+                          .font(.caption)
+                          .foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 4)
                       }
@@ -192,6 +204,23 @@ private struct CardDetailEditor: View {
           get: { card.tags.joined(separator: ", ") },
           set: { card.tags = $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) } }
         ))
+      }
+      Section("Statistics") {
+        HStack {
+          Text("Correct")
+          Spacer()
+          Text("\(card.correctCount)")
+        }
+        HStack {
+          Text("Wrong")
+          Spacer()
+          Text("\(card.wrongCount)")
+        }
+        HStack {
+          Text("Last reviewed")
+          Spacer()
+          Text(card.lastReviewedAt?.formatted(date: .abbreviated, time: .shortened) ?? "—")
+        }
       }
     }
     .foregroundStyle(Color.app(.accent_subtle))

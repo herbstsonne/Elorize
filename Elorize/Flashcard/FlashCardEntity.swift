@@ -23,6 +23,9 @@ public final class FlashCardEntity {
 	public var intervalDays: Int
 	public var consecutiveCorrect: Int
 	public var lastQuality: Int?
+  
+  public var correctCount: Int = 0
+  public var wrongCount: Int = 0
 
 	public init(
 		id: UUID = UUID(),
