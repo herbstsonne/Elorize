@@ -10,6 +10,7 @@ struct CardsOverviewView: View {
   private var subjects: [SubjectEntity]
   
   @State private var expandedSubjectIDs: Set<PersistentIdentifier> = []
+  @State private var searchText: String = ""
   
   var body: some View {
     NavigationStack {
@@ -33,9 +34,9 @@ struct CardsOverviewView: View {
                     }
                   )) {
                     // Show cards for this subject, sorted by createdAt desc
-                    let cards = (subject.flashCardsArray).sorted { ($0.createdAt) > ($1.createdAt) }
+                    let cards = subject.searchCards(matching: searchText).sorted { $0.createdAt > $1.createdAt }
                     if cards.isEmpty {
-                      Text("No cards in this subject")
+                      Text("No matching cards")
                         .foregroundStyle(.secondary)
                     } else {
                       ForEach(cards) { card in
@@ -65,6 +66,16 @@ struct CardsOverviewView: View {
           .background(BackgroundColorView().ignoresSafeArea())
         }
       }
+      .searchable(text: $searchText)
+      .onChange(of: searchText) { oldValue, newValue in
+        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+          // When clearing search, don't force any expansion
+          // (leave user's expanded/collapsed state as-is)
+          return
+        }
+        expandSubjectsWhenSearching(trimmed)
+      }
     }
     .toolbar {
       leadingToolbarItems()
@@ -89,8 +100,19 @@ struct CardsOverviewView: View {
 
 private extension CardsOverviewView {
 
+  func expandSubjectsWhenSearching(_ trimmed: String) {
+    var newExpanded: Set<PersistentIdentifier> = []
+    for subject in subjects {
+      let matches = subject.searchCards(matching: trimmed)
+      if !matches.isEmpty {
+        newExpanded.insert(subject.persistentModelID)
+      }
+    }
+    expandedSubjectIDs = newExpanded
+  }
+
   @ViewBuilder
-  private func subjectHeader(for subject: SubjectEntity) -> some View {
+  func subjectHeader(for subject: SubjectEntity) -> some View {
     HStack {
       if viewModel.editingSubjectID == subject.persistentModelID {
         TextField("Subject name", text: $viewModel.editedSubjectName, onCommit: {
