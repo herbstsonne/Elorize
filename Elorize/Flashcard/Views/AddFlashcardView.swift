@@ -7,10 +7,6 @@ struct AddFlashCardView: View {
   @Environment(\.dismiss) private var dismiss
   
   @StateObject private var viewModel = AddFlashCardViewModel()
-  @State private var localSubjects: [SubjectEntity] = []
-  @State private var showingNewSubjectPrompt = false
-  @State private var newSubjectName: String = ""
-  @State private var isSaving: Bool = false
   
   private var subjects: [SubjectEntity]
   
@@ -33,9 +29,9 @@ struct AddFlashCardView: View {
 				.textViewStyle(16)
 			}
 			.onAppear {
-        self.localSubjects = subjects
+        viewModel.localSubjects = subjects
         if viewModel.selectedSubjectID == nil {
-          viewModel.selectedSubjectID = localSubjects.first?.id
+          viewModel.selectedSubjectID = viewModel.localSubjects.first?.id
         }
         viewModel.setContext(context)
         viewModel.loadSubjects(subjects)
@@ -46,16 +42,40 @@ struct AddFlashCardView: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
           Button("Save") {
-            isSaving = true
-            if viewModel.save() {
+            viewModel.isSaving = true
+            // Trim inputs
+            let front = viewModel.front.trimmingCharacters(in: .whitespacesAndNewlines)
+            let back = viewModel.back.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !front.isEmpty, !back.isEmpty else {
+              viewModel.isSaving = false
+              return
+            }
+            // Build tags array from text
+            let tags = viewModel.tagsText
+              .split(separator: ",")
+              .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+              .filter { !$0.isEmpty }
+            // Create the flashcard entity
+            let card = FlashCardEntity(front: front, back: back, tags: tags)
+            // Associate subject if one is selected
+            if let selectedID = viewModel.selectedSubjectID,
+               let subject = viewModel.localSubjects.first(where: { $0.id == selectedID }) {
+              card.subject = subject
+            }
+            // Insert and save
+            context.insert(card)
+            do {
+              try context.save()
+              NotificationCenter.default.post(name: Notification.Name("FlashcardCreated"), object: nil, userInfo: ["cardID": card.id])
               dismiss()
-            } else {
-              isSaving = false
+            } catch {
+              // Revert saving state on error
+              viewModel.isSaving = false
             }
           }
           .disabled(viewModel.front.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                     viewModel.back.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                    (localSubjects.isEmpty && viewModel.selectedSubjectID == nil))
+                    (viewModel.localSubjects.isEmpty && viewModel.selectedSubjectID == nil))
         }
       }
 		}
@@ -103,9 +123,9 @@ private extension AddFlashCardView {
   @ViewBuilder
   func showSectionSubject() -> some View {
     Section("Subject/Category") {
-      if localSubjects.isEmpty {
+      if viewModel.localSubjects.isEmpty {
         Button {
-          showingNewSubjectPrompt = true
+          viewModel.showingNewSubjectPrompt = true
         } label: {
           Label("Create new subject/category…", systemImage: "folder.badge.plus")
         }
@@ -114,22 +134,22 @@ private extension AddFlashCardView {
       } else {
         Picker("Subject/Category", selection: $viewModel.selectedSubjectID) {
           Text("None").tag(UUID?.none)
-          ForEach(localSubjects) { subject in
+          ForEach(viewModel.localSubjects) { subject in
             Text(subject.name).tag(Optional(subject.id))
           }
-          Text("+ New subject/category…").tag(UUID?.none)
         }
-        .onChange(of: viewModel.selectedSubjectID) { _, newValue in
-          if !isSaving, newValue == nil {
-            showingNewSubjectPrompt = true
-          }
+        Button {
+          viewModel.showingNewSubjectPrompt = true
+        } label: {
+          Label("+ New subject/category…", systemImage: "folder.badge.plus")
         }
+        .buttonStyle(.borderless)
       }
     }
-    .alert("New subject/category", isPresented: $showingNewSubjectPrompt) {
-      TextField("Name", text: $newSubjectName)
+    .alert("New subject/category", isPresented: $viewModel.showingNewSubjectPrompt) {
+      TextField("Name", text: $viewModel.newSubjectName)
       Button("Create") { createSubject() }
-      Button("Cancel", role: .cancel) { newSubjectName = "" }
+      Button("Cancel", role: .cancel) { viewModel.newSubjectName = "" }
     } message: {
       Text("Enter a name for the new subject/category.")
     }
@@ -143,15 +163,15 @@ private extension AddFlashCardView {
   }
   
   func createSubject() {
-    let trimmed = newSubjectName.trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimmed = viewModel.newSubjectName.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
     let subject = SubjectEntity(name: trimmed)
     context.insert(subject)
     do { try context.save() } catch { /* handle save error if needed */ }
     // Update local subjects and selection
-    localSubjects.append(subject)
+    viewModel.localSubjects.append(subject)
     viewModel.selectedSubjectID = subject.id
-    newSubjectName = ""
+    viewModel.newSubjectName = ""
   }
 }
 

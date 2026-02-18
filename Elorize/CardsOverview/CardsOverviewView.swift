@@ -9,75 +9,61 @@ struct CardsOverviewView: View {
   @Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
   private var subjects: [SubjectEntity]
   
-  // Local state for simple inline editing of subject names
-  @State private var editingSubjectID: PersistentIdentifier?
-  @State private var editedSubjectName: String = ""
-  
   var body: some View {
     NavigationStack {
       VStack {
-        List {
-          if subjects.isEmpty {
-            ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
-              .textViewStyle(16)
-          } else {
-            ForEach(subjects) { subject in
-              Section {
-                DisclosureGroup {
-                  // Show cards for this subject, sorted by createdAt desc
-                  let cards = (subject.flashCardsArray).sorted { ($0.createdAt) > ($1.createdAt) }
-                  if cards.isEmpty {
-                    Text("No cards in this subject")
-                      .foregroundStyle(.secondary)
-                  } else {
-                    ForEach(cards) { card in
-                      NavigationLink {
-                        CardDetailEditor(card: card)
-                          .environmentObject(viewModel)
-                      } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                          Text(card.front)
-                            .font(.headline)
-                          Text(card.back)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                          if !card.tags.isEmpty {
-                            Text(card.tags.joined(separator: ", "))
-                              .font(.caption)
-                              .foregroundStyle(.tertiary)
-                          }
-                          // Stats row
-                          HStack(spacing: 12) {
-                            Text("✅ \(card.correctCount)")
-                            Text("❌ \(card.wrongCount)")
-                            if let last = card.lastReviewedAt {
-                              Text("Last: \(last.formatted(date: .abbreviated, time: .shortened))")
-                            } else {
-                              Text("Last: —")
-                            }
-                          }
-                          .font(.caption)
-                          .foregroundStyle(.secondary)
+        ScrollViewReader { proxy in
+          List {
+            if subjects.isEmpty {
+              ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
+                .textViewStyle(16)
+            } else {
+              ForEach(subjects) { subject in
+                Section {
+                  DisclosureGroup {
+                    // Show cards for this subject, sorted by createdAt desc
+                    let cards = (subject.flashCardsArray).sorted { ($0.createdAt) > ($1.createdAt) }
+                    if cards.isEmpty {
+                      Text("No cards in this subject")
+                        .foregroundStyle(.secondary)
+                    } else {
+                      ForEach(cards) { card in
+                        NavigationLink {
+                          CardDetailEditor(card: card)
+                            .environmentObject(viewModel)
+                        } label: {
+                          showFlashcard(card)
                         }
-                        .padding(.vertical, 4)
+                        .id(card.id)
+                      }
+                      .onDelete { indexSet in
+                        deleteCards(at: indexSet, in: cards)
                       }
                     }
-                    .onDelete { indexSet in
-                      deleteCards(at: indexSet, in: cards)
-                    }
+                  } label: {
+                    subjectHeader(for: subject)
                   }
-                } label: {
-                  subjectHeader(for: subject)
                 }
               }
+              .onDelete(perform: deleteSubjects)
             }
-            .onDelete(perform: deleteSubjects)
+          }
+          .foregroundStyle(Color.app(.accent_subtle))
+          .listStyle(.insetGrouped)
+          .scrollContentBackground(.hidden)
+          .background(BackgroundColorView().ignoresSafeArea())
+          .onReceive(NotificationCenter.default.publisher(for: Notification.Name("FlashcardCreated"))) { note in
+            if let id = note.userInfo?["cardID"] as? UUID {
+              viewModel.highlightedCardID = id
+              withAnimation(.easeInOut) {
+                proxy.scrollTo(id, anchor: .top)
+              }
+              DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                if viewModel.highlightedCardID == id { viewModel.highlightedCardID = nil }
+              }
+            }
           }
         }
-        .foregroundStyle(Color.app(.accent_subtle))
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .background(BackgroundColorView().ignoresSafeArea())
       }
     }
     .toolbar {
@@ -94,16 +80,7 @@ struct CardsOverviewView: View {
     .toolbarBackground(Color.clear, for: .navigationBar)
     .tint(Color.app(.accent_subtle))
     .onChange(of: editMode?.wrappedValue) { _, newValue in
-      switch newValue {
-      case .active:
-        if let first = subjects.first {
-          editingSubjectID = first.persistentModelID
-          editedSubjectName = first.name
-        }
-      default:
-        editingSubjectID = nil
-        editedSubjectName = ""
-      }
+      editingSubjectName(newValue)
     }
   }
 }
@@ -115,8 +92,8 @@ private extension CardsOverviewView {
   @ViewBuilder
   private func subjectHeader(for subject: SubjectEntity) -> some View {
     HStack {
-      if editingSubjectID == subject.persistentModelID {
-        TextField("Subject name", text: $editedSubjectName, onCommit: {
+      if viewModel.editingSubjectID == subject.persistentModelID {
+        TextField("Subject name", text: $viewModel.editedSubjectName, onCommit: {
           commitSubjectEdit(subject)
         })
         .textFieldStyle(.roundedBorder)
@@ -131,8 +108,8 @@ private extension CardsOverviewView {
     .onTapGesture {
       // Only allow switching into inline edit while in edit mode
       if editMode?.wrappedValue == .active {
-        editingSubjectID = subject.persistentModelID
-        editedSubjectName = subject.name
+        viewModel.editingSubjectID = subject.persistentModelID
+        viewModel.editedSubjectName = subject.name
       }
     }
   }
@@ -163,14 +140,51 @@ private extension CardsOverviewView {
       .accessibilityLabel("Add subject/category")
     }
   }
+  
+  @ViewBuilder
+  func showFlashcard(_ card: FlashCardEntity) -> some View {
+    VStack(alignment: .leading, spacing: 4) {
+      Text(card.front)
+        .font(.headline)
+      Text(card.back)
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+      if !card.tags.isEmpty {
+        Text(card.tags.joined(separator: ", "))
+          .font(.caption)
+          .foregroundStyle(.tertiary)
+      }
+      // Stats row
+      HStack(spacing: 12) {
+        Text("✅ \(card.correctCount)")
+        Text("❌ \(card.wrongCount)")
+        if let last = card.lastReviewedAt {
+          Text("Last: \(last.formatted(date: .abbreviated, time: .shortened))")
+        } else {
+          Text("Last: —")
+        }
+      }
+      .font(.caption)
+      .foregroundStyle(.secondary)
+    }
+    .padding(.vertical, 4)
+    .background(
+      RoundedRectangle(cornerRadius: 8)
+        .fill(Color.yellow.opacity(viewModel.highlightedCardID == card.id ? 0.25 : 0.0))
+    )
+    .overlay(
+      RoundedRectangle(cornerRadius: 8)
+        .stroke(viewModel.highlightedCardID == card.id ? Color.yellow.opacity(0.8) : Color.clear, lineWidth: 2)
+    )
+  }
 }
 
 private extension CardsOverviewView {
   func commitSubjectEdit(_ subject: SubjectEntity) {
-    let newName = editedSubjectName
+    let newName = viewModel.editedSubjectName
     viewModel.commitSubjectEdit(subject, newName: newName)
-    editingSubjectID = nil
-    editedSubjectName = ""
+    viewModel.editingSubjectID = nil
+    viewModel.editedSubjectName = ""
   }
   
   func deleteCards(at offsets: IndexSet, in cards: [FlashCardEntity]) {
@@ -179,6 +193,19 @@ private extension CardsOverviewView {
   
   func deleteSubjects(at offsets: IndexSet) {
     viewModel.deleteSubjects(at: offsets, subjects: subjects)
+  }
+  
+  func editingSubjectName(_ newValue: EditMode?) {
+    switch newValue {
+    case .some(.active):
+      if let first = subjects.first {
+        viewModel.editingSubjectID = first.persistentModelID
+        viewModel.editedSubjectName = first.name
+      }
+    default:
+      viewModel.editingSubjectID = nil
+      viewModel.editedSubjectName = ""
+    }
   }
 }
 
@@ -240,19 +267,3 @@ private struct CardDetailEditor: View {
     .tint(Color.app(.accent_subtle))
   }
 }
-
-// MARK: - Convenience for subject->cards relationship
-
-extension SubjectEntity {
-  var flashCardsArray: [FlashCardEntity] {
-    // Attempt to expose a stable array regardless of underlying storage (Set or relationship)
-    if let cards = self.cards as? Set<FlashCardEntity> {
-      return Array(cards)
-    } else if let cards = self.cards as? [FlashCardEntity] {
-      return cards
-    } else {
-      return []
-    }
-  }
-}
-

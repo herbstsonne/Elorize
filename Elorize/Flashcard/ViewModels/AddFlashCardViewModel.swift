@@ -6,17 +6,18 @@ internal import Combine
 @MainActor
 final class AddFlashCardViewModel: ObservableObject {
 
-    // Inputs
-    @Published var front: String = ""
-    @Published var back: String = ""
-    @Published var selectedSubjectID: UUID?
-    @Published var tagsText: String = ""
+  // Inputs
+  @Published var front: String = ""
+  @Published var back: String = ""
+  @Published var selectedSubjectID: UUID?
+  @Published var tagsText: String = ""
 
-    // UI state
-    @Published var isSaving: Bool = false
-    @Published var errorMessage: String?
-    @Published var showingNewSubjectPrompt: Bool = false
-    @Published var newSubjectName: String = ""
+  // UI state
+  @Published var isSaving: Bool = false
+  @Published var errorMessage: String?
+  @Published var showingNewSubjectPrompt: Bool = false
+  @Published var newSubjectName: String = ""
+  @Published var localSubjects: [SubjectEntity] = []
 
     // Subjects used by the picker (mutable so newly created subjects appear immediately)
     @Published var subjects: [SubjectEntity] = []
@@ -57,15 +58,15 @@ final class AddFlashCardViewModel: ObservableObject {
     }
 
     // Save a new flashcard using the SwiftData context directly
-    func save(subject: SubjectEntity? = nil) -> Bool {
+    func save(subject: SubjectEntity? = nil) -> FlashCardEntity? {
         let trimmedFront = front.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         let trimmedBack = back.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !trimmedFront.isEmpty, !trimmedBack.isEmpty else {
             errorMessage = "Front and Back are required."
-            return false
+            return nil
         }
 
-        guard let context else { return false }
+        guard let context else { return nil }
 
         let subject: SubjectEntity? = {
             if let id = selectedSubjectID {
@@ -88,10 +89,11 @@ final class AddFlashCardViewModel: ObservableObject {
             back = ""
             tagsText = ""
             selectedSubjectID = subjects.first?.id
-            return true
+            return entity
         } catch {
             errorMessage = "Failed to save card."
-            return false
+            return nil
         }
     }
 }
+

@@ -29,7 +29,12 @@ final class HomeViewModel: ObservableObject {
   @Published var selectedTab: HomeTab = .home {
     didSet { handleTabChange(selectedTab) }
   }
-  
+
+  // CardsOverviewView
+  @Published var editingSubjectID: PersistentIdentifier?
+  @Published var editedSubjectName: String = ""
+  @Published var highlightedCardID: UUID?
+
   func openFilter() { showingFilter = true }
   func closeFilter() { showingFilter = false }
   
