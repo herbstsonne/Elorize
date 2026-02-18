@@ -19,6 +19,7 @@ final class HomeViewModel: ObservableObject {
   // UI State
   @Published var showingAddSubject = false
   @Published var showingAddSheet = false
+  @Published var showingFilter = false
   @Published var currentIndex = 0
   @Published var selectedSubjectID: UUID?
   @Published var reviewFilter: ReviewFilter = .all
@@ -28,6 +29,9 @@ final class HomeViewModel: ObservableObject {
   @Published var selectedTab: HomeTab = .home {
     didSet { handleTabChange(selectedTab) }
   }
+  
+  func openFilter() { showingFilter = true }
+  func closeFilter() { showingFilter = false }
   
   @AppStorage("app.currentTab") private var storedTabRaw: String = AppTab.exercise.rawValue
   @Published var currentTab: AppTab = .exercise {
@@ -144,6 +148,50 @@ final class HomeViewModel: ObservableObject {
   
   func deleteSubjects(at offsets: IndexSet, subjects: [SubjectEntity]) {
     flashcardsRepository?.deleteSubjects(at: offsets, subjects: subjects)
+  }
+  
+  func refreshData(with flashCards: [FlashCardEntity], subjects: [SubjectEntity]) {
+    self.flashCardEntities = flashCards
+    self.subjects = subjects
+  }
+  
+  @discardableResult
+  func createSubject(named name: String) -> SubjectEntity? {
+    let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return nil }
+    let subject = SubjectEntity(name: trimmed)
+    do {
+      try subjectRepository?.insert(subject)
+    } catch {
+      print("Couldn't insert subject: \(error)")
+      return nil
+    }
+    // Keep local cache in sync for immediate UI updates
+    subjects.append(subject)
+    return subject
+  }
+  
+  func saveFlashcard(front: String, back: String, tags: [String], subjectID: UUID?) -> Bool {
+    let trimmedFront = front.trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimmedBack = back.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmedFront.isEmpty, !trimmedBack.isEmpty else { return false }
+
+    let subject: SubjectEntity? = {
+      if let id = subjectID {
+        return subjects.first(where: { $0.id == id })
+      }
+      return nil
+    }()
+    
+    let flash = FlashCard(front: trimmedFront, back: trimmedBack, tags: tags)
+    let entity = FlashCardEntity(from: flash, subject: subject)
+    // Persist via repository if available
+    flashcardsRepository?.saveNew(entity)
+    flashcardsRepository?.save()
+
+    // Update local cache for immediate UI reflection
+    flashCardEntities.insert(entity, at: 0)
+    return true
   }
   
   private func handleTabChange(_ tab: HomeTab) {

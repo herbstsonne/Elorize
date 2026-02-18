@@ -1,53 +1,97 @@
 import Foundation
+import SwiftUI
+import SwiftData
 internal import Combine
 
 @MainActor
 final class AddFlashCardViewModel: ObservableObject {
 
-	@Published var front: String = ""
-	@Published var back: String = ""
-	@Published var selectedSubjectID: UUID?
-	@Published var tagsText: String = ""
-	@Published var isSaving = false
-	@Published var errorMessage: String?
+    // Inputs
+    @Published var front: String = ""
+    @Published var back: String = ""
+    @Published var selectedSubjectID: UUID?
+    @Published var tagsText: String = ""
 
-	private var repository: ExerciseRepository?
-	
-	func setRepository(_ repository: ExerciseRepository) {
-		self.repository = repository
-	}
+    // UI state
+    @Published var isSaving: Bool = false
+    @Published var errorMessage: String?
+    @Published var showingNewSubjectPrompt: Bool = false
+    @Published var newSubjectName: String = ""
 
-	func save(with subjects: [SubjectEntity]) -> Bool {
-		let trimmedFront = front.trimmingCharacters(in: .whitespacesAndNewlines)
-		let trimmedBack = back.trimmingCharacters(in: .whitespacesAndNewlines)
-		guard !trimmedFront.isEmpty, !trimmedBack.isEmpty else {
-				errorMessage = "Front and Back are required."
-				return false
-		}
+    // Subjects used by the picker (mutable so newly created subjects appear immediately)
+    @Published var subjects: [SubjectEntity] = []
 
-		let subject = selectedSubjectID.flatMap { id in subjects.first { $0.id == id } }
-		let tags = tagsText
-				.split(separator: ",")
-				.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-				.filter { !$0.isEmpty }
+    // SwiftData context
+    private var context: ModelContext?
 
-		let card = FlashCard(front: trimmedFront, back: trimmedBack, tags: tags)
-		let entity = FlashCardEntity(from: card, subject: subject)
+    func setContext(_ context: ModelContext) {
+        self.context = context
+    }
 
-		isSaving = true
-		defer { isSaving = false }
+    func loadSubjects(_ initial: [SubjectEntity]) {
+        self.subjects = initial
+        if selectedSubjectID == nil {
+            selectedSubjectID = subjects.first?.id
+        }
+    }
 
-		do {
-			try repository?.insert(entity)
-			// Reset inputs on success
-			front = ""
-			back = ""
-			tagsText = ""
-			selectedSubjectID = nil
-			return true
-		} catch {
-				errorMessage = "Failed to save card."
-				return false
-		}
-	}
+    func createSubject() {
+        let name = newSubjectName.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        guard !name.isEmpty, let context else { return }
+        let subject = SubjectEntity(name: name)
+        context.insert(subject)
+        do { try context.save() } catch {
+            errorMessage = "Failed to save subject."
+            return
+        }
+        subjects.append(subject)
+        selectedSubjectID = subject.id
+        newSubjectName = ""
+    }
+
+    private var tagsArray: [String] {
+        tagsText
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    // Save a new flashcard using the SwiftData context directly
+    func save(subject: SubjectEntity? = nil) -> Bool {
+        let trimmedFront = front.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        let trimmedBack = back.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        guard !trimmedFront.isEmpty, !trimmedBack.isEmpty else {
+            errorMessage = "Front and Back are required."
+            return false
+        }
+
+        guard let context else { return false }
+
+        let subject: SubjectEntity? = {
+            if let id = selectedSubjectID {
+                return subjects.first(where: { $0.id == id })
+            }
+            return nil
+        }()
+
+        let flash = FlashCard(front: trimmedFront, back: trimmedBack, tags: tagsArray)
+        let entity = FlashCardEntity(from: flash, subject: subject)
+
+        isSaving = true
+        defer { isSaving = false }
+
+        do {
+            context.insert(entity)
+            try context.save()
+            // Reset inputs on success
+            front = ""
+            back = ""
+            tagsText = ""
+            selectedSubjectID = subjects.first?.id
+            return true
+        } catch {
+            errorMessage = "Failed to save card."
+            return false
+        }
+    }
 }
