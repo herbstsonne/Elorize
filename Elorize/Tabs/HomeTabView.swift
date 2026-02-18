@@ -28,16 +28,6 @@ struct HomeTabView: View {
       }
       
       NavigationStack {
-        FilterView()
-          .environmentObject(viewModel)
-          .environment(\.editMode, $editMode)
-      }
-      .tag(AppTab.filter)
-      .tabItem {
-        Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
-      }
-      
-      NavigationStack {
         CardsOverviewView()
           .environmentObject(viewModel)
           .environment(\.editMode, $editMode)

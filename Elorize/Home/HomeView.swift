@@ -12,6 +12,8 @@ struct HomeView: View {
   @Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
   private var subjects: [SubjectEntity]
   
+  @State private var showingFilter = false
+  
   init() {
     defineSegmentedPickerTextColors()
   }
@@ -46,6 +48,20 @@ struct HomeView: View {
     .onChange(of: viewModel.selectedSubjectID) { _, _ in
       viewModel.flashCardEntities = flashCardEntities
       viewModel.subjects = subjects
+    }
+    .toolbar {
+      ToolbarItem(placement: .topBarTrailing) {
+        Button {
+          showingFilter = true
+        } label: {
+          Image(systemName: "line.3.horizontal.decrease.circle")
+        }
+        .accessibilityLabel("Open filters")
+      }
+    }
+    .sheet(isPresented: $showingFilter) {
+      FilterView()
+        .environmentObject(viewModel)
     }
     .fullScreenCover(isPresented: .constant(!hasSeenOnboarding)) {
       OnboardingView(
