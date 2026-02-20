@@ -44,13 +44,24 @@ final class FlashcardRepository {
     try? context.save()
   }
 
-  /// Inserts a new FlashCardEntity into the context. Call `save()` to persist changes.
-  func saveNew(_ entity: FlashCardEntity) {
+  func saveNew(subject entity: SubjectEntity) {
     context.insert(entity)
+    try? context.save()
   }
 
-  /// Backwards-compatible alias to insert a new FlashCardEntity.
-  func insert(_ entity: FlashCardEntity) {
-    saveNew(entity)
+  func saveNew(flashCard entity: FlashCardEntity) {
+    context.insert(entity)
+    try? context.save()
+  }
+  
+  func fetchEntity(forId id: UUID) -> FlashCardEntity? {
+    var matchedEntity: FlashCardEntity?
+    let descriptor = FetchDescriptor<FlashCardEntity>()
+    if let entities = try? context.fetch(descriptor) {
+      matchedEntity = entities.first(where: { entity in
+        entity.id == id
+      })
+    }
+    return matchedEntity
   }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct FlashCardView: View {
 
@@ -143,6 +144,7 @@ private extension FlashCardView {
 		Button {
 			viewModel.flashErrorHighlight {
 				viewModel.actions.onWrong()
+        viewModel.storeReview(isCorrect: false)
 				viewModel.isFlipped = false
 			}
 		} label: {
@@ -163,6 +165,7 @@ private extension FlashCardView {
 		Button {
 			viewModel.flashSuccessHighlight {
 				viewModel.actions.onCorrect()
+        viewModel.storeReview(isCorrect: true)
 				viewModel.isFlipped = false
 			}
 		} label: {

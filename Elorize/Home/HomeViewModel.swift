@@ -5,12 +5,12 @@ import SwiftUI
 
 enum HomeTab: Hashable {
   case home
-  case filter
   case cards
+  case statistics
 }
 
 @MainActor
-final class HomeViewModel: ObservableObject {
+class HomeViewModel: ObservableObject {
   
   // Source data provided by the view via SwiftData @Query
   @Published var flashCardEntities: [FlashCardEntity] = []
@@ -191,8 +191,7 @@ final class HomeViewModel: ObservableObject {
     let flash = FlashCard(front: trimmedFront, back: trimmedBack, tags: tags)
     let entity = FlashCardEntity(from: flash, subject: subject)
     // Persist via repository if available
-    flashcardsRepository?.saveNew(entity)
-    flashcardsRepository?.save()
+    flashcardsRepository?.saveNew(flashCard: entity)
 
     // Update local cache for immediate UI reflection
     flashCardEntities.insert(entity, at: 0)
@@ -205,13 +204,13 @@ final class HomeViewModel: ObservableObject {
       // Reset any Cards UI sheets when returning home
       showingAddSubject = false
       showingAddSheet = false
-    case .filter:
-      // Close transient UI when navigating to settings
-      showingAddSubject = false
-      showingAddSheet = false
     case .cards:
       // Prepare Cards state if needed; do not auto-open sheets here
       break
+    case .statistics:
+      // Close transient UI when navigating to statistics
+      showingAddSubject = false
+      showingAddSheet = false
     }
   }
   

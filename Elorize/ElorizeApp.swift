@@ -6,7 +6,8 @@ struct ElorizeApp: App {
     var sharedModelContainer: ModelContainer = {
 			let schema = Schema([
 				SubjectEntity.self,
-				FlashCardEntity.self
+				FlashCardEntity.self,
+        ReviewEventEntity.self
 			])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

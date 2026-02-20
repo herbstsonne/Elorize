@@ -3,7 +3,7 @@ import Foundation
 /// A single flashcard with optional spaced-repetition metadata.
 public struct FlashCard: Identifiable, Codable, Hashable {
     // MARK: - Identity
-    public let id: UUID
+    public var id: UUID
 
     // MARK: - Content
     public var front: String
