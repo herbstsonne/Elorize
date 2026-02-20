@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 internal import Combine
+import SwiftData
 
 @MainActor
 final class FlashCardViewModel: ObservableObject {
@@ -43,8 +44,10 @@ final class FlashCardViewModel: ObservableObject {
 	@AppStorage("flashcard.fontName") private var storedFontName: String = "System"
 	@AppStorage("flashcard.fontSize") private var storedFontSize: Double = 34
 	@AppStorage("flashcard.textAlignment") private var storedTextAlignment: String = "center"
-
+  
+  private var flashcardsRepository: FlashcardRepository?
 	private var cancellables = Set<AnyCancellable>()
+  private var modelContext: ModelContext?
 	static let fontNameList: [String] = [
 		"System",
 		"Georgia",
@@ -58,21 +61,23 @@ final class FlashCardViewModel: ObservableObject {
 	init(
 		card: FlashCard? = nil,
 		actions: Actions = Actions(),
+    flashcardsRepository: FlashcardRepository?,
 		fontSize: CGFloat = 34,
 		fontName: String = "System",
 		availableFonts: [String] = FlashCardViewModel.fontNameList
-	) {
-		self.card = card
-		self.actions = actions
-		let initialName = storedFontName.isEmpty ? fontName : storedFontName
-		let initialSize = storedFontSize <= 0 ? Double(fontSize) : storedFontSize
-		self.fontName = initialName
-		self.fontSize = CGFloat(initialSize)
-		self.availableFonts = availableFonts
-
-		setTextAlignment()
-		loadData()
-	}
+  ) {
+    self.card = card
+    self.actions = actions
+    self.flashcardsRepository = flashcardsRepository
+    let initialName = storedFontName.isEmpty ? fontName : storedFontName
+    let initialSize = storedFontSize <= 0 ? Double(fontSize) : storedFontSize
+    self.fontName = initialName
+    self.fontSize = CGFloat(initialSize)
+    self.availableFonts = availableFonts
+    
+    setTextAlignment()
+    loadData()
+  }
 
 	func flip() {
 		isFlipped = !isFlipped
@@ -103,6 +108,16 @@ final class FlashCardViewModel: ObservableObject {
 			completion?()
 		}
 	}
+  
+  func storeReview(isCorrect: Bool) {
+    guard let id = card?.id else { return }
+
+    let matchedEntity = flashcardsRepository?.fetchEntity(forId: id)
+    if let entity = matchedEntity {
+      let event = ReviewEventEntity(timestamp: Date(), isCorrect: isCorrect, card: entity)
+      flashcardsRepository?.saveNew(flashCard: entity)
+    }
+  }
 }
 
 private extension FlashCardViewModel {

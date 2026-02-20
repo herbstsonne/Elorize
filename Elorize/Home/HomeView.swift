@@ -3,6 +3,7 @@ import SwiftData
 
 struct HomeView: View {
 
+  @Environment(\.modelContext) private var context
   @EnvironmentObject var viewModel: HomeViewModel
   @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding: Bool = false
   
@@ -110,13 +111,14 @@ private extension HomeView {
       if let entity = viewModel.nextEntity() {
         FlashCardView(
           viewModel: FlashCardViewModel(
-            card: entity.value,
+            card: entity.card,
             actions: .init(
               onWrong: { viewModel.markWrong(entity) },
               onCorrect: { viewModel.markCorrect(entity) },
               onNext: { viewModel.advanceIndex() },
               onPrevious: { viewModel.previousIndex() }
-            )
+            ),
+            flashcardsRepository: FlashcardRepository(context: context)
           )
         )
       } else {

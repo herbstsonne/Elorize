@@ -28,7 +28,7 @@ public final class FlashCardEntity {
   public var wrongCount: Int = 0
 
 	public init(
-		id: UUID = UUID(),
+		id: UUID,
 		front: String,
 		back: String,
 		tags: [String] = [],
@@ -54,6 +54,7 @@ public final class FlashCardEntity {
 
 // MARK: - Mapping to/from value type
 public extension FlashCardEntity {
+	// Note: We mirror the FlashCard's stable id onto the entity's id to keep a 1:1 mapping.
 	convenience init(from card: FlashCard, subject: SubjectEntity?) {
 		self.init(
 			id: card.id,
@@ -70,7 +71,7 @@ public extension FlashCardEntity {
 		self.subject = subject
 	}
 
-	var value: FlashCard {
+	var card: FlashCard {
 		FlashCard(
 			id: id,
 			front: front,
@@ -84,3 +85,4 @@ public extension FlashCardEntity {
 		)
 	}
 }
+

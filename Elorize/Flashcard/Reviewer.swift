@@ -4,7 +4,7 @@ import SwiftUI
 struct Reviewer {
 
 	func registerReview(for entity: FlashCardEntity, quality: Int, date: Date = Date()) {
-		var card = entity.value
+		var card = entity.card
 		card.registerReview(quality: quality, reviewDate: date)
 
 		entity.lastReviewedAt = card.lastReviewedAt

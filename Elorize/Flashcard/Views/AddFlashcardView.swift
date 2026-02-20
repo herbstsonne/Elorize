@@ -33,7 +33,7 @@ struct AddFlashCardView: View {
         if viewModel.selectedSubjectID == nil {
           viewModel.selectedSubjectID = viewModel.localSubjects.first?.id
         }
-        viewModel.setContext(context)
+        viewModel.setRepository(FlashcardRepository(context: context))
         viewModel.loadSubjects(subjects)
 			}
       .toolbar {

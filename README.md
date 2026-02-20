@@ -9,24 +9,22 @@ Elegant, minimalist flashcards with a Parisian-inspired design.
 <p align="center">
   <img src="Images/splash.png" alt="Splash" width="240" style="margin-right:12px;" />
   <img src="Images/home.png" alt="Home" width="240" style="margin-right:12px;" />
-  <img src="Images/home_wrong.png" alt="Home" width="240" style="margin-right:12px;" />
-  <img src="Images/home_correct.png" alt="Home" width="240" style="margin-right:12px;" />
-  <img src="Images/text_controls.png" alt="Home" width="240"   style="margin-right:12px;" />
-  <img src="Images/filter.png" alt="Home" width="240" style="margin-right:12px;" />
-  <img src="Images/filter_editmode.png" alt="Home" width="240" style="margin-right:12px;" />
-  <img src="Images/filter_editmode_delete.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/home_edit.png" alt="Home" width="240"   style="margin-right:12px;" />
+  <img src="Images/home_filter.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/add_card.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/add_subject.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/card_overview.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/card_overview_edit.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/statistics.png" alt="Home" width="240" style="margin-right:12px;" />
   </p>
 
   ## iPad
 
   <p align="center">
-  <img src="Images/home_ipad_h.png" alt="Home iPad H" width="240" style="margin-right:12px;" />
-  <img src="Images/home_ipad_v.png" alt="Home iPad V" width="240" />
-  <img src="Images/filter_ipad_h.png" alt="Filter iPad H" width="240" />
+  <img src="Images/home_iPad.png" alt="Home iPad H" width="240" style="margin-right:12px;" />
+  <img src="Images/home_filter_iPad.png" alt="Home iPad V" width="240" />
+  <img src="Images/cards_iPad.png" alt="Filter iPad H" width="240" />
+  <img src="Images/statistics_iPad.png" alt="Filter iPad H" width="240" />
 </p>
 
 ---

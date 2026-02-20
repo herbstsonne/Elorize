@@ -19,30 +19,28 @@ final class AddFlashCardViewModel: ObservableObject {
   @Published var newSubjectName: String = ""
   @Published var localSubjects: [SubjectEntity] = []
 
-    // Subjects used by the picker (mutable so newly created subjects appear immediately)
-    @Published var subjects: [SubjectEntity] = []
+  // Subjects used by the picker (mutable so newly created subjects appear immediately)
+  @Published var subjects: [SubjectEntity] = []
 
-    // SwiftData context
-    private var context: ModelContext?
+  private var flashcardsRepository: FlashcardRepository?
 
-    func setContext(_ context: ModelContext) {
-        self.context = context
-    }
+  func loadSubjects(_ initial: [SubjectEntity]) {
+      self.subjects = initial
+      if selectedSubjectID == nil {
+          selectedSubjectID = subjects.first?.id
+      }
+  }
 
-    func loadSubjects(_ initial: [SubjectEntity]) {
-        self.subjects = initial
-        if selectedSubjectID == nil {
-            selectedSubjectID = subjects.first?.id
-        }
-    }
+  private var tagsArray: [String] {
+      tagsText
+          .split(separator: ",")
+          .map { $0.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines) }
+          .filter { !$0.isEmpty }
+  }
 
-    private var tagsArray: [String] {
-        tagsText
-            .split(separator: ",")
-            .map { $0.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-    }
-  
+  func setRepository(_ flashcardsRepository: FlashcardRepository?) {
+    self.flashcardsRepository = flashcardsRepository
+  }
 
   func insertFlashcard() {
     isSaving = true
@@ -53,30 +51,26 @@ final class AddFlashCardViewModel: ObservableObject {
       isSaving = false
       return
     }
-    let tags = tagsText
-      .split(separator: ",")
-      .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-      .filter { !$0.isEmpty }
-    let card = FlashCardEntity(front: front, back: back, tags: tags)
+    var flash = FlashCard(front: front, back: back)
+    let card = FlashCardEntity(from: flash, subject: nil)
     if let selectedID = selectedSubjectID,
        let subject = localSubjects.first(where: { $0.id == selectedID }) {
       card.subject = subject
     }
     // Insert and save
-    context?.insert(card)  }
+    flashcardsRepository?.saveNew(flashCard: card)
+  }
 
   func createSubject() {
     let trimmed = newSubjectName.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
     let subject = SubjectEntity(name: trimmed)
-    context?.insert(subject)
-    do { try context?.save() } catch { /* handle save error if needed */ }
-    // Update local subjects and selection
+    flashcardsRepository?.saveNew(subject: subject)
     localSubjects.append(subject)
     selectedSubjectID = subject.id
     newSubjectName = ""
   }
-    // Save a new flashcard using the SwiftData context directly
+
     func save(subject: SubjectEntity? = nil) -> FlashCardEntity? {
         let trimmedFront = front.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         let trimmedBack = back.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
@@ -84,8 +78,6 @@ final class AddFlashCardViewModel: ObservableObject {
             errorMessage = "Front and Back are required."
             return nil
         }
-
-        guard let context else { return nil }
 
         let subject: SubjectEntity? = {
             if let id = selectedSubjectID {
@@ -100,19 +92,13 @@ final class AddFlashCardViewModel: ObservableObject {
         isSaving = true
         defer { isSaving = false }
 
-        do {
-            context.insert(entity)
-            try context.save()
-            // Reset inputs on success
-            front = ""
-            back = ""
-            tagsText = ""
-            selectedSubjectID = subjects.first?.id
-            return entity
-        } catch {
-            errorMessage = "Failed to save card."
-            return nil
-        }
+        flashcardsRepository?.saveNew(flashCard: entity)
+        // Reset inputs on success
+        front = ""
+        back = ""
+        tagsText = ""
+        selectedSubjectID = subjects.first?.id
+        return entity
     }
 }
 

@@ -36,6 +36,16 @@ struct HomeTabView: View {
       .tabItem {
         Label("Cards", systemImage: "rectangle.on.rectangle.angled")
       }
+      
+      NavigationStack {
+        StatisticsView(homeViewModel: viewModel)
+          .environmentObject(viewModel)
+          .environment(\.editMode, $editMode)
+      }
+      .tag(AppTab.statistics)
+      .tabItem {
+        Label("Statistics", systemImage: "chart.bar")
+      }
     }
     .onChange(of: viewModel.currentTab) { _, _ in
       // Refresh local data when the tab changes and exit edit mode
