@@ -99,7 +99,8 @@ private extension FlashCardView {
         switch viewModel.highlightState {
         case .success: return Color.app(.success)
         case .error: return Color.app(.error)
-        case .none: return Color.app(.card_background)
+        case .front: return Color.app(.card_background_front)
+        case .back: return Color.app(.card_background_back)
         }
       }()
       RoundedRectangle(cornerRadius: 16, style: .continuous)

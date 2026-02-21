@@ -7,7 +7,8 @@ import SwiftData
 final class FlashCardViewModel: ObservableObject {
 
 	enum HighlightState {
-		case none
+		case front
+    case back
 		case success
 		case error
 	}
@@ -32,7 +33,7 @@ final class FlashCardViewModel: ObservableObject {
 	@Published var showsTextControls: Bool = false
 	@Published var isInteracting: Bool = false
 	@Published var textAlignment: TextAlignment = .center
-	@Published var highlightState: HighlightState = .none
+	@Published var highlightState: HighlightState = .front
 	var alignment: Alignment {
 		switch textAlignment {
 			case .leading: .leading
@@ -80,7 +81,8 @@ final class FlashCardViewModel: ObservableObject {
   }
 
 	func flip() {
-		isFlipped = !isFlipped
+    isFlipped.toggle()
+    highlightState = isFlipped ? .back : .front
 	}
 	
 	func selectedFont() -> Font {
@@ -92,19 +94,21 @@ final class FlashCardViewModel: ObservableObject {
 	}
 
 	func flashSuccessHighlight(completion: (() -> Void)? = nil) {
-		highlightState = .success
+    let sideState: HighlightState = isFlipped ? .back : .front
+    highlightState = .success
 		Task { @MainActor in
 			try? await Task.sleep(nanoseconds: 1_000_000_000)
-			withAnimation(.easeInOut) { self.highlightState = .none }
+			withAnimation(.easeInOut) { self.highlightState = sideState }
 			completion?()
 		}
 	}
 
 	func flashErrorHighlight(completion: (() -> Void)? = nil) {
+    let sideState: HighlightState = isFlipped ? .back : .front
 		highlightState = .error
 		Task { @MainActor in
 			try? await Task.sleep(nanoseconds: 1_000_000_000)
-			withAnimation(.easeInOut) { self.highlightState = .none }
+			withAnimation(.easeInOut) { self.highlightState = sideState }
 			completion?()
 		}
 	}
@@ -114,8 +118,21 @@ final class FlashCardViewModel: ObservableObject {
 
     let matchedEntity = flashcardsRepository?.fetchEntity(forId: id)
     if let entity = matchedEntity {
-      let event = ReviewEventEntity(timestamp: Date(), isCorrect: isCorrect, card: entity)
-      flashcardsRepository?.saveNew(flashCard: entity)
+        let event = ReviewEventEntity(timestamp: Date(), isCorrect: isCorrect, card: entity)
+        flashcardsRepository?.saveNew(flashCard: entity)
+    }
+
+    // Trigger per-outcome action
+    if isCorrect {
+        actions.onCorrect()
+    } else {
+        actions.onWrong()
+    }
+
+    // Delay before moving to next card to allow highlight animation to be seen
+    Task { @MainActor in
+        try? await Task.sleep(nanoseconds: 800_000_000)
+        actions.onNext()
     }
   }
 }
