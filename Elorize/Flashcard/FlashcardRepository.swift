@@ -1,7 +1,15 @@
 import Foundation
 import SwiftData
 
-final class FlashcardRepository {
+protocol FlashcardRepositoryProtocol {
+  func save()
+  func saveNew(flashCard: FlashCardEntity)
+  func commitSubjectEdit(_ subject: SubjectEntity, newName: String)
+  func deleteCards(at offsets: IndexSet, in cards: [FlashCardEntity])
+  func deleteSubjects(at offsets: IndexSet, subjects: [SubjectEntity])
+}
+
+final class FlashcardRepository: FlashcardRepositoryProtocol {
   private let context: ModelContext
 
   init(context: ModelContext) {
