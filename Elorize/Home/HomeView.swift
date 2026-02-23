@@ -36,12 +36,6 @@ struct HomeView: View {
         viewModel.subjects = subjects
       }
     }
-    .onChange(of: viewModel.showingAddSheet) { oldValue, newValue in
-      if oldValue == true && newValue == false {
-        viewModel.flashCardEntities = flashCardEntities
-        viewModel.subjects = subjects
-      }
-    }
     .onChange(of: viewModel.reviewFilter) { _, _ in
       viewModel.flashCardEntities = flashCardEntities
       viewModel.subjects = subjects
