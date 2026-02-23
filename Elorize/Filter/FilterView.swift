@@ -25,12 +25,10 @@ struct FilterView: View {
           .padding(.horizontal, 20)
           .padding(.top, 12)
           .onChange(of: viewModel.subjects) { oldValue, newValue in
-            // If the currently selected subject was deleted, reset selection to All (nil)
             if let selected = viewModel.selectedSubjectID, newValue.first(where: { $0.id == selected }) == nil {
               viewModel.selectedSubjectID = nil
               storedSelectedSubjectID = ""
             }
-            // If there are no subjects at all, clear selection and storage
             if newValue.isEmpty {
               viewModel.selectedSubjectID = nil
               storedSelectedSubjectID = ""

@@ -87,24 +87,32 @@ private extension StatisticsView {
               Text("No review activity yet.")
                   .foregroundStyle(.secondary)
           } else {
-              Chart {
-                  ForEach(stats) { stat in
-                      BarMark(
-                          x: .value("Day", stat.date, unit: .day),
-                          y: .value("Count", stat.correct)
-                      )
-                      .foregroundStyle(by: .value("Result", "Correct"))
+              // Precompute date domains to help the type-checker
+              let firstDate: Date = stats.first?.date ?? Date()
+              let lastDate: Date = stats.last?.date ?? Date()
+              let fullDomain: ClosedRange<Date> = firstDate ... lastDate
 
-                      BarMark(
-                          x: .value("Day", stat.date, unit: .day),
-                          y: .value("Count", stat.wrong)
-                      )
-                      .foregroundStyle(by: .value("Result", "Wrong"))
+              let visibleDomain: ClosedRange<Date> = {
+                  let calendar = Calendar.current
+                  if let sevenDaysBeforeLast = calendar.date(byAdding: .day, value: -6, to: lastDate) {
+                      return max(sevenDaysBeforeLast, firstDate) ... lastDate
+                  } else {
+                      return fullDomain
                   }
+              }()
+
+              // Precompute the foreground style scale mapping
+              let resultDomain: [String] = ["Got it", "Repeat"]
+              let resultRange: [Color] = [Color.app(.success), Color.app(.error)]
+
+              Chart {
+                  chartContent(for: stats)
               }
+              .chartXScale(domain: fullDomain)
+              .chartScrollableAxes(.horizontal).chartXVisibleDomain(length: 86400 * 7)
               .background(Color.secondary.opacity(0.05))
-              .chartXScale(domain: stats.first!.date ... stats.last!.date)
-              .chartForegroundStyleScale(domain: ["Correct", "Wrong"], range: [Color.app(.success), Color.app(.error)])
+              .chartPlotStyle { plot in plot }
+              .chartForegroundStyleScale(domain: resultDomain, range: resultRange)
               .chartXAxis {
                   AxisMarks(values: .automatic(desiredCount: 6)) { _ in
                       AxisGridLine()
@@ -118,6 +126,26 @@ private extension StatisticsView {
           }
       }
       .foregroundStyle(Color.app(.accent_subtle))
+  }
+
+  // Split chart marks out to reduce generic inference pressure
+  @ChartContentBuilder
+  private func chartContent(for stats: [DailyStat]) -> some ChartContent {
+      ForEach(stats) { stat in
+          BarMark(
+              x: .value("Day", stat.date, unit: .day),
+              y: .value("Count", stat.correct)
+          )
+          .foregroundStyle(by: .value("Result", "Got it"))
+          .position(by: .value("Stack", "Result"))
+
+          BarMark(
+              x: .value("Day", stat.date, unit: .day),
+              y: .value("Count", stat.wrong)
+          )
+          .foregroundStyle(by: .value("Result", "Repeat"))
+          .position(by: .value("Stack", "Result"))
+      }
   }
 
   @ViewBuilder
