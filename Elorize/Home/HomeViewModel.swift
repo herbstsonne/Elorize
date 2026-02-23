@@ -76,6 +76,33 @@ class HomeViewModel: ObservableObject {
       }
     }
   }
+  
+  var activeFilterSummary: String {
+    var parts: [String] = []
+
+    // Subject name if a subject is selected
+    if let selectedID = selectedSubjectID,
+       let subject = subjects.first(where: { $0.id == selectedID }) {
+      parts.append(subject.name)
+    }
+
+    let label: String
+    switch String(describing: reviewFilter).lowercased() {
+    case let s where s.contains("wrong"):
+      label = "Repeat"
+    case let s where s.contains("correct"):
+      label = "Got it!"
+    default:
+      label = String(describing: reviewFilter)
+    }
+    parts.append(label)
+
+    if parts.isEmpty {
+      return "All"
+    } else {
+      return parts.joined(separator: " • ")
+    }
+  }
 
   init(
     generator: FlashcardGenerator = FlashcardGenerator(),

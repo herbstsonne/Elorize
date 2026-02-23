@@ -37,7 +37,6 @@ struct FlashCardView: View {
 		DragGesture(minimumDistance: 10)
 			.onChanged { value in
 				viewModel.dragOffset = value.translation
-				// Slight rotation based on horizontal drag
 				viewModel.dragRotation = Double(value.translation.width / 20)
 				viewModel.isInteracting = true
 			}
@@ -46,7 +45,6 @@ struct FlashCardView: View {
 				let translation = value.translation.width
 
 				if translation <= -threshold {
-					// Swipe right-to-left -> previous card
 					DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
 						viewModel.actions.onPrevious()
 					}
@@ -54,7 +52,6 @@ struct FlashCardView: View {
 					viewModel.isInteracting = false
 					viewModel.isFlipped = false
 				} else if translation >= threshold {
-					// Swipe left-to-right -> next card
 					DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
 						viewModel.actions.onNext()
 					}
@@ -62,7 +59,6 @@ struct FlashCardView: View {
 					viewModel.isInteracting = false
 					viewModel.isFlipped = false
 				} else {
-					// Snap back
 					resetCardPosition()
 					viewModel.isInteracting = false
 				}
@@ -99,7 +95,8 @@ private extension FlashCardView {
         switch viewModel.highlightState {
         case .success: return Color.app(.success)
         case .error: return Color.app(.error)
-        case .none: return Color.app(.card_background)
+        case .front: return Color.app(.card_background_front)
+        case .back: return Color.app(.card_background_back)
         }
       }()
       RoundedRectangle(cornerRadius: 16, style: .continuous)

@@ -10,7 +10,8 @@ public enum AppColor: String, CaseIterable {
 	case background_secondary
 	case button_default
 	case button_pressed
-	case card_background
+	case card_background_front
+  case card_background_back
 	case error
 	case gold_primary
 	case success

@@ -31,7 +31,7 @@ struct SplashView: View {
 						VStack(spacing: 0) {
 							RoundedRectangle(cornerRadius: 24, style: .continuous)
 							    // Base fill matching flash card surface
-							    .fill(Color.app(.card_background))
+							    .fill(Color.app(.card_background_front))
 							    // Subtle border similar to flash card edge
 							    .overlay(
 							        RoundedRectangle(cornerRadius: 24, style: .continuous)
