@@ -55,9 +55,20 @@ struct HomeView: View {
         Button {
           showingFilter = true
         } label: {
-          Image(systemName: "line.3.horizontal.decrease.circle")
+          HStack(spacing: 8) {
+            Image(systemName: "line.3.horizontal.decrease.circle")
+              .font(.headline)
+            Text(viewModel.activeFilterSummary)
+              .font(.headline)
+              .lineLimit(1)
+              .minimumScaleFactor(0.8)
+              .truncationMode(.tail)
+          }
+          .padding(.vertical, 6)
+          .padding(.horizontal, 10)
+          .contentShape(Rectangle())
         }
-        .accessibilityLabel("Open filters")
+        .accessibilityLabel("Open filters. Active: \(viewModel.activeFilterSummary)")
       }
     }
     .sheet(isPresented: $showingFilter) {
@@ -130,17 +141,26 @@ private extension HomeView {
 }
 
 #Preview {
-  let container = try! ModelContainer(for: SubjectEntity.self, FlashCardEntity.self, configurations: .init(isStoredInMemoryOnly: true))
-  let context = ModelContext(container)
-  
-  // Seed one subject and one sample card
-  let subject = SubjectEntity(name: "Spanish")
-  context.insert(subject)
-  let sample = FlashCard(front: "thank you", back: "gracias", tags: ["spanish"])
-  context.insert(FlashCardEntity(from: sample, subject: subject))
-  try? context.save()
-  
+  // In-memory container for preview
+  let container = try! ModelContainer(
+    for: SubjectEntity.self,
+         FlashCardEntity.self,
+    configurations: .init(isStoredInMemoryOnly: true)
+  )
+
+  // Seed data in a temporary context
+  do {
+    let tempContext = ModelContext(container)
+    let subject = SubjectEntity(name: "Spanish")
+    tempContext.insert(subject)
+    let sample = FlashCard(front: "thank you", back: "gracias", tags: ["spanish"])
+    tempContext.insert(FlashCardEntity(from: sample, subject: subject))
+    try? tempContext.save()
+  }
+
+  // Provide required environment object
   return HomeView()
+    .environmentObject(HomeViewModel())
     .modelContainer(container)
 }
 
