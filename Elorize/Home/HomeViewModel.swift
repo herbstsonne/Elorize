@@ -12,11 +12,8 @@ enum HomeTab: Hashable {
 @MainActor
 class HomeViewModel: ObservableObject {
   
-  // Source data provided by the view via SwiftData @Query
   @Published var flashCardEntities: [FlashCardEntity] = []
   @Published var subjects: [SubjectEntity] = []
-  
-  // UI State
   @Published var showingAddSubject = false
   @Published var showingAddSheet = false
   @Published var showingFilter = false
@@ -35,6 +32,13 @@ class HomeViewModel: ObservableObject {
   @Published var editedSubjectName: String = ""
   @Published var highlightedCardID: UUID?
 
+  @Published var expandedSubjectIDs: Set<PersistentIdentifier> = []
+  @Published var searchText: String = ""
+  @Published var subjectSort: SubjectSortCriterion = .name
+  @Published var cardSort: CardSortCriterion = .front
+  @Published var subjectSortDirection: SortDirection = .ascending
+  @Published var cardSortDirection: SortDirection = .descending
+
   func openFilter() { showingFilter = true }
   func closeFilter() { showingFilter = false }
   
@@ -43,11 +47,11 @@ class HomeViewModel: ObservableObject {
     didSet { storedTabRaw = currentTab.rawValue }
   }
   
-  private var flashcardsRepository: FlashcardRepository?
+  private var flashcardsRepository: FlashcardRepositoryProtocol?
   private var subjectRepository: SubjectRepository?
   private var exerciseRepository: ExerciseRepository?
-  private let generator: FlashcardGenerator
-  private let reviewer: Reviewer
+  private let generator: FlashcardGeneratorProtocol
+  private let reviewer: ReviewerProtocol
 
   var filteredFlashCardEntities: [FlashCardEntity] {
     if let id = selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
@@ -60,16 +64,13 @@ class HomeViewModel: ObservableObject {
   var filteredByOutcome: [FlashCardEntity] {
     switch reviewFilter {
     case .all:
-      // Include every card regardless of review outcome, including those never reviewed (nil)
       return filteredFlashCardEntities
     case .wrong:
-      // Only include cards that have been explicitly reviewed with a low quality (<= 2)
       return filteredFlashCardEntities.filter { quality in
         if let q = quality.lastQuality { return q <= 2 }
         return false
       }
     case .correct:
-      // Only include cards that have been explicitly reviewed with a high quality (>= 3)
       return filteredFlashCardEntities.filter { quality in
         if let q = quality.lastQuality { return q >= 3 }
         return false
@@ -79,8 +80,6 @@ class HomeViewModel: ObservableObject {
   
   var activeFilterSummary: String {
     var parts: [String] = []
-
-    // Subject name if a subject is selected
     if let selectedID = selectedSubjectID,
        let subject = subjects.first(where: { $0.id == selectedID }) {
       parts.append(subject.name)
@@ -105,20 +104,17 @@ class HomeViewModel: ObservableObject {
   }
 
   init(
-    generator: FlashcardGenerator = FlashcardGenerator(),
-    reviewer: Reviewer = Reviewer()
+    generator: FlashcardGeneratorProtocol = FlashcardGenerator(),
+    reviewer: ReviewerProtocol = Reviewer()
   ) {
-    // First assign stored properties to satisfy initialization rules
     self.generator = generator
     self.reviewer = reviewer
-
-    // Now it's safe to read from @AppStorage via `self`
     if let stored = AppTab(rawValue: self.storedTabRaw) {
       self.currentTab = stored
     }
   }
   
-  func setRepository(_ exRepository: ExerciseRepository, _ subRepository: SubjectRepository, _ flashcardsRepository: FlashcardRepository?) {
+  func setRepository(_ exRepository: ExerciseRepository, _ subRepository: SubjectRepository, _ flashcardsRepository: FlashcardRepositoryProtocol?) {
     self.exerciseRepository = exRepository
     self.subjectRepository = subRepository
     self.flashcardsRepository = flashcardsRepository
@@ -217,10 +213,7 @@ class HomeViewModel: ObservableObject {
     
     let flash = FlashCard(front: trimmedFront, back: trimmedBack, tags: tags)
     let entity = FlashCardEntity(from: flash, subject: subject)
-    // Persist via repository if available
     flashcardsRepository?.saveNew(flashCard: entity)
-
-    // Update local cache for immediate UI reflection
     flashCardEntities.insert(entity, at: 0)
     return true
   }
@@ -228,14 +221,11 @@ class HomeViewModel: ObservableObject {
   private func handleTabChange(_ tab: HomeTab) {
     switch tab {
     case .home:
-      // Reset any Cards UI sheets when returning home
       showingAddSubject = false
       showingAddSheet = false
     case .cards:
-      // Prepare Cards state if needed; do not auto-open sheets here
       break
     case .statistics:
-      // Close transient UI when navigating to statistics
       showingAddSubject = false
       showingAddSheet = false
     }

@@ -3,6 +3,7 @@ import SwiftUI
 struct FilterView: View {
   
   @EnvironmentObject var viewModel: HomeViewModel
+  @Environment(\.dismiss) private var dismiss
   
   @AppStorage("filters.selectedSubjectID") private var storedSelectedSubjectID: String = ""
   @AppStorage("filters.reviewFilter") private var storedReviewFilter: String = ReviewFilter.all.rawValue
@@ -16,26 +17,45 @@ struct FilterView: View {
         } else {
           Form {
             showPickerFilterByKnowledge()
+              .padding(.bottom, 8)
             showPickerSubject()
           }
           .scrollContentBackground(.hidden)
           .listStyle(.plain)
+          .padding(.horizontal, 20)
+          .padding(.top, 12)
           .onChange(of: viewModel.subjects) { oldValue, newValue in
-            // If the currently selected subject was deleted, reset selection to All (nil)
             if let selected = viewModel.selectedSubjectID, newValue.first(where: { $0.id == selected }) == nil {
               viewModel.selectedSubjectID = nil
               storedSelectedSubjectID = ""
             }
-            // If there are no subjects at all, clear selection and storage
             if newValue.isEmpty {
               viewModel.selectedSubjectID = nil
               storedSelectedSubjectID = ""
             }
           }
         }
+        
+        Spacer(minLength: 8)
         Spacer()
       }
     }
+    .overlay(alignment: .topTrailing) {
+      Button(action: { dismiss() }) {
+        Image(systemName: "xmark")
+          .font(.system(size: 17, weight: .semibold))
+          .symbolRenderingMode(.monochrome)
+          .foregroundStyle(.primary)
+          .frame(minWidth: 44, minHeight: 44, alignment: .center)
+          .contentShape(Rectangle())
+      }
+      .buttonStyle(.plain)
+      .padding(.top, 8)
+      .padding(.trailing, 8)
+      .accessibilityLabel("Close")
+      .accessibilityAddTraits(.isButton)
+    }
+    .ignoresSafeArea(.keyboard)
   }
 }
 

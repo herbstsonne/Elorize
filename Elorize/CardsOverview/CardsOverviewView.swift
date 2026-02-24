@@ -5,53 +5,32 @@ struct CardsOverviewView: View {
   @EnvironmentObject var viewModel: HomeViewModel
   @Environment(\.editMode) private var editMode
   
-  // Fetch all subjects sorted by name
-  @Query(sort: [SortDescriptor(\SubjectEntity.name, order: .forward)])
-  private var subjects: [SubjectEntity]
-  
-  @State private var expandedSubjectIDs: Set<PersistentIdentifier> = []
-  @State private var searchText: String = ""
+  // Fetch all subjects (we'll sort locally based on UI state)
+  @Query private var subjects: [SubjectEntity]
   
   var body: some View {
     NavigationStack {
       VStack {
         ScrollViewReader { proxy in
           List {
+            let sortedSubjects = sortedSubjectsArray()
             if subjects.isEmpty {
               ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
                 .textViewStyle(16)
             } else {
-              ForEach(subjects) { subject in
+              ForEach(sortedSubjects) { subject in
                 Section {
                   DisclosureGroup(isExpanded: Binding(
-                    get: { expandedSubjectIDs.contains(subject.persistentModelID) },
+                    get: { viewModel.expandedSubjectIDs.contains(subject.persistentModelID) },
                     set: { isExpanded in
                       if isExpanded {
-                        expandedSubjectIDs.insert(subject.persistentModelID)
+                        viewModel.expandedSubjectIDs.insert(subject.persistentModelID)
                       } else {
-                        expandedSubjectIDs.remove(subject.persistentModelID)
+                        viewModel.expandedSubjectIDs.remove(subject.persistentModelID)
                       }
                     }
                   )) {
-                    // Show cards for this subject, sorted by createdAt desc
-                    let cards = subject.searchCards(matching: searchText).sorted { $0.createdAt > $1.createdAt }
-                    if cards.isEmpty {
-                      Text("No matching cards")
-                        .foregroundStyle(.secondary)
-                    } else {
-                      ForEach(cards) { card in
-                        NavigationLink {
-                          CardDetailEditor(card: card)
-                            .environmentObject(viewModel)
-                        } label: {
-                          showFlashcard(card)
-                        }
-                        .id(card.id)
-                      }
-                      .onDelete { indexSet in
-                        deleteCards(at: indexSet, in: cards)
-                      }
-                    }
+                    cardsList(for: subject)
                   } label: {
                     subjectHeader(for: subject)
                   }
@@ -66,8 +45,8 @@ struct CardsOverviewView: View {
           .background(BackgroundColorView().ignoresSafeArea())
         }
       }
-      .searchable(text: $searchText)
-      .onChange(of: searchText) { oldValue, newValue in
+      .searchable(text: $viewModel.searchText)
+      .onChange(of: viewModel.searchText) { oldValue, newValue in
         let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
           // When clearing search, don't force any expansion
@@ -108,7 +87,21 @@ private extension CardsOverviewView {
         newExpanded.insert(subject.persistentModelID)
       }
     }
-    expandedSubjectIDs = newExpanded
+    viewModel.expandedSubjectIDs = newExpanded
+  }
+
+  func sortedSubjectsArray() -> [SubjectEntity] {
+    return subjects.sorted { a, b in
+      switch viewModel.subjectSort {
+      case .name:
+        switch viewModel.subjectSortDirection {
+        case .ascending:
+          return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+        case .descending:
+          return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedDescending
+        }
+      }
+    }
   }
 
   @ViewBuilder
@@ -146,6 +139,9 @@ private extension CardsOverviewView {
   @ToolbarContentBuilder
   func trailingToolbarItems() -> some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
+      sortMenu()
+    }
+    ToolbarItem(placement: .topBarTrailing) {
       Button {
         viewModel.showingAddSheet = true
       } label: {
@@ -161,6 +157,66 @@ private extension CardsOverviewView {
       }
       .accessibilityLabel("Add subject/category")
     }
+  }
+
+  @ViewBuilder
+  func sortMenu() -> some View {
+    Menu {
+      // Subject: Name
+      Button {
+        if viewModel.subjectSort == .name {
+          viewModel.subjectSortDirection = (viewModel.subjectSortDirection == .ascending) ? .descending : .ascending
+        } else {
+          viewModel.subjectSort = .name
+          viewModel.subjectSortDirection = .ascending
+        }
+      } label: {
+        let arrow = viewModel.subjectSortDirection == .ascending ? "arrow.up" : "arrow.down"
+        Label("Subject: Name", systemImage: arrow)
+      }
+
+      // Cards: Created
+      Button {
+        if viewModel.cardSort == .createdAt {
+          viewModel.cardSortDirection = (viewModel.cardSortDirection == .ascending) ? .descending : .ascending
+        } else {
+          viewModel.cardSort = .createdAt
+          viewModel.cardSortDirection = .descending
+        }
+      } label: {
+        let arrow = (viewModel.cardSort == .createdAt && viewModel.cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
+        Label("Cards: Created", systemImage: arrow)
+      }
+
+      // Cards: Last Learnt
+      Button {
+        if viewModel.cardSort == .lastReviewedAt {
+          viewModel.cardSortDirection = (viewModel.cardSortDirection == .ascending) ? .descending : .ascending
+        } else {
+          viewModel.cardSort = .lastReviewedAt
+          viewModel.cardSortDirection = .descending
+        }
+      } label: {
+        let arrow = (viewModel.cardSort == .lastReviewedAt && viewModel.cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
+        Label("Cards: Last Learnt", systemImage: arrow)
+      }
+
+      // Cards: Front
+      Button {
+        if viewModel.cardSort == .front {
+          viewModel.cardSortDirection = (viewModel.cardSortDirection == .ascending) ? .descending : .ascending
+        } else {
+          viewModel.cardSort = .front
+          viewModel.cardSortDirection = .ascending
+        }
+      } label: {
+        let arrow = (viewModel.cardSort == .front && viewModel.cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
+        Label("Cards: Front", systemImage: arrow)
+      }
+    } label: {
+      Image(systemName: "arrow.up.arrow.down")
+    }
+    .accessibilityLabel("Sort")
   }
   
   @ViewBuilder
@@ -190,6 +246,56 @@ private extension CardsOverviewView {
       .foregroundStyle(.secondary)
     }
     .padding(.vertical, 4)
+  }
+  
+  func sortedCards(for subject: SubjectEntity, search: String, sort: CardSortCriterion, direction: SortDirection) -> [FlashCardEntity] {
+    let base = subject.searchCards(matching: search)
+    switch sort {
+    case .front:
+      switch direction {
+      case .ascending:
+        return base.sorted { $0.front.localizedCaseInsensitiveCompare($1.front) == .orderedAscending }
+      case .descending:
+        return base.sorted { $0.front.localizedCaseInsensitiveCompare($1.front) == .orderedDescending }
+      }
+    case .createdAt:
+      switch direction {
+      case .ascending:
+        return base.sorted { $0.createdAt < $1.createdAt }
+      case .descending:
+        return base.sorted { $0.createdAt > $1.createdAt }
+      }
+    case .lastReviewedAt:
+      // Treat nil as very old when ascending, very new when descending
+      switch direction {
+      case .ascending:
+        return base.sorted { ( $0.lastReviewedAt ?? .distantPast ) < ( $1.lastReviewedAt ?? .distantPast ) }
+      case .descending:
+        return base.sorted { ( $0.lastReviewedAt ?? .distantPast ) > ( $1.lastReviewedAt ?? .distantPast ) }
+      }
+    }
+  }
+  
+  @ViewBuilder
+  func cardsList(for subject: SubjectEntity) -> some View {
+    let cards = sortedCards(for: subject, search: viewModel.searchText, sort: viewModel.cardSort, direction: viewModel.cardSortDirection)
+    if cards.isEmpty {
+      Text("No matching cards")
+        .foregroundStyle(.secondary)
+    } else {
+      ForEach(cards) { card in
+        NavigationLink {
+          CardDetailEditor(card: card)
+            .environmentObject(viewModel)
+        } label: {
+          showFlashcard(card)
+        }
+        .id(card.id)
+      }
+      .onDelete { indexSet in
+        deleteCards(at: indexSet, in: cards)
+      }
+    }
   }
 }
 
