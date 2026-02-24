@@ -32,6 +32,13 @@ class HomeViewModel: ObservableObject {
   @Published var editedSubjectName: String = ""
   @Published var highlightedCardID: UUID?
 
+  @Published var expandedSubjectIDs: Set<PersistentIdentifier> = []
+  @Published var searchText: String = ""
+  @Published var subjectSort: SubjectSortCriterion = .name
+  @Published var cardSort: CardSortCriterion = .front
+  @Published var subjectSortDirection: SortDirection = .ascending
+  @Published var cardSortDirection: SortDirection = .descending
+
   func openFilter() { showingFilter = true }
   func closeFilter() { showingFilter = false }
   

@@ -8,36 +8,12 @@ struct CardsOverviewView: View {
   // Fetch all subjects (we'll sort locally based on UI state)
   @Query private var subjects: [SubjectEntity]
   
-  @State private var expandedSubjectIDs: Set<PersistentIdentifier> = []
-  @State private var searchText: String = ""
-
-  enum SortDirection { case ascending, descending }
-  
-  enum SubjectSortCriterion { case name }
-  enum CardSortCriterion { case createdAt, lastReviewedAt, front }
-  
-  @State private var subjectSort: SubjectSortCriterion = .name
-  @State private var cardSort: CardSortCriterion = .front
-
-  @State private var subjectSortDirection: SortDirection = .ascending
-  @State private var cardSortDirection: SortDirection = .descending
-  
   var body: some View {
     NavigationStack {
       VStack {
         ScrollViewReader { proxy in
           List {
-            let sortedSubjects: [SubjectEntity] = subjects.sorted { a, b in
-              switch subjectSort {
-              case .name:
-                switch subjectSortDirection {
-                case .ascending:
-                  return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
-                case .descending:
-                  return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedDescending
-                }
-              }
-            }
+            let sortedSubjects = sortedSubjectsArray()
             if subjects.isEmpty {
               ContentUnavailableView("No Cards", systemImage: "rectangle.on.rectangle.slash", description: Text("Add your first flashcard to get started."))
                 .textViewStyle(16)
@@ -45,12 +21,12 @@ struct CardsOverviewView: View {
               ForEach(sortedSubjects) { subject in
                 Section {
                   DisclosureGroup(isExpanded: Binding(
-                    get: { expandedSubjectIDs.contains(subject.persistentModelID) },
+                    get: { viewModel.expandedSubjectIDs.contains(subject.persistentModelID) },
                     set: { isExpanded in
                       if isExpanded {
-                        expandedSubjectIDs.insert(subject.persistentModelID)
+                        viewModel.expandedSubjectIDs.insert(subject.persistentModelID)
                       } else {
-                        expandedSubjectIDs.remove(subject.persistentModelID)
+                        viewModel.expandedSubjectIDs.remove(subject.persistentModelID)
                       }
                     }
                   )) {
@@ -69,8 +45,8 @@ struct CardsOverviewView: View {
           .background(BackgroundColorView().ignoresSafeArea())
         }
       }
-      .searchable(text: $searchText)
-      .onChange(of: searchText) { oldValue, newValue in
+      .searchable(text: $viewModel.searchText)
+      .onChange(of: viewModel.searchText) { oldValue, newValue in
         let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
           // When clearing search, don't force any expansion
@@ -111,7 +87,21 @@ private extension CardsOverviewView {
         newExpanded.insert(subject.persistentModelID)
       }
     }
-    expandedSubjectIDs = newExpanded
+    viewModel.expandedSubjectIDs = newExpanded
+  }
+
+  func sortedSubjectsArray() -> [SubjectEntity] {
+    return subjects.sorted { a, b in
+      switch viewModel.subjectSort {
+      case .name:
+        switch viewModel.subjectSortDirection {
+        case .ascending:
+          return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+        case .descending:
+          return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedDescending
+        }
+      }
+    }
   }
 
   @ViewBuilder
@@ -149,62 +139,7 @@ private extension CardsOverviewView {
   @ToolbarContentBuilder
   func trailingToolbarItems() -> some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
-      Menu {
-        // Subject: Name
-        Button {
-          if subjectSort == .name {
-            subjectSortDirection = (subjectSortDirection == .ascending) ? .descending : .ascending
-          } else {
-            subjectSort = .name
-            subjectSortDirection = .ascending
-          }
-        } label: {
-          let arrow = subjectSortDirection == .ascending ? "arrow.up" : "arrow.down"
-          Label("Subject: Name", systemImage: arrow)
-        }
-
-        // Cards: Created
-        Button {
-          if cardSort == .createdAt {
-            cardSortDirection = (cardSortDirection == .ascending) ? .descending : .ascending
-          } else {
-            cardSort = .createdAt
-            cardSortDirection = .descending
-          }
-        } label: {
-          let arrow = (cardSort == .createdAt && cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
-          Label("Cards: Created", systemImage: arrow)
-        }
-
-        // Cards: Last Learnt
-        Button {
-          if cardSort == .lastReviewedAt {
-            cardSortDirection = (cardSortDirection == .ascending) ? .descending : .ascending
-          } else {
-            cardSort = .lastReviewedAt
-            cardSortDirection = .descending
-          }
-        } label: {
-          let arrow = (cardSort == .lastReviewedAt && cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
-          Label("Cards: Last Learnt", systemImage: arrow)
-        }
-
-        // Cards: Front
-        Button {
-          if cardSort == .front {
-            cardSortDirection = (cardSortDirection == .ascending) ? .descending : .ascending
-          } else {
-            cardSort = .front
-            cardSortDirection = .ascending
-          }
-        } label: {
-          let arrow = (cardSort == .front && cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
-          Label("Cards: Front", systemImage: arrow)
-        }
-      } label: {
-        Image(systemName: "arrow.up.arrow.down")
-      }
-      .accessibilityLabel("Sort")
+      sortMenu()
     }
     ToolbarItem(placement: .topBarTrailing) {
       Button {
@@ -222,6 +157,66 @@ private extension CardsOverviewView {
       }
       .accessibilityLabel("Add subject/category")
     }
+  }
+
+  @ViewBuilder
+  func sortMenu() -> some View {
+    Menu {
+      // Subject: Name
+      Button {
+        if viewModel.subjectSort == .name {
+          viewModel.subjectSortDirection = (viewModel.subjectSortDirection == .ascending) ? .descending : .ascending
+        } else {
+          viewModel.subjectSort = .name
+          viewModel.subjectSortDirection = .ascending
+        }
+      } label: {
+        let arrow = viewModel.subjectSortDirection == .ascending ? "arrow.up" : "arrow.down"
+        Label("Subject: Name", systemImage: arrow)
+      }
+
+      // Cards: Created
+      Button {
+        if viewModel.cardSort == .createdAt {
+          viewModel.cardSortDirection = (viewModel.cardSortDirection == .ascending) ? .descending : .ascending
+        } else {
+          viewModel.cardSort = .createdAt
+          viewModel.cardSortDirection = .descending
+        }
+      } label: {
+        let arrow = (viewModel.cardSort == .createdAt && viewModel.cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
+        Label("Cards: Created", systemImage: arrow)
+      }
+
+      // Cards: Last Learnt
+      Button {
+        if viewModel.cardSort == .lastReviewedAt {
+          viewModel.cardSortDirection = (viewModel.cardSortDirection == .ascending) ? .descending : .ascending
+        } else {
+          viewModel.cardSort = .lastReviewedAt
+          viewModel.cardSortDirection = .descending
+        }
+      } label: {
+        let arrow = (viewModel.cardSort == .lastReviewedAt && viewModel.cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
+        Label("Cards: Last Learnt", systemImage: arrow)
+      }
+
+      // Cards: Front
+      Button {
+        if viewModel.cardSort == .front {
+          viewModel.cardSortDirection = (viewModel.cardSortDirection == .ascending) ? .descending : .ascending
+        } else {
+          viewModel.cardSort = .front
+          viewModel.cardSortDirection = .ascending
+        }
+      } label: {
+        let arrow = (viewModel.cardSort == .front && viewModel.cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
+        Label("Cards: Front", systemImage: arrow)
+      }
+    } label: {
+      Image(systemName: "arrow.up.arrow.down")
+    }
+    .accessibilityLabel("Sort")
   }
   
   @ViewBuilder
@@ -283,7 +278,7 @@ private extension CardsOverviewView {
   
   @ViewBuilder
   func cardsList(for subject: SubjectEntity) -> some View {
-    let cards = sortedCards(for: subject, search: searchText, sort: cardSort, direction: cardSortDirection)
+    let cards = sortedCards(for: subject, search: viewModel.searchText, sort: viewModel.cardSort, direction: viewModel.cardSortDirection)
     if cards.isEmpty {
       Text("No matching cards")
         .foregroundStyle(.secondary)
