@@ -140,8 +140,7 @@ private extension FlashCardView {
 	func buttonWrong() -> some View {
 		Button {
 			viewModel.flashErrorHighlight {
-				viewModel.actions.onWrong()
-        viewModel.storeReview(isCorrect: false)
+				viewModel.storeReview(isCorrect: false)
 				viewModel.isFlipped = false
 			}
 		} label: {
@@ -161,8 +160,7 @@ private extension FlashCardView {
 	func buttonCorrect() -> some View {
 		Button {
 			viewModel.flashSuccessHighlight {
-				viewModel.actions.onCorrect()
-        viewModel.storeReview(isCorrect: true)
+				viewModel.storeReview(isCorrect: true)
 				viewModel.isFlipped = false
 			}
 		} label: {

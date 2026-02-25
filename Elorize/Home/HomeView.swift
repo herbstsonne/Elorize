@@ -45,6 +45,9 @@ struct HomeView: View {
       viewModel.subjects = subjects
     }
     .toolbar {
+      ToolbarItem(placement: .topBarLeading) {
+        XPProgressCompactView()
+      }
       ToolbarItem(placement: .topBarTrailing) {
         Button {
           showingFilter = true

@@ -43,6 +43,8 @@ class HomeViewModel: ObservableObject {
   func closeFilter() { showingFilter = false }
   
   @AppStorage("app.currentTab") private var storedTabRaw: String = AppTab.exercise.rawValue
+  @AppStorage("gamification.totalXP") private var storedTotalXP: Int = 0
+  
   @Published var currentTab: AppTab = .exercise {
     didSet { storedTabRaw = currentTab.rawValue }
   }
@@ -52,6 +54,10 @@ class HomeViewModel: ObservableObject {
   private var exerciseRepository: ExerciseRepository?
   private let generator: FlashcardGeneratorProtocol
   private let reviewer: ReviewerProtocol
+
+  // MARK: - Gamification
+  private var gamificationService: GamificationService!
+  @Published var xpState: XPLevelState = XPLevelState(xp: 0, level: 1, xpForNextLevel: 100, xpIntoCurrentLevel: 0)
 
   var filteredFlashCardEntities: [FlashCardEntity] {
     if let id = selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
@@ -112,6 +118,8 @@ class HomeViewModel: ObservableObject {
     if let stored = AppTab(rawValue: self.storedTabRaw) {
       self.currentTab = stored
     }
+    self.gamificationService = GamificationService(initialXP: storedTotalXP, initialLevel: 1)
+    self.xpState = gamificationService.state
   }
   
   func setRepository(_ exRepository: ExerciseRepository, _ subRepository: SubjectRepository, _ flashcardsRepository: FlashcardRepositoryProtocol?) {
@@ -132,12 +140,18 @@ class HomeViewModel: ObservableObject {
     entity.wrongCount += 1
     reviewer.registerReview(for: entity, quality: 2)
     exerciseRepository?.saveWrongAnswered(entity)
+    // Gamification: small XP for attempts
+    xpState = gamificationService.addXP(1)
+    storedTotalXP = xpState.xp
   }
   
   func markCorrect(_ entity: FlashCardEntity) {
     entity.correctCount += 1
     reviewer.registerReview(for: entity, quality: 5)
     exerciseRepository?.saveCorrectAnswered(entity)
+    // Gamification: award XP for correct answers
+    xpState = gamificationService.addXP(5)
+    storedTotalXP = xpState.xp
   }
   
   func advanceIndex() {
