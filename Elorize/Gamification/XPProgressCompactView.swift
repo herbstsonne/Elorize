@@ -6,9 +6,6 @@ struct XPProgressCompactView: View {
 
   var body: some View {
     HStack(spacing: 10) {
-      Text("Lv \(viewModel.xpState.level)")
-        .font(.footnote)
-        .foregroundStyle(.primary)
       Button {
         #if os(iOS)
         let generator = UIImpactFeedbackGenerator(style: .light)
@@ -16,6 +13,9 @@ struct XPProgressCompactView: View {
         #endif
         showingDetails = true
       } label: {
+        Text("Lv. \(viewModel.xpState.level)")
+          .font(.footnote)
+          .foregroundStyle(Color.app(.accent_subtle))
         ProgressView(value: viewModel.xpState.levelProgress)
           .progressViewStyle(.linear)
           .frame(width: 120, height: 16)
@@ -27,7 +27,7 @@ struct XPProgressCompactView: View {
       }
       .buttonStyle(.plain)
       .padding(.vertical, 6)
-      .frame(minWidth: 160)
+      .frame(minWidth: 200)
       .accessibilityLabel("Open XP details")
     }
     .accessibilityLabel("Level \(viewModel.xpState.level), progress \(Int(viewModel.xpState.levelProgress * 100)) percent")
@@ -77,7 +77,7 @@ private struct XPDetailsView: View {
           VStack(alignment: .leading, spacing: 8) {
             Text("• Correct answer: +5 XP")
             Text("• Wrong answer: +1 XP (for the attempt)")
-            Text("• Level up: When your XP in this level reaches the required XP")
+            Text("• Level up: Every 100 XP, your level increases and XP resets within the new level")
           }
         }
 

@@ -21,19 +21,10 @@ public final class GamificationService: @unchecked Sendable {
   @discardableResult
   public func addXP(_ delta: Int) -> XPLevelState {
     guard delta != 0 else { return state }
-    var totalXP = max(0, state.xp + delta)
-    var level = max(1, state.level)
-
-    // Recompute the level based on total XP.
-    while true {
-      let (xpForNext, intoCurrent) = GamificationService.split(xp: totalXP, level: level, base: baseNextLevelXP, growth: growth)
-      if intoCurrent >= xpForNext { // Should not happen due to split, but be safe
-        level += 1
-        continue
-      }
-      state = XPLevelState(xp: totalXP, level: level, xpForNextLevel: xpForNext, xpIntoCurrentLevel: intoCurrent)
-      break
-    }
+    let totalXP = max(0, state.xp + delta)
+    let intoCurrent = totalXP % baseNextLevelXP
+    let level = Int(totalXP / baseNextLevelXP) + 1
+    state = XPLevelState(xp: totalXP, level: level, xpForNextLevel: baseNextLevelXP, xpIntoCurrentLevel: intoCurrent)
     return state
   }
 
@@ -51,7 +42,6 @@ public final class GamificationService: @unchecked Sendable {
 
   /// Returns the cumulative XP required to reach the start of a given level.
   private static func totalXPRequired(toReachLevel level: Int, base: Int, growth: Double) -> Int {
-    guard level > 1 else { return 0 }
     var total = 0.0
     var requirement = Double(base)
     for _ in 1..<(level) {

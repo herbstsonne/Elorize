@@ -44,6 +44,7 @@ class HomeViewModel: ObservableObject {
   
   @AppStorage("app.currentTab") private var storedTabRaw: String = AppTab.exercise.rawValue
   @AppStorage("gamification.totalXP") private var storedTotalXP: Int = 0
+  @AppStorage("gamification.level") private var storedLevel: Int = 1
   
   @Published var currentTab: AppTab = .exercise {
     didSet { storedTabRaw = currentTab.rawValue }
@@ -57,7 +58,13 @@ class HomeViewModel: ObservableObject {
 
   // MARK: - Gamification
   private var gamificationService: GamificationService!
-  @Published var xpState: XPLevelState = XPLevelState(xp: 0, level: 1, xpForNextLevel: 100, xpIntoCurrentLevel: 0)
+  @Published var xpState: XPLevelState = XPLevelState(xp: 0, level: 1, xpForNextLevel: 100, xpIntoCurrentLevel: 0) {
+    didSet {
+      // Persist XP and Level whenever state updates
+      storedTotalXP = xpState.xp
+      storedLevel = xpState.level
+    }
+  }
 
   var filteredFlashCardEntities: [FlashCardEntity] {
     if let id = selectedSubjectID, let subject = subjects.first(where: { $0.id == id }) {
@@ -118,8 +125,10 @@ class HomeViewModel: ObservableObject {
     if let stored = AppTab(rawValue: self.storedTabRaw) {
       self.currentTab = stored
     }
-    self.gamificationService = GamificationService(initialXP: storedTotalXP, initialLevel: 1)
-    self.xpState = gamificationService.state
+    // Restore XP and Level state from persisted storage
+    self.gamificationService = GamificationService(initialXP: storedTotalXP, initialLevel: storedLevel)
+    let restored = gamificationService.state
+    self.xpState = restored
   }
   
   func setRepository(_ exRepository: ExerciseRepository, _ subRepository: SubjectRepository, _ flashcardsRepository: FlashcardRepositoryProtocol?) {
@@ -142,7 +151,6 @@ class HomeViewModel: ObservableObject {
     exerciseRepository?.saveWrongAnswered(entity)
     // Gamification: small XP for attempts
     xpState = gamificationService.addXP(1)
-    storedTotalXP = xpState.xp
   }
   
   func markCorrect(_ entity: FlashCardEntity) {
@@ -151,7 +159,6 @@ class HomeViewModel: ObservableObject {
     exerciseRepository?.saveCorrectAnswered(entity)
     // Gamification: award XP for correct answers
     xpState = gamificationService.addXP(5)
-    storedTotalXP = xpState.xp
   }
   
   func advanceIndex() {

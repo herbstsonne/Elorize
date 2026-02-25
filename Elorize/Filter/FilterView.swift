@@ -9,53 +9,47 @@ struct FilterView: View {
   @AppStorage("filters.reviewFilter") private var storedReviewFilter: String = ReviewFilter.all.rawValue
   
   var body: some View {
-    ZStack {
-      BackgroundColorView()
-      VStack {
-        if viewModel.subjects.isEmpty {
-          showContentUnavailableView()
-        } else {
-          Form {
-            showPickerFilterByKnowledge()
-              .padding(.bottom, 8)
-            showPickerSubject()
-          }
-          .scrollContentBackground(.hidden)
-          .listStyle(.plain)
-          .padding(.horizontal, 20)
-          .padding(.top, 12)
-          .onChange(of: viewModel.subjects) { oldValue, newValue in
-            if let selected = viewModel.selectedSubjectID, newValue.first(where: { $0.id == selected }) == nil {
-              viewModel.selectedSubjectID = nil
-              storedSelectedSubjectID = ""
+    NavigationStack {
+      ZStack {
+        BackgroundColorView()
+        VStack {
+          if viewModel.subjects.isEmpty {
+            showContentUnavailableView()
+          } else {
+            Form {
+              showPickerFilterByKnowledge()
+                .padding(.bottom, 8)
+              showPickerSubject()
             }
-            if newValue.isEmpty {
-              viewModel.selectedSubjectID = nil
-              storedSelectedSubjectID = ""
+            .scrollContentBackground(.hidden)
+            .listStyle(.plain)
+            .padding(.horizontal, 20)
+            .onChange(of: viewModel.subjects) { oldValue, newValue in
+              if let selected = viewModel.selectedSubjectID, newValue.first(where: { $0.id == selected }) == nil {
+                viewModel.selectedSubjectID = nil
+                storedSelectedSubjectID = ""
+              }
+              if newValue.isEmpty {
+                viewModel.selectedSubjectID = nil
+                storedSelectedSubjectID = ""
+              }
             }
           }
+          Spacer(minLength: 8)
+          Spacer()
         }
-        
-        Spacer(minLength: 8)
-        Spacer()
+      }
+      .ignoresSafeArea(.keyboard)
+      .foregroundStyle(Color.app(.accent_subtle))
+      .tint(Color.app(.accent_subtle))
+      .toolbarBackground(.visible, for: .navigationBar)
+      .toolbarBackground(Color.clear, for: .navigationBar)
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Close") { dismiss() }
+        }
       }
     }
-    .overlay(alignment: .topTrailing) {
-      Button(action: { dismiss() }) {
-        Image(systemName: "xmark")
-          .font(.system(size: 17, weight: .semibold))
-          .symbolRenderingMode(.monochrome)
-          .foregroundStyle(.primary)
-          .frame(minWidth: 44, minHeight: 44, alignment: .center)
-          .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-      .padding(.top, 8)
-      .padding(.trailing, 8)
-      .accessibilityLabel("Close")
-      .accessibilityAddTraits(.isButton)
-    }
-    .ignoresSafeArea(.keyboard)
   }
 }
 
