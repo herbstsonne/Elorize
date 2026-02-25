@@ -222,7 +222,7 @@ private extension AllCardsView {
           vm.direction = .descending
         }
       } label: {
-        let arrow = (vm.sort == .lastReviewedAt && vm.direction == .ascending) ? "arrow.up" : "arrow/down"
+        let arrow = (vm.sort == .lastReviewedAt && vm.direction == .ascending) ? "arrow.up" : "arrow.down"
         Label("Cards: Last Learnt", systemImage: arrow)
       }
 

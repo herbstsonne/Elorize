@@ -16,18 +16,6 @@ struct StatisticsView: View {
   @Query(sort: [SortDescriptor(\ReviewEventEntity.timestamp, order: .forward)])
   var reviewEvents: [ReviewEventEntity]
 
-  var dailyStats: [DailyStat] {
-      var map: [Date: (correct: Int, wrong: Int)] = [:]
-    for event in reviewEvents {
-      let d = statisticsViewModel.dayStart(for: event.timestamp)
-          var entry = map[d] ?? (correct: 0, wrong: 0)
-          if event.isCorrect { entry.correct += 1 } else { entry.wrong += 1 }
-          map[d] = entry
-      }
-      return map.map { key, value in DailyStat(id: key, date: key, correct: value.correct, wrong: value.wrong) }
-                .sorted { $0.date < $1.date }
-  }
-
   init(homeViewModel: HomeViewModel) {
     self.homeViewModel = homeViewModel
     _statisticsViewModel = StateObject(wrappedValue: StatisticsViewModel(homeViewModel: homeViewModel))
@@ -37,11 +25,11 @@ struct StatisticsView: View {
         NavigationStack {
             List {
               OverallSection(totalCards: statisticsViewModel.totalCards, totalSubjects: statisticsViewModel.totalSubjects)
-              DailyPerformanceSection(stats: dailyStats)
+              DailyPerformanceSection(stats: statisticsViewModel.dailyStats(from: reviewEvents))
 
                 ForEach(subjects, id: \.id) { subject in
-                    let stats = subjectStats(for: subject)
-                    SubjectSectionView(subject: subject, cardCount: stats)
+                    let count = statisticsViewModel.cardCount(in: subject, from: flashCards)
+                    SubjectSectionView(subject: subject, cardCount: count)
                 }
             }
             .onAppear { print("subjects:", subjects.count, "flashCards:", flashCards.count, "events:", reviewEvents.count) }
@@ -49,22 +37,15 @@ struct StatisticsView: View {
             .onChange(of: flashCards) { _, new in print("flashCards changed:", new.count) }
             .onChange(of: reviewEvents) { _, new in print("reviewEvents changed:", new.count) }
             .scrollContentBackground(.hidden)
-            .background(BackgroundColorView())
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Statistics")
-                        .font(.headline)
-                }
-            }
-        }
+            .background(BackgroundColorView())        }
     }
 }
 
+// MARK: - View Builders
 private extension StatisticsView {
 
   @ViewBuilder
-  private func OverallSection(totalCards: Int, totalSubjects: Int) -> some View
-  {
+  func OverallSection(totalCards: Int, totalSubjects: Int) -> some View {
       Section("Overall") {
           HStack {
               Text("Total Cards")
@@ -81,7 +62,7 @@ private extension StatisticsView {
   }
 
   @ViewBuilder
-  private func DailyPerformanceSection(stats: [DailyStat]) -> some View {
+  func DailyPerformanceSection(stats: [DailyStat]) -> some View {
       Section("Daily Performance") {
           if stats.isEmpty {
               Text("No review activity yet.")
@@ -90,35 +71,12 @@ private extension StatisticsView {
               // Precompute date domains to help the type-checker
               let firstDate: Date = stats.first?.date ?? Date()
               let lastDate: Date = stats.last?.date ?? Date()
-              let fullDomain: ClosedRange<Date> = firstDate ... lastDate
 
-              let visibleDomain: ClosedRange<Date> = {
-                  let calendar = Calendar.current
-                  if let sevenDaysBeforeLast = calendar.date(byAdding: .day, value: -6, to: lastDate) {
-                      return max(sevenDaysBeforeLast, firstDate) ... lastDate
-                  } else {
-                      return fullDomain
-                  }
-              }()
-
-              // Precompute the foreground style scale mapping
-              let resultDomain: [String] = ["Got it", "Repeat"]
-              let resultRange: [Color] = [Color.app(.success), Color.app(.error)]
-
-              Chart {
-                  chartContent(for: stats)
-              }
-              .chartXScale(domain: fullDomain)
-              .chartScrollableAxes(.horizontal).chartXVisibleDomain(length: 86400 * 7)
-              .background(Color.secondary.opacity(0.05))
-              .chartPlotStyle { plot in plot }
-              .chartForegroundStyleScale(domain: resultDomain, range: resultRange)
-              .chartXAxis {
-                  AxisMarks(values: .automatic(desiredCount: 6)) { _ in
-                      AxisGridLine()
-                      AxisValueLabel(format: .dateTime.day().month(.abbreviated))
-                  }
-              }
+              dailyChart(
+                  stats: stats,
+                  firstDate: firstDate,
+                  lastDate: lastDate
+              )
               .frame(minHeight: 180)
               Text("Total events: \(reviewEvents.count)")
                   .font(.footnote)
@@ -130,7 +88,7 @@ private extension StatisticsView {
 
   // Split chart marks out to reduce generic inference pressure
   @ChartContentBuilder
-  private func chartContent(for stats: [DailyStat]) -> some ChartContent {
+  func chartContent(for stats: [DailyStat]) -> some ChartContent {
       ForEach(stats) { stat in
           BarMark(
               x: .value("Day", stat.date, unit: .day),
@@ -149,7 +107,55 @@ private extension StatisticsView {
   }
 
   @ViewBuilder
-  private func SubjectSectionView(subject: SubjectEntity, cardCount: Int) -> some View {
+  func dailyChart(stats: [DailyStat], firstDate: Date, lastDate: Date) -> some View {
+      let fullDomain: ClosedRange<Date> = firstDate ... lastDate
+      let resultDomain: [String] = ["Got it", "Repeat"]
+      let resultRange: [Color] = [Color.app(.success), Color.app(.error)]
+      let maxY: Int = stats.map { $0.correct + $0.wrong }.max() ?? 0
+      let yMax: Int = max(Int(Double(maxY) * 1.5), 1)
+
+      Chart {
+          chartContent(for: stats)
+          // Show today's date as a vertical rule
+          let today = Calendar.current.startOfDay(for: Date())
+          RuleMark(x: .value("Today", today, unit: .day))
+              .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
+              .foregroundStyle(Color.app(.accent_subtle))
+              .annotation(position: .top, alignment: .center) {
+                  Text("Today").font(.caption2).foregroundStyle(Color.app(.accent_subtle))
+              }
+      }
+      .chartXScale(domain: fullDomain)
+      .chartScrollableAxes(.horizontal)
+      .chartXVisibleDomain(length: 86400 * 7)
+      .chartYScale(domain: 0 ... yMax)
+      .chartYAxis {
+          AxisMarks(position: .leading) {
+              AxisGridLine()
+              AxisValueLabel()
+          }
+      }
+      .background(Color.secondary.opacity(0.05))
+      .chartPlotStyle { plot in plot }
+      .chartForegroundStyleScale(domain: resultDomain, range: resultRange)
+      .chartXAxis {
+          let today = Calendar.current.startOfDay(for: Date())
+          AxisMarks(values: .automatic(desiredCount: 6)) { _ in
+              AxisGridLine()
+              AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+          }
+          // Force a tick at today with a custom label
+          AxisMarks(values: [today]) { _ in
+              AxisGridLine()
+              AxisValueLabel {
+                  Text("Today")
+              }
+          }
+      }
+  }
+
+  @ViewBuilder
+  func SubjectSectionView(subject: SubjectEntity, cardCount: Int) -> some View {
       Section(subject.name ?? "Unknown") {
           HStack {
               Text("Cards in Subject")
@@ -159,22 +165,6 @@ private extension StatisticsView {
       }
       .foregroundStyle(Color.app(.accent_subtle))
   }
-}
-
-private extension StatisticsView {
-  
-  func subjectStats(for subject: SubjectEntity) -> Int {
-        // Avoid heavy generic inference by not comparing whole entities in a filter closure.
-        // Compare stable identifiers instead and use a simple loop the compiler can type-check quickly.
-        let targetID = subject.id
-        var count = 0
-        for card in flashCards {
-            if card.subject?.id == targetID {
-                count += 1
-            }
-        }
-        return count
-    }
 }
 
 @MainActor
