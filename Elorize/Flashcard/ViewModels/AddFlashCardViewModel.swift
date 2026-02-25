@@ -12,6 +12,8 @@ final class AddFlashCardViewModel: ObservableObject {
   @Published var selectedSubjectID: UUID?
   @Published var tagsText: String = ""
 
+  @AppStorage("addCard.keepAdding") var keepAdding: Bool = false
+
   // UI state
   @Published var isSaving: Bool = false
   @Published var errorMessage: String?
@@ -24,9 +26,11 @@ final class AddFlashCardViewModel: ObservableObject {
 
   private var flashcardsRepository: FlashcardRepository?
 
-  func loadSubjects(_ initial: [SubjectEntity]) {
+  func loadSubjects(_ initial: [SubjectEntity], preferredID: UUID? = nil) {
       self.subjects = initial
-      if selectedSubjectID == nil {
+      if let preferred = preferredID, subjects.first(where: { $0.id == preferred }) != nil {
+          selectedSubjectID = preferred
+      } else if selectedSubjectID == nil {
           selectedSubjectID = subjects.first?.id
       }
   }
@@ -100,5 +104,44 @@ final class AddFlashCardViewModel: ObservableObject {
         selectedSubjectID = subjects.first?.id
         return entity
     }
+
+  @discardableResult
+  func save(keepOpen: Bool, context: ModelContext) -> Bool {
+      // Validate inputs
+      let trimmedFront = front.trimmingCharacters(in: .whitespacesAndNewlines)
+      let trimmedBack = back.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard !trimmedFront.isEmpty, !trimmedBack.isEmpty, let selectedSubjectID else {
+          errorMessage = "Front, Back, and Subject are required."
+          return false
+      }
+      // Resolve subject
+      guard let subject = subjects.first(where: { $0.id == selectedSubjectID }) else {
+          errorMessage = "Invalid subject selection."
+          return false
+      }
+
+      // Build entity and persist
+      let flash = FlashCard(front: trimmedFront, back: trimmedBack, tags: tagsArray)
+      let entity = FlashCardEntity(from: flash, subject: subject)
+
+      isSaving = true
+      defer { isSaving = false }
+
+      flashcardsRepository?.saveNew(flashCard: entity)
+      do {
+          try context.save()
+      } catch {
+          errorMessage = "Failed to save: \(error.localizedDescription)"
+          return false
+      }
+
+      if keepOpen {
+          // Reset inputs for next entry, keep subject selection
+          front = ""
+          back = ""
+          tagsText = ""
+      }
+      return true
+  }
 }
 

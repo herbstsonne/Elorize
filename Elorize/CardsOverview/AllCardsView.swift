@@ -1,13 +1,16 @@
 import SwiftUI
 import SwiftData
 
-struct CardsOverviewView: View {
+struct AllCardsView: View {
   @EnvironmentObject var viewModel: HomeViewModel
+  @Environment(\.modelContext) private var context
   @Environment(\.editMode) private var editMode
-  
-  // Fetch all subjects (we'll sort locally based on UI state)
+  @StateObject private var vm = AllCardsViewModel()
+
   @Query private var subjects: [SubjectEntity]
-  
+  @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
+  private var flashCardEntities: [FlashCardEntity]
+
   var body: some View {
     NavigationStack {
       VStack {
@@ -36,7 +39,9 @@ struct CardsOverviewView: View {
                   }
                 }
               }
-              .onDelete(perform: deleteSubjects)
+              .onDelete { indexSet in
+                deleteSubjects(at: indexSet, subjects: sortedSubjects)
+              }
             }
           }
           .foregroundStyle(Color.app(.accent_subtle))
@@ -45,8 +50,8 @@ struct CardsOverviewView: View {
           .background(BackgroundColorView().ignoresSafeArea())
         }
       }
-      .searchable(text: $viewModel.searchText)
-      .onChange(of: viewModel.searchText) { oldValue, newValue in
+      .searchable(text: $vm.searchText)
+      .onChange(of: vm.searchText) { oldValue, newValue in
         let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
           // When clearing search, don't force any expansion
@@ -54,6 +59,16 @@ struct CardsOverviewView: View {
           return
         }
         expandSubjectsWhenSearching(trimmed)
+      }
+      .onAppear {
+        vm.setRepository(FlashcardRepository(context: context))
+        vm.refreshData(with: flashCardEntities, subjects: subjects)
+      }
+      .onChange(of: flashCardEntities) { _, newCards in
+        vm.refreshData(with: newCards, subjects: subjects)
+      }
+      .onChange(of: subjects) { _, newSubjects in
+        vm.refreshData(with: flashCardEntities, subjects: newSubjects)
       }
     }
     .toolbar {
@@ -64,7 +79,8 @@ struct CardsOverviewView: View {
       AddSubjectView()
     }
     .sheet(isPresented: $viewModel.showingAddSheet) {
-      AddFlashCardView(subjects: subjects)
+      AddFlashCardView()
+        .environmentObject(viewModel)
     }
     .toolbarBackground(.visible, for: .navigationBar)
     .toolbarBackground(Color.clear, for: .navigationBar)
@@ -77,7 +93,7 @@ struct CardsOverviewView: View {
 
 // MARK: - ViewBuilder
 
-private extension CardsOverviewView {
+private extension AllCardsView {
 
   func expandSubjectsWhenSearching(_ trimmed: String) {
     var newExpanded: Set<PersistentIdentifier> = []
@@ -118,6 +134,15 @@ private extension CardsOverviewView {
           .font(.headline)
       }
       Spacer()
+      Button {
+        viewModel.preselectedSubjectForAdd = subject.id
+        viewModel.showingAddSheet = true
+      } label: {
+        Image(systemName: "plus.circle")
+          .font(.headline)
+      }
+      .buttonStyle(.plain)
+      .accessibilityLabel("Add card to \(subject.name)")
     }
     .contentShape(Rectangle())
     .onTapGesture {
@@ -177,40 +202,40 @@ private extension CardsOverviewView {
 
       // Cards: Created
       Button {
-        if viewModel.cardSort == .createdAt {
-          viewModel.cardSortDirection = (viewModel.cardSortDirection == .ascending) ? .descending : .ascending
+        if vm.sort == .createdAt {
+          vm.direction = (vm.direction == .ascending) ? .descending : .ascending
         } else {
-          viewModel.cardSort = .createdAt
-          viewModel.cardSortDirection = .descending
+          vm.sort = .createdAt
+          vm.direction = .descending
         }
       } label: {
-        let arrow = (viewModel.cardSort == .createdAt && viewModel.cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
+        let arrow = (vm.sort == .createdAt && vm.direction == .ascending) ? "arrow.up" : "arrow.down"
         Label("Cards: Created", systemImage: arrow)
       }
 
       // Cards: Last Learnt
       Button {
-        if viewModel.cardSort == .lastReviewedAt {
-          viewModel.cardSortDirection = (viewModel.cardSortDirection == .ascending) ? .descending : .ascending
+        if vm.sort == .lastReviewedAt {
+          vm.direction = (vm.direction == .ascending) ? .descending : .ascending
         } else {
-          viewModel.cardSort = .lastReviewedAt
-          viewModel.cardSortDirection = .descending
+          vm.sort = .lastReviewedAt
+          vm.direction = .descending
         }
       } label: {
-        let arrow = (viewModel.cardSort == .lastReviewedAt && viewModel.cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
+        let arrow = (vm.sort == .lastReviewedAt && vm.direction == .ascending) ? "arrow.up" : "arrow/down"
         Label("Cards: Last Learnt", systemImage: arrow)
       }
 
       // Cards: Front
       Button {
-        if viewModel.cardSort == .front {
-          viewModel.cardSortDirection = (viewModel.cardSortDirection == .ascending) ? .descending : .ascending
+        if vm.sort == .front {
+          vm.direction = (vm.direction == .ascending) ? .descending : .ascending
         } else {
-          viewModel.cardSort = .front
-          viewModel.cardSortDirection = .ascending
+          vm.sort = .front
+          vm.direction = .ascending
         }
       } label: {
-        let arrow = (viewModel.cardSort == .front && viewModel.cardSortDirection == .ascending) ? "arrow.up" : "arrow.down"
+        let arrow = (vm.sort == .front && vm.direction == .ascending) ? "arrow.up" : "arrow.down"
         Label("Cards: Front", systemImage: arrow)
       }
     } label: {
@@ -278,7 +303,7 @@ private extension CardsOverviewView {
   
   @ViewBuilder
   func cardsList(for subject: SubjectEntity) -> some View {
-    let cards = sortedCards(for: subject, search: viewModel.searchText, sort: viewModel.cardSort, direction: viewModel.cardSortDirection)
+    let cards = sortedCards(for: subject, search: vm.searchText, sort: vm.sort, direction: vm.direction)
     if cards.isEmpty {
       Text("No matching cards")
         .foregroundStyle(.secondary)
@@ -293,13 +318,13 @@ private extension CardsOverviewView {
         .id(card.id)
       }
       .onDelete { indexSet in
-        deleteCards(at: indexSet, in: cards)
+        vm.deleteCards(at: indexSet)
       }
     }
   }
 }
 
-private extension CardsOverviewView {
+private extension AllCardsView {
   func commitSubjectEdit(_ subject: SubjectEntity) {
     let newName = viewModel.editedSubjectName
     viewModel.commitSubjectEdit(subject, newName: newName)
@@ -307,11 +332,7 @@ private extension CardsOverviewView {
     viewModel.editedSubjectName = ""
   }
   
-  func deleteCards(at offsets: IndexSet, in cards: [FlashCardEntity]) {
-    viewModel.deleteCards(at: offsets, in: cards)
-  }
-  
-  func deleteSubjects(at offsets: IndexSet) {
+  func deleteSubjects(at offsets: IndexSet, subjects: [SubjectEntity]) {
     viewModel.deleteSubjects(at: offsets, subjects: subjects)
   }
   
@@ -338,19 +359,52 @@ private struct CardDetailEditor: View {
 
   @State var card: FlashCardEntity
 
+  @Query private var subjects: [SubjectEntity]
+
+  @State private var frontText: String = ""
+  @State private var backText: String = ""
+  @State private var tagsText: String = ""
+  @State private var selectedSubjectID: UUID = UUID()
+
   var body: some View {
     Form {
       Section("Front") {
-        TextField("Front", text: $card.front)
+        ZStack(alignment: .topLeading) {
+          if frontText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            Text("Front…")
+              .foregroundStyle(.secondary)
+              .padding(.horizontal, 5)
+              .padding(.vertical, 8)
+          }
+          TextEditor(text: $frontText)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .frame(minHeight: 80)
+        }
       }
       Section("Back") {
-        TextField("Back", text: $card.back)
+        ZStack(alignment: .topLeading) {
+          if backText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            Text("Back…")
+              .foregroundStyle(.secondary)
+              .padding(.horizontal, 5)
+              .padding(.vertical, 8)
+          }
+          TextEditor(text: $backText)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .frame(minHeight: 80)
+        }
       }
       Section("Tags (comma separated)") {
-        TextField("tags", text: Binding(
-          get: { card.tags.joined(separator: ", ") },
-          set: { card.tags = $0.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) } }
-        ))
+        TextField("tags", text: $tagsText)
+      }
+      Section("Subject") {
+        Picker("Subject", selection: $selectedSubjectID) {
+          ForEach(subjects) { subject in
+            Text(subject.name).tag(subject.id)
+          }
+        }
       }
       Section("Statistics") {
         HStack {
@@ -374,10 +428,21 @@ private struct CardDetailEditor: View {
     .navigationBarTitleDisplayMode(.inline)
     .scrollContentBackground(.hidden)
     .background(BackgroundColorView().ignoresSafeArea())
+    .onAppear {
+      frontText = card.front
+      backText = card.back
+      tagsText = card.tags.joined(separator: ", ")
+      if let current = card.subject?.id {
+        selectedSubjectID = current
+      } else if let first = subjects.first?.id {
+        selectedSubjectID = first
+      }
+    }
     .toolbar {
       ToolbarItem(placement: .confirmationAction) {
         Button("Save") {
-          viewModel.save()
+          let tagsArray = tagsText.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+          viewModel.updateCard(card, front: frontText, back: backText, tags: tagsArray, subjectID: selectedSubjectID)
           dismiss()
         }
       }

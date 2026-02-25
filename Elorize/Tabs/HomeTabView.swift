@@ -28,7 +28,7 @@ struct HomeTabView: View {
       }
       
       NavigationStack {
-        CardsOverviewView()
+        AllCardsView()
           .environmentObject(viewModel)
           .environment(\.editMode, $editMode)
       }

@@ -23,6 +23,8 @@ class HomeViewModel: ObservableObject {
   @Published var showingDeleteAlert = false
   @Published var entityPendingDeletion: FlashCardEntity?
   @Published var selectedSubjectIDs: Set<UUID> = []
+  // Add FlashCard preselection
+  @Published var preselectedSubjectForAdd: UUID?
   @Published var selectedTab: HomeTab = .home {
     didSet { handleTabChange(selectedTab) }
   }
@@ -237,6 +239,28 @@ class HomeViewModel: ObservableObject {
     flashcardsRepository?.saveNew(flashCard: entity)
     flashCardEntities.insert(entity, at: 0)
     return true
+  }
+  
+  /// Update an existing flashcard's content and subject, then persist.
+  func updateCard(_ card: FlashCardEntity, front: String, back: String, tags: [String], subjectID: UUID?) {
+    let trimmedFront = front.trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimmedBack = back.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmedFront.isEmpty, !trimmedBack.isEmpty else { return }
+
+    // Update content
+    card.front = trimmedFront
+    card.back = trimmedBack
+    card.tags = tags
+
+    // Update subject relationship
+    if let subjectID = subjectID, let newSubject = subjects.first(where: { $0.id == subjectID }) {
+      card.subject = newSubject
+    } else if subjectID == nil {
+      card.subject = nil
+    }
+
+    // Persist changes
+    flashcardsRepository?.save()
   }
   
   private func handleTabChange(_ tab: HomeTab) {
