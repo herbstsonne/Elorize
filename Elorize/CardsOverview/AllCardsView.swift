@@ -238,6 +238,19 @@ private extension AllCardsView {
         let arrow = (vm.sort == .front && vm.direction == .ascending) ? "arrow.up" : "arrow.down"
         Label("Cards: Front", systemImage: arrow)
       }
+
+      // Cards: Tags
+      Button {
+        if vm.sort == .tags {
+          vm.direction = (vm.direction == .ascending) ? .descending : .ascending
+        } else {
+          vm.sort = .tags
+          vm.direction = .ascending
+        }
+      } label: {
+        let arrow = (vm.sort == .tags && vm.direction == .ascending) ? "arrow.up" : "arrow.down"
+        Label("Cards: Tags", systemImage: arrow)
+      }
     } label: {
       Image(systemName: "arrow.up.arrow.down")
     }
@@ -298,6 +311,13 @@ private extension AllCardsView {
       case .descending:
         return base.sorted { ( $0.lastReviewedAt ?? .distantPast ) > ( $1.lastReviewedAt ?? .distantPast ) }
       }
+    case .tags:
+      switch direction {
+      case .ascending:
+        return base.sorted { $0.tags.joined(separator: ", ").localizedCaseInsensitiveCompare($1.tags.joined(separator: ", ")) == .orderedAscending }
+      case .descending:
+        return base.sorted { $0.tags.joined(separator: ", ").localizedCaseInsensitiveCompare($1.tags.joined(separator: ", ")) == .orderedDescending }
+      }
     }
   }
   
@@ -307,6 +327,30 @@ private extension AllCardsView {
     if cards.isEmpty {
       Text("No matching cards")
         .foregroundStyle(.secondary)
+    } else if vm.sort == .tags {
+      // Group by all tags: cards appear in each tag group they belong to
+      let expanded: [(tag: String, card: FlashCardEntity)] = cards.flatMap { card in
+        card.tags.map { (tag: $0, card: card) }
+      }
+      let groups: [String: [FlashCardEntity]] = Dictionary(grouping: expanded, by: { $0.tag })
+        .mapValues { $0.map { $0.card } }
+
+      ForEach(groups.keys.sorted(), id: \.self) { tag in
+        Section(tag) {
+          ForEach(groups[tag] ?? []) { card in
+            NavigationLink {
+              CardDetailEditor(card: card)
+                .environmentObject(viewModel)
+            } label: {
+              showFlashcard(card)
+            }
+            .id(card.id)
+          }
+          .onDelete { indexSet in
+            vm.deleteCards(at: indexSet)
+          }
+        }
+      }
     } else {
       ForEach(cards) { card in
         NavigationLink {

@@ -61,6 +61,13 @@ final class AllCardsViewModel: ObservableObject {
       case .descending:
         return base.sorted { ($0.lastReviewedAt ?? .distantPast) > ($1.lastReviewedAt ?? .distantPast) }
       }
+    case .tags:
+      switch direction {
+      case .ascending:
+        return base.sorted { $0.tags.joined(separator: ", ").localizedCaseInsensitiveCompare($1.tags.joined(separator: ", ")) == .orderedAscending }
+      case .descending:
+        return base.sorted { $0.tags.joined(separator: ", ").localizedCaseInsensitiveCompare($1.tags.joined(separator: ", ")) == .orderedDescending }
+      }
     }
   }
 
@@ -114,3 +121,4 @@ final class AllCardsViewModel: ObservableObject {
     card.lastReviewedAt?.formatted(date: .abbreviated, time: .shortened) ?? "—"
   }
 }
+

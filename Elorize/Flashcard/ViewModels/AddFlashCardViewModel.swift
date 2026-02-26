@@ -28,6 +28,7 @@ final class AddFlashCardViewModel: ObservableObject {
 
   func loadSubjects(_ initial: [SubjectEntity], preferredID: UUID? = nil) {
       self.subjects = initial
+      self.localSubjects = initial
       if let preferred = preferredID, subjects.first(where: { $0.id == preferred }) != nil {
           selectedSubjectID = preferred
       } else if selectedSubjectID == nil {
@@ -58,7 +59,7 @@ final class AddFlashCardViewModel: ObservableObject {
     var flash = FlashCard(front: front, back: back)
     let card = FlashCardEntity(from: flash, subject: nil)
     if let selectedID = selectedSubjectID,
-       let subject = localSubjects.first(where: { $0.id == selectedID }) {
+       let subject = subjects.first(where: { $0.id == selectedID }) {
       card.subject = subject
     }
     // Insert and save
@@ -71,6 +72,7 @@ final class AddFlashCardViewModel: ObservableObject {
     let subject = SubjectEntity(name: trimmed)
     flashcardsRepository?.saveNew(subject: subject)
     localSubjects.append(subject)
+    subjects.append(subject)
     selectedSubjectID = subject.id
     newSubjectName = ""
   }
