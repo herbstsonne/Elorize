@@ -45,8 +45,6 @@ struct FilterView: View {
       .onChange(of: viewModel.subjects) { _, newSubjects in
         vm.updateSubjects(newSubjects)
       }
-      .toolbarBackground(.visible, for: .navigationBar)
-      .toolbarBackground(Color.clear, for: .navigationBar)
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button("Close") { dismiss() }
