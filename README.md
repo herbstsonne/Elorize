@@ -10,11 +10,13 @@ Elegant, minimalist flashcards with a Parisian-inspired design.
   <img src="Images/splash.png" alt="Splash" width="240" style="margin-right:12px;" />
   <img src="Images/home.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/home_edit.png" alt="Home" width="240"   style="margin-right:12px;" />
-  <img src="Images/home_filter.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/xp_sheet.png" alt="Home" width="240"   style="margin-right:12px;" />
+  <img src="Images/filter_sheet.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/add_card.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/add_subject.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/cards.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/cards_sort.png" alt="Home" width="240" style="margin-right:12px;" />
-  <img src="Images/card_overview_edit.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/cards_edit.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/statistics.png" alt="Home" width="240" style="margin-right:12px;" />
   </p>
 
@@ -22,9 +24,8 @@ Elegant, minimalist flashcards with a Parisian-inspired design.
 
   <p align="center">
   <img src="Images/home_iPad.png" alt="Home iPad H" width="240" style="margin-right:12px;" />
-  <img src="Images/home_filter_iPad.png" alt="Home iPad V" width="240" />
-  <img src="Images/cards_iPad.png" alt="Filter iPad H" width="240" />
-  <img src="Images/statistics_iPad.png" alt="Filter iPad H" width="240" />
+  <img src="Images/cards_iPad.png" alt="Cards iPad H" width="240" />
+  <img src="Images/statistics_iPad.png" alt="Statistics iPad H" width="240" />
 </p>
 
 ---

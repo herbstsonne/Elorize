@@ -54,9 +54,10 @@ struct HomeView: View {
         } label: {
           HStack(spacing: 8) {
             Image(systemName: "line.3.horizontal.decrease.circle")
-              .font(.headline)
+              .font(.footnote)
             Text(viewModel.activeFilterSummary)
-              .font(.headline)
+              .font(.footnote)
+              .tint(Color.app(.accent_subtle))
               .lineLimit(1)
               .minimumScaleFactor(0.8)
               .truncationMode(.tail)

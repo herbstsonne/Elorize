@@ -7,10 +7,6 @@ struct XPProgressCompactView: View {
   var body: some View {
     HStack(spacing: 10) {
       Button {
-        #if os(iOS)
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
-        #endif
         showingDetails = true
       } label: {
         Text("Lv. \(viewModel.xpState.level)")
@@ -18,7 +14,7 @@ struct XPProgressCompactView: View {
           .foregroundStyle(Color.app(.accent_subtle))
         ProgressView(value: viewModel.xpState.levelProgress)
           .progressViewStyle(.linear)
-          .frame(width: 120, height: 16)
+          .frame(width: 50, height: 16)
           .contentShape(Rectangle())
           .tint(Color.app(.accent_subtle))
         Text("XP")
@@ -27,7 +23,7 @@ struct XPProgressCompactView: View {
       }
       .buttonStyle(.plain)
       .padding(.vertical, 6)
-      .frame(minWidth: 200)
+      .frame(minWidth: 120)
       .accessibilityLabel("Open XP details")
     }
     .accessibilityLabel("Level \(viewModel.xpState.level), progress \(Int(viewModel.xpState.levelProgress * 100)) percent")
