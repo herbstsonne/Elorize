@@ -14,7 +14,7 @@ struct XPProgressCompactView: View {
           .foregroundStyle(Color.app(.accent_subtle))
         ProgressView(value: viewModel.xpState.levelProgress)
           .progressViewStyle(.linear)
-          .frame(width: 50, height: 16)
+          .frame(width: 60, height: 16)
           .contentShape(Rectangle())
           .tint(Color.app(.accent_subtle))
         Text("XP")
@@ -23,7 +23,7 @@ struct XPProgressCompactView: View {
       }
       .buttonStyle(.plain)
       .padding(.vertical, 6)
-      .frame(minWidth: 120)
+      .frame(minWidth: 140)
       .accessibilityLabel("Open XP details")
     }
     .accessibilityLabel("Level \(viewModel.xpState.level), progress \(Int(viewModel.xpState.levelProgress * 100)) percent")
