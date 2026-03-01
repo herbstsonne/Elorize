@@ -68,7 +68,6 @@ private extension StatisticsView {
               Text("No review activity yet.")
                   .foregroundStyle(.secondary)
           } else {
-              // Precompute date domains to help the type-checker
               let firstDate: Date = stats.first?.date ?? Date()
               let lastDate: Date = stats.last?.date ?? Date()
 
@@ -89,27 +88,26 @@ private extension StatisticsView {
   // Split chart marks out to reduce generic inference pressure
   @ChartContentBuilder
   func chartContent(for stats: [DailyStat]) -> some ChartContent {
-      ForEach(stats) { stat in
-          BarMark(
-              x: .value("Day", stat.date, unit: .day),
-              y: .value("Count", stat.correct)
-          )
-          .foregroundStyle(by: .value("Result", "Got it"))
-          .position(by: .value("Stack", "Result"))
+    ForEach(stats) { stat in
+        let day: Date = stat.date
 
-          BarMark(
-              x: .value("Day", stat.date, unit: .day),
-              y: .value("Count", stat.wrong)
-          )
-          .foregroundStyle(by: .value("Result", "Repeat"))
-          .position(by: .value("Stack", "Result"))
-      }
+        ForEach([Result.gotIt, Result.repeatWrong], id: \.self) { result in
+            let count: Int = (result == .gotIt) ? stat.correct : stat.wrong
+
+            BarMark(
+                x: .value("Day", day, unit: .day),
+                y: .value("Count", count)
+            )
+            .foregroundStyle(by: .value("Result", result))
+            .position(by: .value("Result", result))
+        }
+    }
   }
 
   @ViewBuilder
   func dailyChart(stats: [DailyStat], firstDate: Date, lastDate: Date) -> some View {
       let fullDomain: ClosedRange<Date> = firstDate ... lastDate
-      let resultDomain: [String] = ["Got it", "Repeat"]
+      let resultDomain: [Result] = [.gotIt, .repeatWrong]
       let resultRange: [Color] = [Color.app(.success), Color.app(.error)]
       let maxY: Int = stats.map { $0.correct + $0.wrong }.max() ?? 0
       let yMax: Int = max(Int(Double(maxY) * 1.5), 1)
@@ -142,9 +140,8 @@ private extension StatisticsView {
           let today = Calendar.current.startOfDay(for: Date())
           AxisMarks(values: .automatic(desiredCount: 6)) { _ in
               AxisGridLine()
-              AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+            AxisValueLabel(format: .dateTime.locale(Locale(identifier: "en_US")).month(.twoDigits).day(.twoDigits))
           }
-          // Force a tick at today with a custom label
           AxisMarks(values: [today]) { _ in
               AxisGridLine()
               AxisValueLabel {
@@ -201,6 +198,7 @@ fileprivate final class StatisticsPreviewModel: ObservableObject {
         context.insert(ReviewEventEntity(timestamp: day1, isCorrect: true, card: card1))
         context.insert(ReviewEventEntity(timestamp: day1, isCorrect: false, card: card1))
         context.insert(ReviewEventEntity(timestamp: day2, isCorrect: true, card: card2))
+        context.insert(ReviewEventEntity(timestamp: day2, isCorrect: false, card: card2))
         context.insert(ReviewEventEntity(timestamp: now, isCorrect: true, card: card2))
         context.insert(ReviewEventEntity(timestamp: now, isCorrect: false, card: card2))
 
