@@ -8,6 +8,7 @@ struct AddFlashCardView: View {
   @EnvironmentObject var homeViewModel: HomeViewModel
   
   @StateObject private var viewModel = AddFlashCardViewModel()
+  @Query private var subjects: [SubjectEntity]
   
   var body: some View {
 		NavigationStack {
@@ -27,9 +28,9 @@ struct AddFlashCardView: View {
 				.textViewStyle(16)
 			}
 			.onAppear {
-        viewModel.localSubjects = homeViewModel.subjects
+        viewModel.localSubjects = subjects
         viewModel.setRepository(FlashcardRepository(context: context))
-        viewModel.loadSubjects(homeViewModel.subjects, preferredID: homeViewModel.preselectedSubjectForAdd)
+        viewModel.loadSubjects(subjects, preferredID: homeViewModel.preselectedSubjectForAdd)
 			}
       .toolbar {
         ToolbarItem(placement: .topBarLeading) {

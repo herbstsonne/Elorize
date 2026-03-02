@@ -68,7 +68,6 @@ private extension StatisticsView {
               Text("No review activity yet.")
                   .foregroundStyle(.secondary)
           } else {
-              // Precompute date domains to help the type-checker
               let firstDate: Date = stats.first?.date ?? Date()
               let lastDate: Date = stats.last?.date ?? Date()
 
@@ -89,69 +88,130 @@ private extension StatisticsView {
   // Split chart marks out to reduce generic inference pressure
   @ChartContentBuilder
   func chartContent(for stats: [DailyStat]) -> some ChartContent {
-      ForEach(stats) { stat in
-          BarMark(
-              x: .value("Day", stat.date, unit: .day),
-              y: .value("Count", stat.correct)
-          )
-          .foregroundStyle(by: .value("Result", "Got it"))
-          .position(by: .value("Stack", "Result"))
+    ForEach(stats) { stat in
+        let day: Date = stat.date
 
-          BarMark(
-              x: .value("Day", stat.date, unit: .day),
-              y: .value("Count", stat.wrong)
-          )
-          .foregroundStyle(by: .value("Result", "Repeat"))
-          .position(by: .value("Stack", "Result"))
-      }
+        ForEach([Result.gotIt, Result.repeatWrong], id: \.self) { (result: Result) in
+            let count: Int = (result == .gotIt) ? stat.correct : stat.wrong
+            let dayValue: PlottableValue<Date> = .value("Day", day, unit: .day)
+            let countValue: PlottableValue<Int> = .value("Count", count)
+
+            BarMark(x: dayValue, y: countValue)
+                .foregroundStyle(by: .value("Result", result))
+                .position(by: .value("Result", result))
+        }
+    }
   }
 
   @ViewBuilder
   func dailyChart(stats: [DailyStat], firstDate: Date, lastDate: Date) -> some View {
+      // Precompute domains and constants to reduce generic inference
       let fullDomain: ClosedRange<Date> = firstDate ... lastDate
-      let resultDomain: [String] = ["Got it", "Repeat"]
-      let resultRange: [Color] = [Color.app(.success), Color.app(.error)]
-      let maxY: Int = stats.map { $0.correct + $0.wrong }.max() ?? 0
-      let yMax: Int = max(Int(Double(maxY) * 1.5), 1)
+      let successColor: Color = Color.app(.success)
+      let errorColor: Color = Color.app(.error)
 
-      Chart {
-          chartContent(for: stats)
-          // Show today's date as a vertical rule
-          let today = Calendar.current.startOfDay(for: Date())
+      // Compute y-axis max with explicit types
+      let maxYPerDay: [Int] = stats.map { (stat: DailyStat) -> Int in
+          stat.correct + stat.wrong
+      }
+      let maxYValue: Int = maxYPerDay.max() ?? 0
+      let yMax: Int = max(Int(Double(maxYValue) * 1.5), 1)
+
+      // Precompute today's start of day once
+      let today: Date = Calendar.current.startOfDay(for: Date())
+
+      // Build the chart with simpler modifiers
+      buildChart(
+          stats: stats,
+          today: today,
+          successColor: successColor,
+          errorColor: errorColor,
+          fullDomain: fullDomain,
+          yMax: yMax
+      )
+  }
+  
+  @ViewBuilder
+  private func buildChart(
+      stats: [DailyStat],
+      today: Date,
+      successColor: Color,
+      errorColor: Color,
+      fullDomain: ClosedRange<Date>,
+      yMax: Int
+  ) -> some View {
+      let chart = Chart {
+          // Bars for each day/result with explicit styles to avoid scale inference
+          ForEach(stats) { (stat: DailyStat) in
+              let day: Date = stat.date
+
+              // Correct
+              BarMark(
+                  x: .value("Day", day, unit: .day),
+                  y: .value("Count", stat.correct)
+              )
+              .foregroundStyle(successColor)
+              .position(by: .value("Result", "Correct"))
+
+              // Wrong
+              BarMark(
+                  x: .value("Day", day, unit: .day),
+                  y: .value("Count", stat.wrong)
+              )
+              .foregroundStyle(errorColor)
+              .position(by: .value("Result", "Wrong"))
+          }
+
+          // Vertical rule for today with simple annotation
           RuleMark(x: .value("Today", today, unit: .day))
               .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
               .foregroundStyle(Color.app(.accent_subtle))
               .annotation(position: .top, alignment: .center) {
-                  Text("Today").font(.caption2).foregroundStyle(Color.app(.accent_subtle))
-              }
-      }
-      .chartXScale(domain: fullDomain)
-      .chartScrollableAxes(.horizontal)
-      .chartXVisibleDomain(length: 86400 * 7)
-      .chartYScale(domain: 0 ... yMax)
-      .chartYAxis {
-          AxisMarks(position: .leading) {
-              AxisGridLine()
-              AxisValueLabel()
-          }
-      }
-      .background(Color.secondary.opacity(0.05))
-      .chartPlotStyle { plot in plot }
-      .chartForegroundStyleScale(domain: resultDomain, range: resultRange)
-      .chartXAxis {
-          let today = Calendar.current.startOfDay(for: Date())
-          AxisMarks(values: .automatic(desiredCount: 6)) { _ in
-              AxisGridLine()
-              AxisValueLabel(format: .dateTime.day().month(.abbreviated))
-          }
-          // Force a tick at today with a custom label
-          AxisMarks(values: [today]) { _ in
-              AxisGridLine()
-              AxisValueLabel {
                   Text("Today")
+                      .font(.caption2)
+                      .foregroundStyle(Color.app(.accent_subtle))
+              }
+      }
+      
+      applyChartModifiers(to: chart, fullDomain: fullDomain, yMax: yMax)
+  }
+  
+  @ViewBuilder
+  private func applyChartModifiers<Content: ChartContent>(
+      to chart: Chart<Content>,
+      fullDomain: ClosedRange<Date>,
+      yMax: Int
+  ) -> some View {
+      chart
+          .chartXScale(domain: fullDomain)
+          .chartScrollableAxes(.horizontal)
+          .chartXVisibleDomain(length: 86_400 * 7)
+          .chartYScale(domain: 0 ... yMax)
+          .chartYAxis { 
+              AxisMarks(position: .leading, values: .automatic) 
+          }
+          .background(Color.secondary.opacity(0.05))
+          .chartXAxis { 
+              AxisMarks(values: .automatic(desiredCount: 6)) { value in
+                  AxisGridLine()
+                  if let date: Date = value.as(Date.self) {
+                      AxisValueLabel {
+                          Text(date, format: Date.FormatStyle()
+                              .locale(Locale(identifier: "en_US"))
+                              .month(.twoDigits)
+                              .day(.twoDigits))
+                          .rotationEffect(.degrees(45), anchor: .topLeading)
+                          .font(.caption2)
+                          .fixedSize()
+                          .frame(width: 50, height: 40, alignment: .topLeading)
+                          .offset(x: 15, y: 5)
+                      }
+                  } else {
+                      AxisValueLabel()
+                  }
               }
           }
-      }
+          .padding(.bottom, 25)
   }
 
   @ViewBuilder
@@ -201,6 +261,7 @@ fileprivate final class StatisticsPreviewModel: ObservableObject {
         context.insert(ReviewEventEntity(timestamp: day1, isCorrect: true, card: card1))
         context.insert(ReviewEventEntity(timestamp: day1, isCorrect: false, card: card1))
         context.insert(ReviewEventEntity(timestamp: day2, isCorrect: true, card: card2))
+        context.insert(ReviewEventEntity(timestamp: day2, isCorrect: false, card: card2))
         context.insert(ReviewEventEntity(timestamp: now, isCorrect: true, card: card2))
         context.insert(ReviewEventEntity(timestamp: now, isCorrect: false, card: card2))
 
