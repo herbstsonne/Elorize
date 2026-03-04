@@ -109,6 +109,7 @@ private extension StatisticsView {
                   }
               }
               .frame(height: 160)
+              .padding(.bottom, -8) // Reduce space between chart and text below
               
               Text("Total events: \(reviewEvents.count)")
                   .font(.footnote)
@@ -190,15 +191,15 @@ private extension StatisticsView {
       // Filter stats to only show those within the domain
       let filteredStats = stats.filter { fullDomain.contains($0.date) }
       
-      // Calculate actual bar width (about 40% of allocated space to leave room for spacing)
-      let actualBarWidth = barWidth * 0.4
+      // Calculate actual bar width - make bars narrower so they appear closer together
+      let actualBarWidth = barWidth * 0.3
       
       let chart = Chart {
           // Bars for each day/result with explicit styles to avoid scale inference
           ForEach(filteredStats) { (stat: DailyStat) in
               let day: Date = stat.date
 
-              // Correct
+              // Correct bar
               BarMark(
                   x: .value("Day", day, unit: .day),
                   y: .value("Count", stat.correct),
@@ -207,7 +208,7 @@ private extension StatisticsView {
               .foregroundStyle(successColor)
               .position(by: .value("Result", "Correct"))
 
-              // Wrong
+              // Wrong bar
               BarMark(
                   x: .value("Day", day, unit: .day),
                   y: .value("Count", stat.wrong),
@@ -244,10 +245,12 @@ private extension StatisticsView {
       chart
           .chartXScale(domain: fullDomain)
           .chartYScale(domain: 0 ... yMax)
+          .chartPlotStyle { plotArea in
+              plotArea.background(Color.secondary.opacity(0.05))
+          }
           .chartYAxis { 
               AxisMarks(position: .leading, values: .automatic) 
           }
-          .background(Color.secondary.opacity(0.05))
           .chartXAxis { 
               AxisMarks(values: .stride(by: .day, count: 1)) { value in
                   AxisGridLine()
