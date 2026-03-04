@@ -71,12 +71,46 @@ private extension StatisticsView {
               let firstDate: Date = stats.first?.date ?? Date()
               let lastDate: Date = stats.last?.date ?? Date()
 
-              dailyChart(
-                  stats: stats,
-                  firstDate: firstDate,
-                  lastDate: lastDate
-              )
-              .frame(minHeight: 180)
+              GeometryReader { geometry in
+                  let barWidth: CGFloat = 45 // Width allocated per day
+                  let calculatedWidth = CGFloat(stats.count) * barWidth
+                  let contentWidth = max(calculatedWidth, 200)
+                  let trailingPadding: CGFloat = {
+                      if contentWidth > geometry.size.width {
+                          // Lots of data: add padding for "Today" positioning
+                          return geometry.size.width * 0.5
+                      } else {
+                          // Less data: fill remaining space to push content left
+                          return max(geometry.size.width - contentWidth - 20, 20)
+                      }
+                  }()
+                  
+                  ScrollViewReader { proxy in
+                      ScrollView(.horizontal, showsIndicators: true) {
+                          VStack(spacing: 0) {
+                              dailyChart(
+                                  stats: stats,
+                                  firstDate: firstDate,
+                                  lastDate: lastDate,
+                                  availableWidth: contentWidth,
+                                  barWidth: barWidth
+                              )
+                              .frame(height: 150)
+                              .frame(width: contentWidth)
+                              
+                              // Spacer for date labels
+                              Color.clear
+                                  .frame(height: 35)
+                          }
+                          .padding(.trailing, trailingPadding)
+                          .id("chart-content")
+                      }
+                      .defaultScrollAnchor(.trailing)
+                  }
+              }
+              .frame(height: 160)
+              .padding(.bottom, -8) // Reduce space between chart and text below
+              
               Text("Total events: \(reviewEvents.count)")
                   .font(.footnote)
                   .foregroundStyle(Color.app(.accent_subtle))
@@ -104,9 +138,7 @@ private extension StatisticsView {
   }
 
   @ViewBuilder
-  func dailyChart(stats: [DailyStat], firstDate: Date, lastDate: Date) -> some View {
-      // Precompute domains and constants to reduce generic inference
-      let fullDomain: ClosedRange<Date> = firstDate ... lastDate
+  func dailyChart(stats: [DailyStat], firstDate: Date, lastDate: Date, availableWidth: CGFloat, barWidth: CGFloat) -> some View {
       let successColor: Color = Color.app(.success)
       let errorColor: Color = Color.app(.error)
 
@@ -115,10 +147,13 @@ private extension StatisticsView {
           stat.correct + stat.wrong
       }
       let maxYValue: Int = maxYPerDay.max() ?? 0
-      let yMax: Int = max(Int(Double(maxYValue) * 1.5), 1)
+      let yMax: Int = max(Int(Double(maxYValue) * 1.2), 1)
 
-      // Precompute today's start of day once
+      // Determine the date range to display
       let today: Date = Calendar.current.startOfDay(for: Date())
+      
+      // Compute full domain based on stats count
+      let (statsToDisplay, fullDomain) = computeDisplayParameters(stats: stats, today: today)
 
       // Build the chart with simpler modifiers
       buildChart(
@@ -127,8 +162,20 @@ private extension StatisticsView {
           successColor: successColor,
           errorColor: errorColor,
           fullDomain: fullDomain,
-          yMax: yMax
+          yMax: yMax,
+          barWidth: barWidth
       )
+  }
+  
+  private func computeDisplayParameters(stats: [DailyStat], today: Date) -> ([DailyStat], ClosedRange<Date>) {
+      // Show all available data since the chart is now scrollable
+      let statsToDisplay = stats
+      
+      let startDate = statsToDisplay.first?.date ?? today
+      let endDate = statsToDisplay.last?.date ?? today
+      let fullDomain = startDate ... endDate
+      
+      return (statsToDisplay, fullDomain)
   }
   
   @ViewBuilder
@@ -138,39 +185,52 @@ private extension StatisticsView {
       successColor: Color,
       errorColor: Color,
       fullDomain: ClosedRange<Date>,
-      yMax: Int
+      yMax: Int,
+      barWidth: CGFloat
   ) -> some View {
+      // Filter stats to only show those within the domain
+      let filteredStats = stats.filter { fullDomain.contains($0.date) }
+      
+      // Calculate actual bar width - make bars narrower so they appear closer together
+      let actualBarWidth = barWidth * 0.3
+      
       let chart = Chart {
           // Bars for each day/result with explicit styles to avoid scale inference
-          ForEach(stats) { (stat: DailyStat) in
+          ForEach(filteredStats) { (stat: DailyStat) in
               let day: Date = stat.date
 
-              // Correct
+              // Correct bar
               BarMark(
                   x: .value("Day", day, unit: .day),
-                  y: .value("Count", stat.correct)
+                  y: .value("Count", stat.correct),
+                  width: .fixed(actualBarWidth)
               )
               .foregroundStyle(successColor)
               .position(by: .value("Result", "Correct"))
 
-              // Wrong
+              // Wrong bar
               BarMark(
                   x: .value("Day", day, unit: .day),
-                  y: .value("Count", stat.wrong)
+                  y: .value("Count", stat.wrong),
+                  width: .fixed(actualBarWidth)
               )
               .foregroundStyle(errorColor)
               .position(by: .value("Result", "Wrong"))
           }
 
-          // Vertical rule for today with simple annotation
-          RuleMark(x: .value("Today", today, unit: .day))
-              .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
-              .foregroundStyle(Color.app(.accent_subtle))
-              .annotation(position: .top, alignment: .center) {
-                  Text("Today")
-                      .font(.caption2)
-                      .foregroundStyle(Color.app(.accent_subtle))
-              }
+          // Only show "Today" marker if today is within the domain
+          if fullDomain.contains(today) {
+              RuleMark(x: .value("Today", today, unit: .day))
+                  .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 3]))
+                  .foregroundStyle(Color.app(.accent_subtle))
+                  .annotation(position: .top, alignment: .center, spacing: 4) {
+                      Text("Today")
+                          .font(.caption)
+                          .fontWeight(.medium)
+                          .foregroundStyle(Color.app(.accent_subtle))
+                          .id("today-marker")
+                  }
+          }
       }
       
       applyChartModifiers(to: chart, fullDomain: fullDomain, yMax: yMax)
@@ -184,34 +244,44 @@ private extension StatisticsView {
   ) -> some View {
       chart
           .chartXScale(domain: fullDomain)
-          .chartScrollableAxes(.horizontal)
-          .chartXVisibleDomain(length: 86_400 * 7)
           .chartYScale(domain: 0 ... yMax)
+          .chartPlotStyle { plotArea in
+              plotArea.background(Color.secondary.opacity(0.05))
+          }
           .chartYAxis { 
               AxisMarks(position: .leading, values: .automatic) 
           }
-          .background(Color.secondary.opacity(0.05))
           .chartXAxis { 
-              AxisMarks(values: .automatic(desiredCount: 6)) { value in
+              AxisMarks(values: .stride(by: .day, count: 1)) { value in
                   AxisGridLine()
-                  if let date: Date = value.as(Date.self) {
-                      AxisValueLabel {
+                  AxisValueLabel {
+                      if let date: Date = value.as(Date.self) {
                           Text(date, format: Date.FormatStyle()
                               .locale(Locale(identifier: "en_US"))
                               .month(.twoDigits)
                               .day(.twoDigits))
-                          .rotationEffect(.degrees(45), anchor: .topLeading)
                           .font(.caption2)
-                          .fixedSize()
-                          .frame(width: 50, height: 40, alignment: .topLeading)
-                          .offset(x: 15, y: 5)
+                          .rotationEffect(.degrees(45), anchor: .topLeading)
+                          .fixedSize(horizontal: true, vertical: true)
+                          .frame(width: 60, height: 40, alignment: .topLeading)
+                          .offset(x: 25, y: -4)
                       }
-                  } else {
-                      AxisValueLabel()
                   }
               }
           }
-          .padding(.bottom, 25)
+  }
+  
+  @ViewBuilder
+  private func DynamicAxisLabel(date date: Date) -> some View {
+      Text(date, format: Date.FormatStyle()
+          .locale(Locale(identifier: "en_US"))
+          .month(.twoDigits)
+          .day(.twoDigits))
+      .rotationEffect(.degrees(45), anchor: .topLeading)
+      .font(.caption2)
+      .fixedSize(horizontal: true, vertical: true)
+      .padding(.leading, 15)
+      .padding(.top, 5)
   }
 
   @ViewBuilder
@@ -256,12 +326,24 @@ fileprivate final class StatisticsPreviewModel: ObservableObject {
 
         // Sample review events for preview
         let now = Date()
-        let day1 = Calendar.current.date(byAdding: .day, value: -2, to: now)!
-        let day2 = Calendar.current.date(byAdding: .day, value: -1, to: now)!
+        let day1 = Calendar.current.date(byAdding: .day, value: -1, to: now)!
+        let day2 = Calendar.current.date(byAdding: .day, value: -2, to: now)!
+      let day3 = Calendar.current.date(byAdding: .day, value: -3, to: now)!
+      let day4 = Calendar.current.date(byAdding: .day, value: -4, to: now)!
+      let day5 = Calendar.current.date(byAdding: .day, value: -5, to: now)!
+      let day6 = Calendar.current.date(byAdding: .day, value: -6, to: now)!
+      let day7 = Calendar.current.date(byAdding: .day, value: -7, to: now)!
+      let day8 = Calendar.current.date(byAdding: .day, value: -8, to: now)!
+      context.insert(ReviewEventEntity(timestamp: day8, isCorrect: true, card: card2))
+      context.insert(ReviewEventEntity(timestamp: day7, isCorrect: false, card: card2))
+      context.insert(ReviewEventEntity(timestamp: day6, isCorrect: true, card: card2))
+      context.insert(ReviewEventEntity(timestamp: day5, isCorrect: false, card: card2))
+      context.insert(ReviewEventEntity(timestamp: day4, isCorrect: true, card: card2))
+      context.insert(ReviewEventEntity(timestamp: day3, isCorrect: false, card: card2))
+      context.insert(ReviewEventEntity(timestamp: day2, isCorrect: true, card: card2))
+      context.insert(ReviewEventEntity(timestamp: day2, isCorrect: false, card: card2))
         context.insert(ReviewEventEntity(timestamp: day1, isCorrect: true, card: card1))
         context.insert(ReviewEventEntity(timestamp: day1, isCorrect: false, card: card1))
-        context.insert(ReviewEventEntity(timestamp: day2, isCorrect: true, card: card2))
-        context.insert(ReviewEventEntity(timestamp: day2, isCorrect: false, card: card2))
         context.insert(ReviewEventEntity(timestamp: now, isCorrect: true, card: card2))
         context.insert(ReviewEventEntity(timestamp: now, isCorrect: false, card: card2))
 
