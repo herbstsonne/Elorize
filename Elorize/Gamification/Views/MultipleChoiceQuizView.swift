@@ -4,30 +4,25 @@ import SwiftData
 /// Multiple choice quiz view for scanned flashcards
 struct MultipleChoiceQuizView: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel: MultipleChoiceQuizViewModel
     
-    let cards: [FlashCard]
-    let sourceText: String
-    
-    @State private var currentIndex = 0
-    @State private var selectedAnswer: String?
-    @State private var showingResult = false
-    @State private var userAnswers: [QuizResult] = []
-    @State private var quizCompleted = false
-    @State private var score = 0
-    @State private var quizQuestions: [QuizQuestion] = []
+    init(cards: [FlashCard], sourceText: String) {
+        _viewModel = StateObject(wrappedValue: MultipleChoiceQuizViewModel(cards: cards, sourceText: sourceText))
+    }
     
     var body: some View {
         NavigationStack {
             ZStack {
-                if quizCompleted {
+              BackgroundColorView()
+                if viewModel.quizCompleted {
                     resultsView
-                } else if !quizQuestions.isEmpty {
+                } else if !viewModel.quizQuestions.isEmpty {
                     questionView
                 } else {
                     loadingView
                 }
             }
-            .navigationTitle("Multiple Choice Quiz")
+            .foregroundStyle(Color.app(.accent_default))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -36,16 +31,16 @@ struct MultipleChoiceQuizView: View {
                     }
                 }
                 
-                if !quizCompleted && !quizQuestions.isEmpty {
+                if !viewModel.quizCompleted && !viewModel.quizQuestions.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Text("\(currentIndex + 1)/\(quizQuestions.count)")
+                        Text("\(viewModel.currentIndex + 1)/\(viewModel.quizQuestions.count)")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                 }
             }
             .onAppear {
-                generateQuizQuestions()
+                viewModel.generateQuizQuestions()
             }
         }
     }
@@ -63,19 +58,19 @@ struct MultipleChoiceQuizView: View {
     private var questionView: some View {
         VStack(spacing: 20) {
             // Progress bar
-            ProgressView(value: Double(currentIndex), total: Double(quizQuestions.count))
+            ProgressView(value: Double(viewModel.currentIndex), total: Double(viewModel.quizQuestions.count))
                 .tint(Color.app(.accent_default))
                 .padding(.horizontal)
             
             ScrollView {
                 VStack(spacing: 24) {
-                    if currentIndex < quizQuestions.count {
-                        let question = quizQuestions[currentIndex]
+                    if viewModel.currentIndex < viewModel.quizQuestions.count {
+                        let question = viewModel.quizQuestions[viewModel.currentIndex]
                         
                         // Question card
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
-                                Text("Question \(currentIndex + 1)")
+                                Text("Question \(viewModel.currentIndex + 1)")
                                     .font(.caption)
                                     .fontWeight(.semibold)
                                     .foregroundStyle(Color.app(.background_primary))
@@ -91,6 +86,7 @@ struct MultipleChoiceQuizView: View {
                                 .font(.title3)
                                 .fontWeight(.medium)
                                 .fixedSize(horizontal: false, vertical: true)
+                                .foregroundStyle(Color.app(.accent_default))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
@@ -114,12 +110,14 @@ struct MultipleChoiceQuizView: View {
                         .padding(.horizontal)
                         
                         // Next button (shown after selecting an answer)
-                        if showingResult {
+                        if viewModel.showingResult {
                             Button {
-                                moveToNextQuestion()
+                                withAnimation {
+                                    viewModel.moveToNextQuestion()
+                                }
                             } label: {
-                                Label(currentIndex + 1 < quizQuestions.count ? "Next Question" : "See Results", 
-                                      systemImage: currentIndex + 1 < quizQuestions.count ? "arrow.right" : "checkmark")
+                                Label(viewModel.currentIndex + 1 < viewModel.quizQuestions.count ? "Next Question" : "See Results", 
+                                      systemImage: viewModel.currentIndex + 1 < viewModel.quizQuestions.count ? "arrow.right" : "checkmark")
                                     .font(.headline)
                                     .frame(maxWidth: .infinity)
                                     .padding()
@@ -140,8 +138,10 @@ struct MultipleChoiceQuizView: View {
     @ViewBuilder
     private func answerButton(option: String, question: QuizQuestion) -> some View {
         Button {
-            if !showingResult {
-                selectAnswer(option, for: question)
+            if !viewModel.showingResult {
+                withAnimation(.spring(response: 0.3)) {
+                    viewModel.selectAnswer(option, for: question)
+                }
             }
         } label: {
             HStack {
@@ -152,13 +152,13 @@ struct MultipleChoiceQuizView: View {
                 
                 Spacer()
                 
-                if showingResult {
+                if viewModel.showingResult {
                     if option == question.correctAnswer {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(Color.app(.gold_primary))
-                    } else if option == selectedAnswer {
+                    } else if option == viewModel.selectedAnswer {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.red)
+                        .foregroundStyle(Color.app(.error))
                     }
                 }
             }
@@ -171,45 +171,45 @@ struct MultipleChoiceQuizView: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
-        .disabled(showingResult)
+        .disabled(viewModel.showingResult)
         .buttonStyle(.plain)
     }
     
     private func textColor(for option: String, question: QuizQuestion) -> Color {
-        if !showingResult {
-            return selectedAnswer == option ? Color.app(.accent_default) : .primary
+        if !viewModel.showingResult {
+            return Color.app(.accent_default)
         }
         
         if option == question.correctAnswer {
             return Color.app(.gold_primary)
-        } else if option == selectedAnswer {
-            return .red
+        } else if option == viewModel.selectedAnswer {
+          return Color.app(.error)
         }
-        return .secondary
+        return Color.app(.accent_default)
     }
     
     private func backgroundColor(for option: String, question: QuizQuestion) -> Color {
-        if !showingResult {
-            return selectedAnswer == option ? Color.app(.accent_default).opacity(0.1) : Color.app(.background_secondary)
+        if !viewModel.showingResult {
+            return viewModel.selectedAnswer == option ? Color.app(.accent_default).opacity(0.1) : Color.app(.background_secondary)
         }
         
         if option == question.correctAnswer {
             return Color.app(.gold_primary).opacity(0.15)
-        } else if option == selectedAnswer {
-            return Color.red.opacity(0.15)
+        } else if option == viewModel.selectedAnswer {
+          return Color.app(.error)
         }
         return Color.app(.background_secondary)
     }
     
     private func borderColor(for option: String, question: QuizQuestion) -> Color {
-        if !showingResult {
-            return selectedAnswer == option ? Color.app(.accent_default) : Color.clear
+        if !viewModel.showingResult {
+            return viewModel.selectedAnswer == option ? Color.app(.accent_default) : Color.clear
         }
         
         if option == question.correctAnswer {
             return Color.app(.gold_primary)
-        } else if option == selectedAnswer {
-            return .red
+        } else if option == viewModel.selectedAnswer {
+            return Color.app(.error)
         }
         return Color.clear
     }
@@ -219,27 +219,26 @@ struct MultipleChoiceQuizView: View {
             VStack(spacing: 24) {
                 // Score summary
                 VStack(spacing: 16) {
-                    Image(systemName: scoreIcon)
+                    Image(systemName: viewModel.scoreIcon)
                         .font(.system(size: 60))
-                        .foregroundStyle(scoreColor)
+                        .foregroundStyle(viewModel.scoreColor)
                     
                     Text("Quiz Complete!")
                         .font(.title)
                         .fontWeight(.bold)
                     
-                    Text("\(score) / \(quizQuestions.count)")
+                    Text("\(viewModel.score) / \(viewModel.quizQuestions.count)")
                         .font(.system(size: 48, weight: .bold))
-                        .foregroundStyle(scoreColor)
+                        .foregroundStyle(viewModel.scoreColor)
                     
-                    Text(scoreMessage)
+                    Text(viewModel.scoreMessage)
                         .font(.title3)
                         .foregroundStyle(.secondary)
                     
-                    let percentage = (Double(score) / Double(quizQuestions.count)) * 100
-                    Text("\(Int(percentage))%")
+                    Text("\(Int(viewModel.scorePercentage * 100))%")
                         .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundStyle(scoreColor)
+                        .foregroundStyle(viewModel.scoreColor)
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -259,7 +258,7 @@ struct MultipleChoiceQuizView: View {
                         .fontWeight(.bold)
                         .padding(.horizontal)
                     
-                    ForEach(Array(userAnswers.enumerated()), id: \.offset) { index, result in
+                    ForEach(Array(viewModel.userAnswers.enumerated()), id: \.offset) { index, result in
                         reviewCard(for: result, index: index)
                     }
                 }
@@ -267,7 +266,9 @@ struct MultipleChoiceQuizView: View {
                 // Action buttons
                 VStack(spacing: 12) {
                     Button {
-                        retakeQuiz()
+                        withAnimation {
+                            viewModel.retakeQuiz()
+                        }
                     } label: {
                         Label("Retake Quiz", systemImage: "arrow.clockwise")
                             .font(.headline)
@@ -302,7 +303,7 @@ struct MultipleChoiceQuizView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: result.correct ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundStyle(result.correct ? Color.app(.gold_primary) : .red)
+                    .foregroundStyle(result.correct ? Color.app(.gold_primary) : Color.app(.error))
                 
                 Text("Question \(index + 1)")
                     .font(.headline)
@@ -321,7 +322,7 @@ struct MultipleChoiceQuizView: View {
                         .foregroundStyle(.secondary)
                     Text(result.userAnswer)
                         .font(.caption)
-                        .foregroundStyle(result.correct ? Color.app(.gold_primary) : .red)
+                        .foregroundStyle(result.correct ? Color.app(.gold_primary) : Color.app(.error))
                 }
                 
                 if !result.correct {
@@ -339,127 +340,13 @@ struct MultipleChoiceQuizView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(result.correct ? Color.app(.gold_primary).opacity(0.1) : Color.red.opacity(0.1))
+                .fill(result.correct ? Color.app(.gold_primary).opacity(0.1) : Color.app(.error).opacity(0.1))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(result.correct ? Color.app(.gold_primary) : Color.red, lineWidth: 1)
+                .stroke(result.correct ? Color.app(.gold_primary) : Color.app(.error), lineWidth: 1)
         )
         .padding(.horizontal)
-    }
-    
-    private var scoreIcon: String {
-        let percentage = Double(score) / Double(quizQuestions.count)
-        if percentage >= 0.9 {
-            return "star.fill"
-        } else if percentage >= 0.7 {
-            return "hand.thumbsup.fill"
-        } else if percentage >= 0.5 {
-            return "face.smiling"
-        } else {
-            return "book.fill"
-        }
-    }
-    
-    private var scoreColor: Color {
-        let percentage = Double(score) / Double(quizQuestions.count)
-        if percentage >= 0.9 {
-            return .green
-        } else if percentage >= 0.7 {
-            return .blue
-        } else if percentage >= 0.5 {
-            return .orange
-        } else {
-            return .red
-        }
-    }
-    
-    private var scoreMessage: String {
-        let percentage = Double(score) / Double(quizQuestions.count)
-        if percentage >= 0.9 {
-            return "Outstanding! 🎉"
-        } else if percentage >= 0.7 {
-            return "Great job! 👍"
-        } else if percentage >= 0.5 {
-            return "Good effort! 📚"
-        } else {
-            return "Keep studying! 💪"
-        }
-    }
-    
-    private func generateQuizQuestions() {
-        // Shuffle cards
-        let shuffledCards = cards.shuffled()
-        
-        quizQuestions = shuffledCards.map { card in
-            // Generate wrong answers from other cards
-            var wrongAnswers = cards
-                .filter { $0.back != card.back }
-                .map { $0.back }
-                .shuffled()
-                .prefix(3)
-            
-            // If we don't have enough wrong answers, generate some generic ones
-            while wrongAnswers.count < 3 {
-                wrongAnswers.append("Not applicable")
-            }
-            
-            // Combine correct and wrong answers
-            var options = Array(wrongAnswers) + [card.back]
-            options.shuffle()
-            
-            return QuizQuestion(
-                question: card.front,
-                options: options,
-                correctAnswer: card.back
-            )
-        }
-    }
-    
-    private func selectAnswer(_ answer: String, for question: QuizQuestion) {
-        selectedAnswer = answer
-        
-        withAnimation(.spring(response: 0.3)) {
-            showingResult = true
-        }
-        
-        let isCorrect = answer == question.correctAnswer
-        if isCorrect {
-            score += 1
-        }
-        
-        userAnswers.append(QuizResult(
-            question: question.question,
-            userAnswer: answer,
-            correctAnswer: question.correctAnswer,
-            correct: isCorrect
-        ))
-    }
-    
-    private func moveToNextQuestion() {
-        if currentIndex + 1 < quizQuestions.count {
-            withAnimation {
-                currentIndex += 1
-                selectedAnswer = nil
-                showingResult = false
-            }
-        } else {
-            withAnimation {
-                quizCompleted = true
-            }
-        }
-    }
-    
-    private func retakeQuiz() {
-        withAnimation {
-            currentIndex = 0
-            selectedAnswer = nil
-            showingResult = false
-            userAnswers = []
-            score = 0
-            quizCompleted = false
-            generateQuizQuestions()
-        }
     }
 }
 
