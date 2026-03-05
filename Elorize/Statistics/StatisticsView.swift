@@ -98,18 +98,19 @@ private extension StatisticsView {
                               .frame(height: 150)
                               .frame(width: contentWidth)
                               
-                              // Spacer for date labels
+                              // Spacer for date labels - increased for rotated text
                               Color.clear
-                                  .frame(height: 35)
+                                  .frame(height: 60)
                           }
                           .padding(.trailing, trailingPadding)
+                          .padding(.bottom, 15) // Extra padding to prevent clipping
                           .id("chart-content")
                       }
                       .defaultScrollAnchor(.trailing)
                   }
               }
-              .frame(height: 160)
-              .padding(.bottom, -8) // Reduce space between chart and text below
+              .frame(height: 225) // Increased height to accommodate rotated labels
+              .padding(.bottom, -100) // Reduce space between chart and text below
               
               Text("Total events: \(reviewEvents.count)")
                   .font(.footnote)
@@ -236,13 +237,27 @@ private extension StatisticsView {
       applyChartModifiers(to: chart, fullDomain: fullDomain, yMax: yMax)
   }
   
-  @ViewBuilder
   private func applyChartModifiers<Content: ChartContent>(
       to chart: Chart<Content>,
       fullDomain: ClosedRange<Date>,
       yMax: Int
   ) -> some View {
-      chart
+      // Calculate days in range to determine stride
+      let daysInRange = Calendar.current.dateComponents([.day], from: fullDomain.lowerBound, to: fullDomain.upperBound).day ?? 1
+      
+      // Adjust stride based on number of days to prevent overlap
+      let labelStride: Int
+      if daysInRange > 30 {
+          labelStride = 7 // Show weekly labels for month+ views
+      } else if daysInRange > 14 {
+          labelStride = 3 // Show every 3rd day for 2-4 weeks
+      } else if daysInRange > 7 {
+          labelStride = 2 // Show every other day for 1-2 weeks
+      } else {
+          labelStride = 1 // Show all days for week or less
+      }
+      
+      return chart
           .chartXScale(domain: fullDomain)
           .chartYScale(domain: 0 ... yMax)
           .chartPlotStyle { plotArea in
@@ -252,19 +267,22 @@ private extension StatisticsView {
               AxisMarks(position: .leading, values: .automatic) 
           }
           .chartXAxis { 
-              AxisMarks(values: .stride(by: .day, count: 1)) { value in
+              AxisMarks(values: .stride(by: .day, count: labelStride)) { value in
                   AxisGridLine()
                   AxisValueLabel {
                       if let date: Date = value.as(Date.self) {
-                          Text(date, format: Date.FormatStyle()
-                              .locale(Locale(identifier: "en_US"))
-                              .month(.twoDigits)
-                              .day(.twoDigits))
-                          .font(.caption2)
-                          .rotationEffect(.degrees(45), anchor: .topLeading)
-                          .fixedSize(horizontal: true, vertical: true)
-                          .frame(width: 60, height: 40, alignment: .topLeading)
-                          .offset(x: 25, y: -4)
+                          VStack(spacing: 0) {
+                              Spacer()
+                                  .frame(height: 8)
+                              Text(date, format: Date.FormatStyle()
+                                  .locale(Locale(identifier: "en_US"))
+                                  .month(.twoDigits)
+                                  .day(.twoDigits))
+                              .font(.caption2)
+                              .rotationEffect(.degrees(45), anchor: .center)
+                              .fixedSize(horizontal: true, vertical: true)
+                              .frame(width: 50, height: 50, alignment: .topLeading)
+                          }
                       }
                   }
               }

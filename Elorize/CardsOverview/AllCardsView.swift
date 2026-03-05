@@ -79,7 +79,7 @@ struct AllCardsView: View {
       AddSubjectView()
     }
     .sheet(isPresented: $viewModel.showingAddSheet) {
-      AddFlashCardView()
+      AddCardSelectionView()
         .environmentObject(viewModel)
     }
     .toolbarBackground(.visible, for: .navigationBar)

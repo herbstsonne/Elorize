@@ -1,18 +1,19 @@
 import SwiftUI
+internal import Combine
 
 struct XPProgressCompactView: View {
-  @EnvironmentObject var viewModel: HomeViewModel
-  @State private var showingDetails = false
+  @EnvironmentObject var homeViewModel: HomeViewModel
+  @StateObject private var viewModel = XPProgressCompactViewModel()
 
   var body: some View {
     HStack(spacing: 10) {
       Button {
-        showingDetails = true
+        viewModel.openDetails()
       } label: {
-        Text("Lv. \(viewModel.xpState.level)")
+        Text("Lv. \(viewModel.level)")
           .font(.footnote)
           .foregroundStyle(Color.app(.accent_subtle))
-        ProgressView(value: viewModel.xpState.levelProgress)
+        ProgressView(value: viewModel.levelProgress)
           .progressViewStyle(.linear)
           .frame(width: 60, height: 16)
           .contentShape(Rectangle())
@@ -26,14 +27,20 @@ struct XPProgressCompactView: View {
       .frame(minWidth: 140)
       .accessibilityLabel("Open XP details")
     }
-    .accessibilityLabel("Level \(viewModel.xpState.level), progress \(Int(viewModel.xpState.levelProgress * 100)) percent")
+    .accessibilityLabel(viewModel.accessibilityLabel)
     .padding(.horizontal, 6)
     .padding(.vertical, 2)
-    .accessibilityHint("Opens XP and level details.")
+    .accessibilityHint(viewModel.accessibilityHint)
     .padding(.trailing, 4)
-    .sheet(isPresented: $showingDetails) {
-      XPDetailsView()
-        .environmentObject(viewModel)
+    .sheet(isPresented: $viewModel.showingDetails) {
+      XPDetailsView(viewModel: viewModel)
+    }
+    .onAppear {
+      viewModel.configure(with: homeViewModel)
+    }
+    .onChange(of: homeViewModel.xpState) { _, _ in
+      // Trigger view update when XP state changes
+      viewModel.objectWillChange.send()
     }
   }
 }
@@ -43,7 +50,7 @@ struct XPProgressCompactView: View {
     .environmentObject(HomeViewModel())
 }
 private struct XPDetailsView: View {
-  @EnvironmentObject var viewModel: HomeViewModel
+  @ObservedObject var viewModel: XPProgressCompactViewModel
   @Environment(\.dismiss) private var dismiss
 
   var body: some View {
@@ -53,19 +60,19 @@ private struct XPDetailsView: View {
           HStack {
             Text("Current level")
             Spacer()
-            Text("\(viewModel.xpState.level)")
+            Text("\(viewModel.level)")
           }
           HStack {
             Text("Total XP")
             Spacer()
-            Text("\(viewModel.xpState.xp)")
+            Text("\(viewModel.totalXP)")
           }
           HStack {
             Text("XP in this level")
             Spacer()
-            Text("\(viewModel.xpState.xpIntoCurrentLevel) / \(viewModel.xpState.xpForNextLevel)")
+            Text("\(viewModel.xpIntoCurrentLevel) / \(viewModel.xpForNextLevel)")
           }
-          ProgressView(value: viewModel.xpState.levelProgress)
+          ProgressView(value: viewModel.levelProgress)
             .progressViewStyle(.linear)
             .tint(Color.app(.accent_default))
         }
@@ -79,15 +86,12 @@ private struct XPDetailsView: View {
 
         Section("Tips for the next level") {
           VStack(alignment: .leading, spacing: 8) {
-            let remaining = max(0, viewModel.xpState.xpForNextLevel - viewModel.xpState.xpIntoCurrentLevel)
-            Text("• XP needed: \(remaining)")
-            Text("• Example: \(remaining / 5) correct answers or a mix of correct/incorrect")
+            Text("• XP needed: \(viewModel.xpRemaining)")
+            Text("• Example: \(viewModel.correctAnswersNeeded) correct answers or a mix of correct/incorrect")
             Text("• Study regularly: Consistent sessions help you level up faster")
           }
         }
       }
-      .navigationTitle("Your Progress")
-      .navigationBarTitleDisplayMode(.inline)
       .scrollContentBackground(.hidden)
       .background(BackgroundColorView().ignoresSafeArea())
       .foregroundStyle(Color.app(.accent_subtle))

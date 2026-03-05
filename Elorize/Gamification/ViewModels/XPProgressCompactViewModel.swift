@@ -1,0 +1,72 @@
+import SwiftUI
+internal import Combine
+
+@MainActor
+final class XPProgressCompactViewModel: ObservableObject {
+    @Published var showingDetails = false
+    
+    weak var homeViewModel: HomeViewModel?
+    private var cancellables = Set<AnyCancellable>()
+    
+    init(homeViewModel: HomeViewModel? = nil) {
+        self.homeViewModel = homeViewModel
+    }
+    
+    // MARK: - Computed Properties
+    
+    var level: Int {
+        homeViewModel?.xpState.level ?? 1
+    }
+    
+    var levelProgress: Double {
+        homeViewModel?.xpState.levelProgress ?? 0.0
+    }
+    
+    var totalXP: Int {
+        homeViewModel?.xpState.xp ?? 0
+    }
+    
+    var xpIntoCurrentLevel: Int {
+        homeViewModel?.xpState.xpIntoCurrentLevel ?? 0
+    }
+    
+    var xpForNextLevel: Int {
+        homeViewModel?.xpState.xpForNextLevel ?? 100
+    }
+    
+    var xpRemaining: Int {
+        max(0, xpForNextLevel - xpIntoCurrentLevel)
+    }
+    
+    var correctAnswersNeeded: Int {
+        xpRemaining / 5
+    }
+    
+    var levelProgressPercentage: Int {
+        Int(levelProgress * 100)
+    }
+    
+    // MARK: - Accessibility
+    
+    var accessibilityLabel: String {
+        "Level \(level), progress \(levelProgressPercentage) percent"
+    }
+    
+    var accessibilityHint: String {
+        "Opens XP and level details."
+    }
+    
+    // MARK: - Actions
+    
+    func openDetails() {
+        showingDetails = true
+    }
+    
+    func closeDetails() {
+        showingDetails = false
+    }
+    
+    func configure(with homeViewModel: HomeViewModel) {
+        self.homeViewModel = homeViewModel
+    }
+}
