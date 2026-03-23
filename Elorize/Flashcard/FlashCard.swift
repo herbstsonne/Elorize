@@ -75,7 +75,14 @@ public struct FlashCard: Identifiable, Codable, Hashable {
                 intervalDays = 6
             default:
                 // Next interval = previous * EF, rounded
-                intervalDays = max(1, Int(round(Double(intervalDays) * easeFactor)))
+                let nextInterval = round(Double(intervalDays) * easeFactor)
+                // Cap at a reasonable maximum to prevent overflow (e.g., ~10 years)
+                let maxDays = 3650
+                if nextInterval >= Double(maxDays) {
+                    intervalDays = maxDays
+                } else {
+                    intervalDays = max(1, Int(nextInterval))
+                }
             }
         }
 

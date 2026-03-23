@@ -60,11 +60,36 @@ class HomeViewModel: ObservableObject {
 
   // MARK: - Gamification
   private var gamificationService: GamificationService!
+  @Published var showLevelUpCelebration = false
+  @Published var celebrationScale: CGFloat = 0.3
+  private var lastObservedLevel: Int = 1
+  private var isInitialLoad = true
+  
   @Published var xpState: XPLevelState = XPLevelState(xp: 0, level: 1, xpForNextLevel: 100, xpIntoCurrentLevel: 0) {
     didSet {
       // Persist XP and Level whenever state updates
       storedTotalXP = xpState.xp
       storedLevel = xpState.level
+      
+      // Check for level up (but not on initial load)
+      if xpState.level > lastObservedLevel && !isInitialLoad {
+        showLevelUpCelebration = true
+        celebrationScale = 0.3
+        
+        // Animate to large size over 2 seconds
+        withAnimation(.spring(response: 1.5, dampingFraction: 0.6)) {
+          celebrationScale = 2.0
+        }
+        
+        // Auto-hide after the animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+          withAnimation(.easeOut(duration: 0.4)) {
+            self?.showLevelUpCelebration = false
+          }
+        }
+      }
+      lastObservedLevel = xpState.level
+      isInitialLoad = false
     }
   }
 
@@ -131,6 +156,7 @@ class HomeViewModel: ObservableObject {
     self.gamificationService = GamificationService(initialXP: storedTotalXP, initialLevel: storedLevel)
     let restored = gamificationService.state
     self.xpState = restored
+    self.lastObservedLevel = restored.level
   }
   
   func setRepository(_ exRepository: ExerciseRepository, _ subRepository: SubjectRepository, _ flashcardsRepository: FlashcardRepositoryProtocol?) {

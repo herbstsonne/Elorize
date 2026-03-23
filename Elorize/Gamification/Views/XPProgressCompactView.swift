@@ -38,9 +38,10 @@ struct XPProgressCompactView: View {
     .onAppear {
       viewModel.configure(with: homeViewModel)
     }
-    .onChange(of: homeViewModel.xpState) { _, _ in
+    .onChange(of: homeViewModel.xpState) { _, new in
       // Trigger view update when XP state changes
       viewModel.objectWillChange.send()
+      viewModel.handleLevelChange(new.level)
     }
   }
 }

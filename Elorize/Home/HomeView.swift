@@ -28,6 +28,23 @@ struct HomeView: View {
       VStack {
         showFlashCardSection()
       }
+      
+      // Celebration overlay in center of screen
+      if viewModel.showLevelUpCelebration {
+        Color.clear
+          .ignoresSafeArea()
+          .overlay(
+            VStack(spacing: 16) {
+              Text("🎉")
+                .font(.system(size: 80))
+            }
+            .offset(y: -100)
+            .scaleEffect(viewModel.celebrationScale)
+            .opacity(viewModel.showLevelUpCelebration ? 1.0 : 0.0)
+            .transition(.opacity)
+          )
+          .allowsHitTesting(false)
+      }
     }
     .onAppear {
       viewModel.flashCardEntities = flashCardEntities
