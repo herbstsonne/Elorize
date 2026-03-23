@@ -6,8 +6,8 @@ struct MultipleChoiceQuizView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: MultipleChoiceQuizViewModel
     
-    init(cards: [FlashCard], sourceText: String) {
-        _viewModel = StateObject(wrappedValue: MultipleChoiceQuizViewModel(cards: cards, sourceText: sourceText))
+    init(cards: [FlashCard], sourceText: String, onQuizComplete: ((Int, Int) -> Void)? = nil) {
+        _viewModel = StateObject(wrappedValue: MultipleChoiceQuizViewModel(cards: cards, sourceText: sourceText, onQuizComplete: onQuizComplete))
     }
     
     var body: some View {
@@ -280,6 +280,7 @@ struct MultipleChoiceQuizView: View {
                     }
                     
                     Button {
+                        viewModel.awardXPOnCompletion()
                         dismiss()
                     } label: {
                         Text("Done")

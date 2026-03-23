@@ -108,6 +108,7 @@ struct QuizResultsView: View {
                 }
                 
                 Button {
+                  viewModel.awardXPOnCompletion()
                   dismiss()
                 } label: {
                   Text("Done")

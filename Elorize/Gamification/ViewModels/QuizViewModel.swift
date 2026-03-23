@@ -8,13 +8,16 @@ final class QuizViewModel: ObservableObject {
     @Published var userAnswers: [QuizAnswer] = []
     @Published var quizCompleted = false
     @Published var score = 0
+    @Published var hasAwardedXP = false
     
     let cards: [FlashCard]
     let sourceText: String
+    let onQuizComplete: ((Int, Int) -> Void)?
     
-    init(cards: [FlashCard], sourceText: String) {
+    init(cards: [FlashCard], sourceText: String, onQuizComplete: ((Int, Int) -> Void)? = nil) {
         self.cards = cards
         self.sourceText = sourceText
+        self.onQuizComplete = onQuizComplete
     }
     
     func answerQuestion(correct: Bool) {
@@ -36,8 +39,19 @@ final class QuizViewModel: ObservableObject {
             showingAnswer = false
         } else {
             // Quiz completed
+            print("✅ Quiz completed with score: \(score)/\(cards.count)")
             quizCompleted = true
         }
+    }
+    
+    func awardXPOnCompletion() {
+        guard !hasAwardedXP else {
+            print("⚠️ XP already awarded for this quiz")
+            return
+        }
+        print("✅ Awarding XP on Done button press")
+        onQuizComplete?(score, cards.count)
+        hasAwardedXP = true
     }
     
     func retakeQuiz() {
@@ -46,6 +60,7 @@ final class QuizViewModel: ObservableObject {
         userAnswers = []
         score = 0
         quizCompleted = false
+        hasAwardedXP = false
     }
     
     var scorePercentage: Double {

@@ -112,7 +112,10 @@ struct HomeView: View {
         cards: viewModel.filteredByOutcome.map { entity in
           FlashCard(front: entity.front, back: entity.back)
         },
-        sourceText: "Exercise Quiz"
+        sourceText: "Exercise Quiz",
+        onQuizComplete: { score, total in
+          viewModel.awardQuizXP(score: score, total: total)
+        }
       )
     }
     .sheet(isPresented: $showingMultipleChoiceQuiz) {
@@ -120,7 +123,10 @@ struct HomeView: View {
         cards: viewModel.filteredByOutcome.map { entity in
           FlashCard(front: entity.front, back: entity.back)
         },
-        sourceText: "Exercise Quiz"
+        sourceText: "Exercise Quiz",
+        onQuizComplete: { score, total in
+          viewModel.awardQuizXP(score: score, total: total)
+        }
       )
     }
     .fullScreenCover(isPresented: .constant(!hasSeenOnboarding)) {

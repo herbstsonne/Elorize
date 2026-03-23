@@ -12,9 +12,13 @@ public final class GamificationService: @unchecked Sendable {
   public init(initialXP: Int = 0, initialLevel: Int = 1, baseNextLevelXP: Int = 100, growth: Double = 1.2) {
     self.baseNextLevelXP = max(10, baseNextLevelXP)
     self.growth = max(1.0, growth)
-    // Compute derived state for the given starting point
-    let (xpForNext, intoCurrent) = GamificationService.split(xp: initialXP, level: initialLevel, base: self.baseNextLevelXP, growth: self.growth)
-    self.state = XPLevelState(xp: initialXP, level: initialLevel, xpForNextLevel: xpForNext, xpIntoCurrentLevel: intoCurrent)
+    
+    // Use consistent calculation: simple linear progression
+    let totalXP = max(0, initialXP)
+    let intoCurrent = totalXP % self.baseNextLevelXP
+    let level = Int(totalXP / self.baseNextLevelXP) + 1
+    
+    self.state = XPLevelState(xp: totalXP, level: level, xpForNextLevel: self.baseNextLevelXP, xpIntoCurrentLevel: intoCurrent)
   }
 
   /// Adds XP and handles level-ups as needed.
@@ -22,8 +26,11 @@ public final class GamificationService: @unchecked Sendable {
   public func addXP(_ delta: Int) -> XPLevelState {
     guard delta != 0 else { return state }
     let totalXP = max(0, state.xp + delta)
+    
+    // Use simple linear progression: every baseNextLevelXP grants one level
     let intoCurrent = totalXP % baseNextLevelXP
     let level = Int(totalXP / baseNextLevelXP) + 1
+    
     state = XPLevelState(xp: totalXP, level: level, xpForNextLevel: baseNextLevelXP, xpIntoCurrentLevel: intoCurrent)
     return state
   }

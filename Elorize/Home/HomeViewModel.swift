@@ -189,6 +189,14 @@ class HomeViewModel: ObservableObject {
     xpState = gamificationService.addXP(5)
   }
   
+  func awardQuizXP(score: Int, total: Int) {
+    // Award 1 XP per correct answer
+    let totalXP = score
+    print("🎯 Quiz completed: \(score)/\(total) - Awarding \(totalXP) XP")
+    xpState = gamificationService.addXP(totalXP)
+    print("🎯 New XP state: Level \(xpState.level), Total XP: \(xpState.xp)")
+  }
+  
   func advanceIndex() {
     currentIndex = (currentIndex + 1) % max(1, filteredByOutcome.count)
   }
