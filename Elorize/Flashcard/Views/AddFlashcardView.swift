@@ -1,5 +1,7 @@
 import SwiftUI
+import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct AddFlashCardView: View {
 
@@ -51,6 +53,14 @@ struct AddFlashCardView: View {
                     viewModel.localSubjects.isEmpty)
         }
       }
+      .fullScreenCover(isPresented: $viewModel.showingFrontCamera) {
+        CameraPicker(imageData: $viewModel.frontImageData)
+          .ignoresSafeArea()
+      }
+      .fullScreenCover(isPresented: $viewModel.showingBackCamera) {
+        CameraPicker(imageData: $viewModel.backImageData)
+          .ignoresSafeArea()
+      }
 		}
   }
 }
@@ -72,6 +82,49 @@ private extension AddFlashCardView {
           .autocorrectionDisabled()
           .frame(minHeight: 80)
       }
+      
+      // Image picker for front
+      if let imageData = viewModel.frontImageData, let uiImage = UIImage(data: imageData) {
+        HStack {
+          Image(uiImage: uiImage)
+            .resizable()
+            .scaledToFit()
+            .frame(maxHeight: 150)
+            .cornerRadius(8)
+          Spacer()
+          Button(role: .destructive) {
+            viewModel.frontImageData = nil
+          } label: {
+            Image(systemName: "trash")
+              .foregroundStyle(.red)
+          }
+        }
+      }
+      
+      HStack {
+        PhotosPicker(
+          selection: $viewModel.frontImageSelection,
+          matching: .images,
+          photoLibrary: .shared()
+        ) {
+          Label("Choose from Library", systemImage: "photo.on.rectangle")
+        }
+        .buttonStyle(.borderless)
+        
+        Button {
+          viewModel.showingFrontCamera = true
+        } label: {
+          Label("Take Photo", systemImage: "camera")
+        }
+        .buttonStyle(.borderless)
+      }
+      .onChange(of: viewModel.frontImageSelection) { _, newValue in
+        Task {
+          if let data = try? await newValue?.loadTransferable(type: Data.self) {
+            viewModel.frontImageData = data
+          }
+        }
+      }
     }
   }
   
@@ -89,6 +142,49 @@ private extension AddFlashCardView {
           .textInputAutocapitalization(.never)
           .autocorrectionDisabled()
           .frame(minHeight: 80)
+      }
+      
+      // Image picker for back
+      if let imageData = viewModel.backImageData, let uiImage = UIImage(data: imageData) {
+        HStack {
+          Image(uiImage: uiImage)
+            .resizable()
+            .scaledToFit()
+            .frame(maxHeight: 150)
+            .cornerRadius(8)
+          Spacer()
+          Button(role: .destructive) {
+            viewModel.backImageData = nil
+          } label: {
+            Image(systemName: "trash")
+              .foregroundStyle(.red)
+          }
+        }
+      }
+      
+      HStack {
+        PhotosPicker(
+          selection: $viewModel.backImageSelection,
+          matching: .images,
+          photoLibrary: .shared()
+        ) {
+          Label("Choose from Library", systemImage: "photo.on.rectangle")
+        }
+        .buttonStyle(.borderless)
+        
+        Button {
+          viewModel.showingBackCamera = true
+        } label: {
+          Label("Take Photo", systemImage: "camera")
+        }
+        .buttonStyle(.borderless)
+      }
+      .onChange(of: viewModel.backImageSelection) { _, newValue in
+        Task {
+          if let data = try? await newValue?.loadTransferable(type: Data.self) {
+            viewModel.backImageData = data
+          }
+        }
       }
     }
   }
@@ -134,4 +230,68 @@ private extension AddFlashCardView {
     }
   }
 }
+
+// MARK: - Camera Picker
+
+struct CameraPicker: UIViewControllerRepresentable {
+  @Binding var imageData: Data?
+  @Environment(\.dismiss) private var dismiss
+  
+  func makeUIViewController(context: Context) -> UIImagePickerController {
+    let picker = UIImagePickerController()
+    
+    // Check if camera is available
+    guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+      // If camera not available, dismiss immediately
+      DispatchQueue.main.async {
+        dismiss()
+      }
+      return picker
+    }
+    
+    picker.sourceType = .camera
+    picker.cameraCaptureMode = .photo
+    picker.cameraDevice = .rear
+    picker.showsCameraControls = true
+    picker.allowsEditing = false
+    picker.delegate = context.coordinator
+    
+    return picker
+  }
+  
+  func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+  
+  func makeCoordinator() -> Coordinator {
+    Coordinator(self)
+  }
+  
+  class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    let parent: CameraPicker
+    
+    init(_ parent: CameraPicker) {
+      self.parent = parent
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+      // Dismiss picker first
+      picker.dismiss(animated: true) {
+        // Then process image
+        if let image = info[.originalImage] as? UIImage {
+          // Compress image to reduce size
+          self.parent.imageData = image.jpegData(compressionQuality: 0.8)
+        }
+        // Finally dismiss the fullScreenCover
+        self.parent.dismiss()
+      }
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+      // Dismiss picker first, then the cover
+      picker.dismiss(animated: true) {
+        self.parent.dismiss()
+      }
+    }
+  }
+}
+
 

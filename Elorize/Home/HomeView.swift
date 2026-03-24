@@ -69,24 +69,42 @@ struct HomeView: View {
         XPProgressCompactView()
       }
       ToolbarItem(placement: .topBarTrailing) {
-        Button {
-          showingFilter = true
-        } label: {
-          HStack(spacing: 8) {
-            Image(systemName: "line.3.horizontal.decrease.circle")
+        HStack(spacing: 8) {
+          // Shuffle button
+          Button {
+            if viewModel.isShuffled {
+              viewModel.unshuffleCards()
+            } else {
+              viewModel.shuffleCards()
+            }
+          } label: {
+            Image(systemName: viewModel.isShuffled ? "arrow.uturn.backward" : "shuffle")
               .font(.footnote)
-            Text(viewModel.activeFilterSummary)
-              .font(.footnote)
-              .tint(Color.app(.accent_subtle))
-              .lineLimit(1)
-              .minimumScaleFactor(0.8)
-              .truncationMode(.tail)
+              .foregroundStyle(viewModel.isShuffled ? Color.app(.accent_default) : Color.app(.accent_subtle))
+              .padding(.leading, 12)
           }
-          .padding(.vertical, 6)
-          .padding(.horizontal, 10)
-          .contentShape(Rectangle())
+          .accessibilityLabel(viewModel.isShuffled ? "Unshuffle cards" : "Shuffle cards")
+          
+          // Filter button
+          Button {
+            showingFilter = true
+          } label: {
+            HStack(spacing: 8) {
+              Image(systemName: "line.3.horizontal.decrease.circle")
+                .font(.footnote)
+              Text(viewModel.activeFilterSummary)
+                .font(.footnote)
+                .tint(Color.app(.accent_subtle))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .truncationMode(.tail)
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+            .contentShape(Rectangle())
+          }
+          .accessibilityLabel("Open filters. Active: \(viewModel.activeFilterSummary)")
         }
-        .accessibilityLabel("Open filters. Active: \(viewModel.activeFilterSummary)")
       }
     }
     .sheet(isPresented: $showingFilter) {

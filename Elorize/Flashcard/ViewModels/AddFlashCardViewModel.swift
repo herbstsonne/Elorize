@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import SwiftData
+import PhotosUI
 internal import Combine
 
 @MainActor
@@ -9,6 +10,12 @@ final class AddFlashCardViewModel: ObservableObject {
   // Inputs
   @Published var front: String = ""
   @Published var back: String = ""
+  @Published var frontImageData: Data?
+  @Published var backImageData: Data?
+  @Published var frontImageSelection: PhotosPickerItem?
+  @Published var backImageSelection: PhotosPickerItem?
+  @Published var showingFrontCamera = false
+  @Published var showingBackCamera = false
   @Published var selectedSubjectID: UUID?
   @Published var tagsText: String = ""
 
@@ -102,6 +109,10 @@ final class AddFlashCardViewModel: ObservableObject {
         // Reset inputs on success
         front = ""
         back = ""
+        frontImageData = nil
+        backImageData = nil
+        frontImageSelection = nil
+        backImageSelection = nil
         tagsText = ""
         selectedSubjectID = subjects.first?.id
         return entity
@@ -123,7 +134,13 @@ final class AddFlashCardViewModel: ObservableObject {
       }
 
       // Build entity and persist
-      let flash = FlashCard(front: trimmedFront, back: trimmedBack, tags: tagsArray)
+      let flash = FlashCard(
+        front: trimmedFront, 
+        back: trimmedBack,
+        frontImageData: frontImageData,
+        backImageData: backImageData,
+        tags: tagsArray
+      )
       let entity = FlashCardEntity(from: flash, subject: subject)
 
       isSaving = true
@@ -141,6 +158,10 @@ final class AddFlashCardViewModel: ObservableObject {
           // Reset inputs for next entry, keep subject selection
           front = ""
           back = ""
+          frontImageData = nil
+          backImageData = nil
+          frontImageSelection = nil
+          backImageSelection = nil
           tagsText = ""
       }
       return true

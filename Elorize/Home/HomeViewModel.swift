@@ -18,6 +18,8 @@ class HomeViewModel: ObservableObject {
   @Published var showingAddSheet = false
   @Published var showingFilter = false
   @Published var currentIndex = 0
+  @Published var isShuffled = false
+  private var shuffledIndices: [Int] = []
   @Published var selectedSubjectID: UUID?
   @Published var reviewFilter: ReviewFilter = .all
   @Published var showingDeleteAlert = false
@@ -102,19 +104,27 @@ class HomeViewModel: ObservableObject {
   }
   
   var filteredByOutcome: [FlashCardEntity] {
+    let baseFiltered: [FlashCardEntity]
     switch reviewFilter {
     case .all:
-      return filteredFlashCardEntities
+      baseFiltered = filteredFlashCardEntities
     case .wrong:
-      return filteredFlashCardEntities.filter { quality in
+      baseFiltered = filteredFlashCardEntities.filter { quality in
         if let q = quality.lastQuality { return q <= 2 }
         return false
       }
     case .correct:
-      return filteredFlashCardEntities.filter { quality in
+      baseFiltered = filteredFlashCardEntities.filter { quality in
         if let q = quality.lastQuality { return q >= 3 }
         return false
       }
+    }
+    
+    // Apply shuffle if enabled
+    if isShuffled && !shuffledIndices.isEmpty && shuffledIndices.count == baseFiltered.count {
+      return shuffledIndices.map { baseFiltered[$0] }
+    } else {
+      return baseFiltered
     }
   }
   
@@ -206,6 +216,23 @@ class HomeViewModel: ObservableObject {
     currentIndex = (currentIndex - 1 + count) % count
   }
   
+  func shuffleCards() {
+    let count = filteredFlashCardEntities.count
+    guard count > 0 else { return }
+    
+    shuffledIndices = Array(0..<count).shuffled()
+    isShuffled = true
+    currentIndex = 0
+    print("🔀 Cards shuffled")
+  }
+  
+  func unshuffleCards() {
+    isShuffled = false
+    shuffledIndices = []
+    currentIndex = 0
+    print("↩️ Cards unshuffled")
+  }
+  
   func deleteSelectedSubjects() {
     let idsToDelete = selectedSubjectIDs
     guard !idsToDelete.isEmpty else { return }
@@ -276,7 +303,7 @@ class HomeViewModel: ObservableObject {
   }
   
   /// Update an existing flashcard's content and subject, then persist.
-  func updateCard(_ card: FlashCardEntity, front: String, back: String, tags: [String], subjectID: UUID?) {
+  func updateCard(_ card: FlashCardEntity, front: String, back: String, frontImageData: Data?, backImageData: Data?, tags: [String], subjectID: UUID?) {
     let trimmedFront = front.trimmingCharacters(in: .whitespacesAndNewlines)
     let trimmedBack = back.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedFront.isEmpty, !trimmedBack.isEmpty else { return }
@@ -284,6 +311,8 @@ class HomeViewModel: ObservableObject {
     // Update content
     card.front = trimmedFront
     card.back = trimmedBack
+    card.frontImageData = frontImageData
+    card.backImageData = backImageData
     card.tags = tags
 
     // Update subject relationship

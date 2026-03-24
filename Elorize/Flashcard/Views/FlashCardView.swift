@@ -179,15 +179,28 @@ private extension FlashCardView {
 	@ViewBuilder
 	func cardTextArea() -> some View {
 		ScrollView {
-			Text((viewModel.isFlipped ? viewModel.card?.back : viewModel.card?.front) ?? "")
-				.font(viewModel.selectedFont())
-				.multilineTextAlignment(viewModel.textAlignment)
-				.lineLimit(10)
-				.minimumScaleFactor(0.5)
-				.frame(maxWidth: .infinity, alignment: {
-					viewModel.alignment
-				}())
-				.padding()
+			VStack(spacing: 12) {
+				// Display image if available
+				if let imageData = viewModel.isFlipped ? viewModel.card?.backImageData : viewModel.card?.frontImageData,
+					 let uiImage = UIImage(data: imageData) {
+					Image(uiImage: uiImage)
+						.resizable()
+						.scaledToFit()
+						.cornerRadius(8)
+						.padding(.horizontal)
+				}
+				
+				// Display text
+				Text((viewModel.isFlipped ? viewModel.card?.back : viewModel.card?.front) ?? "")
+					.font(viewModel.selectedFont())
+					.multilineTextAlignment(viewModel.textAlignment)
+					.lineLimit(10)
+					.minimumScaleFactor(0.5)
+					.frame(maxWidth: .infinity, alignment: {
+						viewModel.alignment
+					}())
+					.padding()
+			}
 		}
 	}
 
