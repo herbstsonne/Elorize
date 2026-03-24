@@ -7,8 +7,8 @@ struct QuizView: View {
     @Environment(\.modelContext) private var context
     @StateObject private var viewModel: QuizViewModel
     
-    init(cards: [FlashCard], sourceText: String) {
-        _viewModel = StateObject(wrappedValue: QuizViewModel(cards: cards, sourceText: sourceText))
+    init(cards: [FlashCard], sourceText: String, onQuizComplete: ((Int, Int) -> Void)? = nil) {
+        _viewModel = StateObject(wrappedValue: QuizViewModel(cards: cards, sourceText: sourceText, onQuizComplete: onQuizComplete))
     }
     
     var body: some View {

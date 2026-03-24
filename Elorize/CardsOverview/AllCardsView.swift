@@ -1,5 +1,7 @@
 import SwiftUI
+import SwiftUI
 import SwiftData
+import PhotosUI
 
 struct AllCardsView: View {
   @EnvironmentObject var viewModel: HomeViewModel
@@ -407,6 +409,12 @@ private struct CardDetailEditor: View {
 
   @State private var frontText: String = ""
   @State private var backText: String = ""
+  @State private var frontImageData: Data?
+  @State private var backImageData: Data?
+  @State private var frontImageSelection: PhotosPickerItem?
+  @State private var backImageSelection: PhotosPickerItem?
+  @State private var showingFrontCamera = false
+  @State private var showingBackCamera = false
   @State private var tagsText: String = ""
   @State private var selectedSubjectID: UUID = UUID()
 
@@ -425,6 +433,49 @@ private struct CardDetailEditor: View {
             .autocorrectionDisabled()
             .frame(minHeight: 80)
         }
+        
+        // Image for front
+        if let imageData = frontImageData, let uiImage = UIImage(data: imageData) {
+          HStack {
+            Image(uiImage: uiImage)
+              .resizable()
+              .scaledToFit()
+              .frame(maxHeight: 150)
+              .cornerRadius(8)
+            Spacer()
+            Button(role: .destructive) {
+              frontImageData = nil
+            } label: {
+              Image(systemName: "trash")
+                .foregroundStyle(.red)
+            }
+          }
+        }
+        
+        HStack {
+          PhotosPicker(
+            selection: $frontImageSelection,
+            matching: .images,
+            photoLibrary: .shared()
+          ) {
+            Label("Choose from Library", systemImage: "photo.on.rectangle")
+          }
+          .buttonStyle(.borderless)
+          
+          Button {
+            showingFrontCamera = true
+          } label: {
+            Label("Take Photo", systemImage: "camera")
+          }
+          .buttonStyle(.borderless)
+        }
+        .onChange(of: frontImageSelection) { _, newValue in
+          Task {
+            if let data = try? await newValue?.loadTransferable(type: Data.self) {
+              frontImageData = data
+            }
+          }
+        }
       }
       Section("Back") {
         ZStack(alignment: .topLeading) {
@@ -438,6 +489,49 @@ private struct CardDetailEditor: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .frame(minHeight: 80)
+        }
+        
+        // Image for back
+        if let imageData = backImageData, let uiImage = UIImage(data: imageData) {
+          HStack {
+            Image(uiImage: uiImage)
+              .resizable()
+              .scaledToFit()
+              .frame(maxHeight: 150)
+              .cornerRadius(8)
+            Spacer()
+            Button(role: .destructive) {
+              backImageData = nil
+            } label: {
+              Image(systemName: "trash")
+                .foregroundStyle(.red)
+            }
+          }
+        }
+        
+        HStack {
+          PhotosPicker(
+            selection: $backImageSelection,
+            matching: .images,
+            photoLibrary: .shared()
+          ) {
+            Label("Choose from Library", systemImage: "photo.on.rectangle")
+          }
+          .buttonStyle(.borderless)
+          
+          Button {
+            showingBackCamera = true
+          } label: {
+            Label("Take Photo", systemImage: "camera")
+          }
+          .buttonStyle(.borderless)
+        }
+        .onChange(of: backImageSelection) { _, newValue in
+          Task {
+            if let data = try? await newValue?.loadTransferable(type: Data.self) {
+              backImageData = data
+            }
+          }
         }
       }
       Section("Tags (comma separated)") {
@@ -475,6 +569,8 @@ private struct CardDetailEditor: View {
     .onAppear {
       frontText = card.front
       backText = card.back
+      frontImageData = card.frontImageData
+      backImageData = card.backImageData
       tagsText = card.tags.joined(separator: ", ")
       if let current = card.subject?.id {
         selectedSubjectID = current
@@ -486,7 +582,7 @@ private struct CardDetailEditor: View {
       ToolbarItem(placement: .confirmationAction) {
         Button("Save") {
           let tagsArray = tagsText.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
-          viewModel.updateCard(card, front: frontText, back: backText, tags: tagsArray, subjectID: selectedSubjectID)
+          viewModel.updateCard(card, front: frontText, back: backText, frontImageData: frontImageData, backImageData: backImageData, tags: tagsArray, subjectID: selectedSubjectID)
           dismiss()
         }
       }
@@ -494,6 +590,14 @@ private struct CardDetailEditor: View {
     .toolbarBackground(.visible, for: .navigationBar)
     .toolbarBackground(Color.clear, for: .navigationBar)
     .tint(Color.app(.accent_subtle))
+    .fullScreenCover(isPresented: $showingFrontCamera) {
+      CameraPicker(imageData: $frontImageData)
+        .ignoresSafeArea()
+    }
+    .fullScreenCover(isPresented: $showingBackCamera) {
+      CameraPicker(imageData: $backImageData)
+        .ignoresSafeArea()
+    }
   }
 }
 

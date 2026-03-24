@@ -10,13 +10,16 @@ final class MultipleChoiceQuizViewModel: ObservableObject {
     @Published var quizCompleted = false
     @Published var score = 0
     @Published var quizQuestions: [QuizQuestion] = []
+    @Published var hasAwardedXP = false
     
     let cards: [FlashCard]
     let sourceText: String
+    let onQuizComplete: ((Int, Int) -> Void)?
     
-    init(cards: [FlashCard], sourceText: String) {
+    init(cards: [FlashCard], sourceText: String, onQuizComplete: ((Int, Int) -> Void)? = nil) {
         self.cards = cards
         self.sourceText = sourceText
+        self.onQuizComplete = onQuizComplete
     }
     
     func generateQuizQuestions() {
@@ -71,8 +74,19 @@ final class MultipleChoiceQuizViewModel: ObservableObject {
             selectedAnswer = nil
             showingResult = false
         } else {
+            print("✅ Multiple Choice Quiz completed with score: \(score)/\(quizQuestions.count)")
             quizCompleted = true
         }
+    }
+    
+    func awardXPOnCompletion() {
+        guard !hasAwardedXP else {
+            print("⚠️ XP already awarded for this quiz")
+            return
+        }
+        print("✅ Awarding XP on Done button press")
+        onQuizComplete?(score, quizQuestions.count)
+        hasAwardedXP = true
     }
     
     func retakeQuiz() {
@@ -82,6 +96,7 @@ final class MultipleChoiceQuizViewModel: ObservableObject {
         userAnswers = []
         score = 0
         quizCompleted = false
+        hasAwardedXP = false
         generateQuizQuestions()
     }
     

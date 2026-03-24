@@ -29,7 +29,14 @@ struct StatisticsView: View {
 
                 ForEach(subjects, id: \.id) { subject in
                     let count = statisticsViewModel.cardCount(in: subject, from: flashCards)
-                    SubjectSectionView(subject: subject, cardCount: count)
+                    let repeatCount = statisticsViewModel.repeatCardCount(in: subject, from: flashCards)
+                    let gotItCount = statisticsViewModel.gotItCardCount(in: subject, from: flashCards)
+                    SubjectSectionView(
+                      subject: subject, 
+                      cardCount: count, 
+                      repeatCount: repeatCount, 
+                      gotItCount: gotItCount
+                    )
                 }
             }
             .onAppear { print("subjects:", subjects.count, "flashCards:", flashCards.count, "events:", reviewEvents.count) }
@@ -303,12 +310,29 @@ private extension StatisticsView {
   }
 
   @ViewBuilder
-  func SubjectSectionView(subject: SubjectEntity, cardCount: Int) -> some View {
+  func SubjectSectionView(subject: SubjectEntity, cardCount: Int, repeatCount: Int, gotItCount: Int) -> some View {
       Section(subject.name ?? "Unknown") {
           HStack {
-              Text("Cards in Subject")
+              Text("Cards")
               Spacer()
-              Text("\(cardCount)")
+              HStack(spacing: 12) {
+                  HStack(spacing: 4) {
+                      Image(systemName: "xmark")
+                          .font(.caption)
+                          .foregroundStyle(Color.app(.error))
+                      Text("\(repeatCount)")
+                          .foregroundStyle(Color.app(.error))
+                  }
+                  HStack(spacing: 4) {
+                      Image(systemName: "checkmark")
+                          .font(.caption)
+                          .foregroundStyle(Color.app(.success))
+                      Text("\(gotItCount)")
+                          .foregroundStyle(Color.app(.success))
+                  }
+                  Text("\(cardCount)")
+                      .fontWeight(.semibold)
+              }
           }
       }
       .foregroundStyle(Color.app(.accent_subtle))

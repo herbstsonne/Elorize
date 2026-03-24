@@ -42,6 +42,30 @@ final class StatisticsViewModel: ObservableObject {
     }
     return count
   }
+  
+  // Count "Repeat" cards (wrongCount > 0) for a subject
+  func repeatCardCount(in subject: SubjectEntity, from flashCards: [FlashCardEntity]) -> Int {
+    let targetID = subject.id
+    var count = 0
+    for card in flashCards {
+      if card.subject?.id == targetID && card.wrongCount > 0 {
+        count += 1
+      }
+    }
+    return count
+  }
+  
+  // Count "Got it" cards (correctCount > 0 and wrongCount == 0) for a subject
+  func gotItCardCount(in subject: SubjectEntity, from flashCards: [FlashCardEntity]) -> Int {
+    let targetID = subject.id
+    var count = 0
+    for card in flashCards {
+      if card.subject?.id == targetID && card.correctCount > 0 && card.wrongCount == 0 {
+        count += 1
+      }
+    }
+    return count
+  }
 
   // Chart helpers to keep logic out of the view
   func chartDomain(for stats: [DailyStat]) -> (first: Date, last: Date, full: ClosedRange<Date>) {

@@ -10,6 +10,10 @@ public final class FlashCardEntity {
 	// Content
 	public var front: String
 	public var back: String
+	
+	// Images
+	public var frontImageData: Data?
+	public var backImageData: Data?
 
 	// Tags as a simple array (SwiftData supports [String])
 	public var tags: [String]
@@ -69,6 +73,8 @@ public extension FlashCardEntity {
 			lastQuality: nil
 		)
 		self.subject = subject
+		self.frontImageData = card.frontImageData
+		self.backImageData = card.backImageData
 	}
 
 	var card: FlashCard {
@@ -76,6 +82,8 @@ public extension FlashCardEntity {
 			id: id,
 			front: front,
 			back: back,
+			frontImageData: frontImageData,
+			backImageData: backImageData,
 			tags: tags,
 			createdAt: createdAt,
 			lastReviewedAt: lastReviewedAt,

@@ -28,6 +28,23 @@ struct HomeView: View {
       VStack {
         showFlashCardSection()
       }
+      
+      // Celebration overlay in center of screen
+      if viewModel.showLevelUpCelebration {
+        Color.clear
+          .ignoresSafeArea()
+          .overlay(
+            VStack(spacing: 16) {
+              Text("🎉")
+                .font(.system(size: 80))
+            }
+            .offset(y: -100)
+            .scaleEffect(viewModel.celebrationScale)
+            .opacity(viewModel.showLevelUpCelebration ? 1.0 : 0.0)
+            .transition(.opacity)
+          )
+          .allowsHitTesting(false)
+      }
     }
     .onAppear {
       viewModel.flashCardEntities = flashCardEntities
@@ -52,24 +69,42 @@ struct HomeView: View {
         XPProgressCompactView()
       }
       ToolbarItem(placement: .topBarTrailing) {
-        Button {
-          showingFilter = true
-        } label: {
-          HStack(spacing: 8) {
-            Image(systemName: "line.3.horizontal.decrease.circle")
+        HStack(spacing: 8) {
+          // Shuffle button
+          Button {
+            if viewModel.isShuffled {
+              viewModel.unshuffleCards()
+            } else {
+              viewModel.shuffleCards()
+            }
+          } label: {
+            Image(systemName: viewModel.isShuffled ? "arrow.uturn.backward" : "shuffle")
               .font(.footnote)
-            Text(viewModel.activeFilterSummary)
-              .font(.footnote)
-              .tint(Color.app(.accent_subtle))
-              .lineLimit(1)
-              .minimumScaleFactor(0.8)
-              .truncationMode(.tail)
+              .foregroundStyle(viewModel.isShuffled ? Color.app(.accent_default) : Color.app(.accent_subtle))
+              .padding(.leading, 12)
           }
-          .padding(.vertical, 6)
-          .padding(.horizontal, 10)
-          .contentShape(Rectangle())
+          .accessibilityLabel(viewModel.isShuffled ? "Unshuffle cards" : "Shuffle cards")
+          
+          // Filter button
+          Button {
+            showingFilter = true
+          } label: {
+            HStack(spacing: 8) {
+              Image(systemName: "line.3.horizontal.decrease.circle")
+                .font(.footnote)
+              Text(viewModel.activeFilterSummary)
+                .font(.footnote)
+                .tint(Color.app(.accent_subtle))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .truncationMode(.tail)
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 10)
+            .contentShape(Rectangle())
+          }
+          .accessibilityLabel("Open filters. Active: \(viewModel.activeFilterSummary)")
         }
-        .accessibilityLabel("Open filters. Active: \(viewModel.activeFilterSummary)")
       }
     }
     .sheet(isPresented: $showingFilter) {
@@ -95,7 +130,10 @@ struct HomeView: View {
         cards: viewModel.filteredByOutcome.map { entity in
           FlashCard(front: entity.front, back: entity.back)
         },
-        sourceText: "Exercise Quiz"
+        sourceText: "Exercise Quiz",
+        onQuizComplete: { score, total in
+          viewModel.awardQuizXP(score: score, total: total)
+        }
       )
     }
     .sheet(isPresented: $showingMultipleChoiceQuiz) {
@@ -103,7 +141,10 @@ struct HomeView: View {
         cards: viewModel.filteredByOutcome.map { entity in
           FlashCard(front: entity.front, back: entity.back)
         },
-        sourceText: "Exercise Quiz"
+        sourceText: "Exercise Quiz",
+        onQuizComplete: { score, total in
+          viewModel.awardQuizXP(score: score, total: total)
+        }
       )
     }
     .fullScreenCover(isPresented: .constant(!hasSeenOnboarding)) {

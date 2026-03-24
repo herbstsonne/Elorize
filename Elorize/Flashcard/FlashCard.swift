@@ -8,6 +8,12 @@ public struct FlashCard: Identifiable, Codable, Hashable {
     // MARK: - Content
     public var front: String
     public var back: String
+    
+    /// Optional image data for the front of the card
+    public var frontImageData: Data?
+    
+    /// Optional image data for the back of the card
+    public var backImageData: Data?
 
     /// Optional tags to group or filter cards.
     public var tags: [String]
@@ -31,6 +37,8 @@ public struct FlashCard: Identifiable, Codable, Hashable {
         id: UUID = UUID(),
         front: String,
         back: String,
+        frontImageData: Data? = nil,
+        backImageData: Data? = nil,
         tags: [String] = [],
         createdAt: Date = Date(),
         lastReviewedAt: Date? = nil,
@@ -41,6 +49,8 @@ public struct FlashCard: Identifiable, Codable, Hashable {
         self.id = id
         self.front = front
         self.back = back
+        self.frontImageData = frontImageData
+        self.backImageData = backImageData
         self.tags = tags
         self.createdAt = createdAt
         self.lastReviewedAt = lastReviewedAt
@@ -75,7 +85,14 @@ public struct FlashCard: Identifiable, Codable, Hashable {
                 intervalDays = 6
             default:
                 // Next interval = previous * EF, rounded
-                intervalDays = max(1, Int(round(Double(intervalDays) * easeFactor)))
+                let nextInterval = round(Double(intervalDays) * easeFactor)
+                // Cap at a reasonable maximum to prevent overflow (e.g., ~10 years)
+                let maxDays = 3650
+                if nextInterval >= Double(maxDays) {
+                    intervalDays = maxDays
+                } else {
+                    intervalDays = max(1, Int(nextInterval))
+                }
             }
         }
 

@@ -10,10 +10,10 @@ struct XPProgressCompactView: View {
       Button {
         viewModel.openDetails()
       } label: {
-        Text("Lv. \(viewModel.level)")
+        Text("Lv. \(homeViewModel.xpState.level)")
           .font(.footnote)
           .foregroundStyle(Color.app(.accent_subtle))
-        ProgressView(value: viewModel.levelProgress)
+        ProgressView(value: homeViewModel.xpState.levelProgress)
           .progressViewStyle(.linear)
           .frame(width: 60, height: 16)
           .contentShape(Rectangle())
@@ -38,9 +38,10 @@ struct XPProgressCompactView: View {
     .onAppear {
       viewModel.configure(with: homeViewModel)
     }
-    .onChange(of: homeViewModel.xpState) { _, _ in
+    .onChange(of: homeViewModel.xpState) { _, new in
       // Trigger view update when XP state changes
       viewModel.objectWillChange.send()
+      viewModel.handleLevelChange(new.level)
     }
   }
 }

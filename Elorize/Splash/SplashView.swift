@@ -64,7 +64,7 @@ struct SplashView: View {
             // Title and tagline
             VStack(spacing: 14) {
                 // Elegant, Parisian-inspired title
-                Text("Elorize")
+                Text("Gold & Ink")
                     .font(.system(size: 64, weight: .semibold, design: .serif))
                     .kerning(1.5)
                     .foregroundStyle(
@@ -77,7 +77,7 @@ struct SplashView: View {
                     .shadow(color: Color.black.opacity(0.5), radius: 20, x: 0, y: 6)
                     .overlay {
                         // Subtle top highlight
-                        Text("Elorize")
+                        Text("Gold & Ink")
                             .font(.system(size: 192, weight: .semibold, design: .serif))
                             .kerning(1.5)
                             .foregroundColor(Color.app(.text_primary).opacity(0.15))

@@ -16,7 +16,7 @@ final class OnboardingViewModel: ObservableObject {
 
   init(pages: [OnboardingScreen] = [
     .init(
-      title: "Welcome to Elorize",
+      title: "Welcome to Gold & Ink",
       message: "Learn efficiently with flashcards. Stay focused with a clean design. Celebrate your progress with fun effects.",
       systemImage: "sparkles"
     ),

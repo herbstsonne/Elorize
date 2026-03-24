@@ -18,6 +18,8 @@ class HomeViewModel: ObservableObject {
   @Published var showingAddSheet = false
   @Published var showingFilter = false
   @Published var currentIndex = 0
+  @Published var isShuffled = false
+  private var shuffledIndices: [Int] = []
   @Published var selectedSubjectID: UUID?
   @Published var reviewFilter: ReviewFilter = .all
   @Published var showingDeleteAlert = false
@@ -60,11 +62,36 @@ class HomeViewModel: ObservableObject {
 
   // MARK: - Gamification
   private var gamificationService: GamificationService!
+  @Published var showLevelUpCelebration = false
+  @Published var celebrationScale: CGFloat = 0.3
+  private var lastObservedLevel: Int = 1
+  private var isInitialLoad = true
+  
   @Published var xpState: XPLevelState = XPLevelState(xp: 0, level: 1, xpForNextLevel: 100, xpIntoCurrentLevel: 0) {
     didSet {
       // Persist XP and Level whenever state updates
       storedTotalXP = xpState.xp
       storedLevel = xpState.level
+      
+      // Check for level up (but not on initial load)
+      if xpState.level > lastObservedLevel && !isInitialLoad {
+        showLevelUpCelebration = true
+        celebrationScale = 0.3
+        
+        // Animate to large size over 2 seconds
+        withAnimation(.spring(response: 1.5, dampingFraction: 0.6)) {
+          celebrationScale = 2.0
+        }
+        
+        // Auto-hide after the animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+          withAnimation(.easeOut(duration: 0.4)) {
+            self?.showLevelUpCelebration = false
+          }
+        }
+      }
+      lastObservedLevel = xpState.level
+      isInitialLoad = false
     }
   }
 
@@ -77,19 +104,27 @@ class HomeViewModel: ObservableObject {
   }
   
   var filteredByOutcome: [FlashCardEntity] {
+    let baseFiltered: [FlashCardEntity]
     switch reviewFilter {
     case .all:
-      return filteredFlashCardEntities
+      baseFiltered = filteredFlashCardEntities
     case .wrong:
-      return filteredFlashCardEntities.filter { quality in
+      baseFiltered = filteredFlashCardEntities.filter { quality in
         if let q = quality.lastQuality { return q <= 2 }
         return false
       }
     case .correct:
-      return filteredFlashCardEntities.filter { quality in
+      baseFiltered = filteredFlashCardEntities.filter { quality in
         if let q = quality.lastQuality { return q >= 3 }
         return false
       }
+    }
+    
+    // Apply shuffle if enabled
+    if isShuffled && !shuffledIndices.isEmpty && shuffledIndices.count == baseFiltered.count {
+      return shuffledIndices.map { baseFiltered[$0] }
+    } else {
+      return baseFiltered
     }
   }
   
@@ -131,6 +166,7 @@ class HomeViewModel: ObservableObject {
     self.gamificationService = GamificationService(initialXP: storedTotalXP, initialLevel: storedLevel)
     let restored = gamificationService.state
     self.xpState = restored
+    self.lastObservedLevel = restored.level
   }
   
   func setRepository(_ exRepository: ExerciseRepository, _ subRepository: SubjectRepository, _ flashcardsRepository: FlashcardRepositoryProtocol?) {
@@ -163,6 +199,14 @@ class HomeViewModel: ObservableObject {
     xpState = gamificationService.addXP(5)
   }
   
+  func awardQuizXP(score: Int, total: Int) {
+    // Award 1 XP per correct answer
+    let totalXP = score
+    print("🎯 Quiz completed: \(score)/\(total) - Awarding \(totalXP) XP")
+    xpState = gamificationService.addXP(totalXP)
+    print("🎯 New XP state: Level \(xpState.level), Total XP: \(xpState.xp)")
+  }
+  
   func advanceIndex() {
     currentIndex = (currentIndex + 1) % max(1, filteredByOutcome.count)
   }
@@ -170,6 +214,23 @@ class HomeViewModel: ObservableObject {
   func previousIndex() {
     let count = max(1, filteredByOutcome.count)
     currentIndex = (currentIndex - 1 + count) % count
+  }
+  
+  func shuffleCards() {
+    let count = filteredFlashCardEntities.count
+    guard count > 0 else { return }
+    
+    shuffledIndices = Array(0..<count).shuffled()
+    isShuffled = true
+    currentIndex = 0
+    print("🔀 Cards shuffled")
+  }
+  
+  func unshuffleCards() {
+    isShuffled = false
+    shuffledIndices = []
+    currentIndex = 0
+    print("↩️ Cards unshuffled")
   }
   
   func deleteSelectedSubjects() {
@@ -242,7 +303,7 @@ class HomeViewModel: ObservableObject {
   }
   
   /// Update an existing flashcard's content and subject, then persist.
-  func updateCard(_ card: FlashCardEntity, front: String, back: String, tags: [String], subjectID: UUID?) {
+  func updateCard(_ card: FlashCardEntity, front: String, back: String, frontImageData: Data?, backImageData: Data?, tags: [String], subjectID: UUID?) {
     let trimmedFront = front.trimmingCharacters(in: .whitespacesAndNewlines)
     let trimmedBack = back.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedFront.isEmpty, !trimmedBack.isEmpty else { return }
@@ -250,6 +311,8 @@ class HomeViewModel: ObservableObject {
     // Update content
     card.front = trimmedFront
     card.back = trimmedBack
+    card.frontImageData = frontImageData
+    card.backImageData = backImageData
     card.tags = tags
 
     // Update subject relationship

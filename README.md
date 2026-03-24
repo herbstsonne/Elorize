@@ -1,6 +1,6 @@
 <p align="center"><img src="Images/elorize_icon.png" alt="Elorize Icon" width="96" /></p>
 
-# Elorize
+# Gold & Ink
 
 Elegant, minimalist flashcards with a Parisian-inspired design.
 
