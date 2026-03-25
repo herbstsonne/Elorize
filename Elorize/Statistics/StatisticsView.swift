@@ -216,7 +216,6 @@ private extension StatisticsView {
   ) -> some View {
       // Filter stats to only show those within the domain
       let filteredStats = stats.filter { fullDomain.contains($0.date) }
-      
       // Transform data into series format for stacked bars
       let chartData: [ReviewChartData] = filteredStats.flatMap { stat in
           [
@@ -239,13 +238,17 @@ private extension StatisticsView {
       } else {
           labelStride = 1
       }
+
+      // Individual bar width
+      let individualBarWidth: CGFloat = 8
       
       return Chart(chartData) { item in
           BarMark(
-              x: .value("Day", item.date, unit: .day),
-              y: .value("Count", item.count)
+              x: .value("Day", item.date, unit: .hour),
+              y: .value("Count", item.count),
+              width: .fixed(individualBarWidth)
           )
-          .foregroundStyle(by: .value("Category", item.category))
+          .foregroundStyle(by: .value("Type", item.type))
       }
       .chartForegroundStyleScale([
           "Repeat": errorColor,
