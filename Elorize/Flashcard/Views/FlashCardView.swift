@@ -22,8 +22,9 @@ struct FlashCardView: View {
 			.onTapGesture { withAnimation(.spring()) { viewModel.flip() } }
 			.padding(.horizontal)
 			
-			HStack(spacing: 16) {
+			HStack(spacing: 12) {
 				buttonWrong()
+				buttonPartial()
 				buttonCorrect()
 			}
 			.padding(.horizontal)
@@ -94,6 +95,7 @@ private extension FlashCardView {
       let bgColor: Color = {
         switch viewModel.highlightState {
         case .success: return Color.app(.success)
+        case .partial: return Color.app(.warning)
         case .error: return Color.app(.error)
         case .front: return Color.app(.card_background_front)
         case .back: return Color.app(.card_background_back)
@@ -140,11 +142,33 @@ private extension FlashCardView {
 	func buttonWrong() -> some View {
 		Button {
 			viewModel.flashErrorHighlight {
-				viewModel.storeReview(isCorrect: false)
+				viewModel.storeReview(quality: 0)
 				viewModel.isFlipped = false
 			}
 		} label: {
 			Label("Repeat", systemImage: "xmark")
+				.font(.caption)
+				.frame(maxWidth: .infinity)
+		}
+		.buttonStyle(
+			ComposedPressTintStyle(
+				kind: .borderedProminent,
+				normalTint: Color.app(.button_default),
+				pressedTint: Color.app(.button_pressed)
+			)
+		)
+	}
+
+	@ViewBuilder
+	func buttonPartial() -> some View {
+		Button {
+			viewModel.flashPartialHighlight {
+				viewModel.storeReview(quality: 3)
+				viewModel.isFlipped = false
+			}
+		} label: {
+			Label("Hard", systemImage: "minus")
+				.font(.caption)
 				.frame(maxWidth: .infinity)
 		}
 		.buttonStyle(
@@ -160,11 +184,12 @@ private extension FlashCardView {
 	func buttonCorrect() -> some View {
 		Button {
 			viewModel.flashSuccessHighlight {
-				viewModel.storeReview(isCorrect: true)
+				viewModel.storeReview(quality: 5)
 				viewModel.isFlipped = false
 			}
 		} label: {
 			Label("Got it", systemImage: "checkmark")
+				.font(.caption)
 				.frame(maxWidth: .infinity)
 		}
 		.buttonStyle(

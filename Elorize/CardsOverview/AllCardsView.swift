@@ -274,8 +274,27 @@ private extension AllCardsView {
       }
       // Stats row
       HStack(spacing: 12) {
-        Text("✅ \(card.correctCount)")
-        Text("❌ \(card.wrongCount)")
+        HStack(spacing: 4) {
+          Image(systemName: "xmark")
+            .font(.caption2)
+            .foregroundStyle(Color.app(.error))
+          Text("\(card.wrongCount)")
+            .foregroundStyle(Color.app(.error))
+        }
+        HStack(spacing: 4) {
+          Image(systemName: "minus")
+            .font(.caption2)
+            .foregroundStyle(Color.app(.warning))
+          Text("\(card.hardCount)")
+            .foregroundStyle(Color.app(.warning))
+        }
+        HStack(spacing: 4) {
+          Image(systemName: "checkmark")
+            .font(.caption2)
+            .foregroundStyle(Color.app(.success))
+          Text("\(card.correctCount)")
+            .foregroundStyle(Color.app(.success))
+        }
         if let last = card.lastReviewedAt {
           Text("Last: \(last.formatted(date: .abbreviated, time: .shortened))")
         } else {
@@ -546,19 +565,44 @@ private struct CardDetailEditor: View {
       }
       Section("Statistics") {
         HStack {
-          Text("Correct")
-          Spacer()
-          Text("\(card.correctCount)")
-        }
-        HStack {
-          Text("Wrong")
+          Label("Repeat", systemImage: "xmark")
+            .foregroundStyle(Color.app(.error))
           Spacer()
           Text("\(card.wrongCount)")
+            .foregroundStyle(Color.app(.error))
+        }
+        HStack {
+          Label("Hard", systemImage: "minus")
+            .foregroundStyle(Color.app(.warning))
+          Spacer()
+          Text("\(card.hardCount)")
+            .foregroundStyle(Color.app(.warning))
+        }
+        HStack {
+          Label("Got it", systemImage: "checkmark")
+            .foregroundStyle(Color.app(.success))
+          Spacer()
+          Text("\(card.correctCount)")
+            .foregroundStyle(Color.app(.success))
         }
         HStack {
           Text("Last reviewed")
           Spacer()
           Text(card.lastReviewedAt?.formatted(date: .abbreviated, time: .shortened) ?? "—")
+        }
+        HStack {
+          Text("Ease factor")
+          Spacer()
+          Text(String(format: "%.2f", card.easeFactor))
+        }
+        HStack {
+          Text("Next review")
+          Spacer()
+          if let nextDue = card.card.nextDueDate {
+            Text(nextDue.formatted(date: .abbreviated, time: .omitted))
+          } else {
+            Text("—")
+          }
         }
       }
     }

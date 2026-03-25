@@ -10,6 +10,7 @@ final class FlashCardViewModel: ObservableObject {
 		case front
     case back
 		case success
+		case partial
 		case error
 	}
 
@@ -115,6 +116,16 @@ final class FlashCardViewModel: ObservableObject {
 		}
 	}
 
+	func flashPartialHighlight(completion: (() -> Void)? = nil) {
+    let sideState: HighlightState = isFlipped ? .back : .front
+    highlightState = .partial
+		Task { @MainActor in
+			try? await Task.sleep(nanoseconds: 1_000_000_000)
+			withAnimation(.easeInOut) { self.highlightState = sideState }
+			completion?()
+		}
+	}
+
 	func flashErrorHighlight(completion: (() -> Void)? = nil) {
     let sideState: HighlightState = isFlipped ? .back : .front
 		highlightState = .error
@@ -125,18 +136,35 @@ final class FlashCardViewModel: ObservableObject {
 		}
 	}
   
-  func storeReview(isCorrect: Bool) {
+  func storeReview(quality: Int) {
     guard let id = card?.id else { return }
 
     let matchedEntity = flashcardsRepository?.fetchEntity(forId: id)
     if let entity = matchedEntity {
-        let event = ReviewEventEntity(timestamp: Date(), isCorrect: isCorrect, card: entity)
+        // Register the review with the quality score (0-5 scale)
+        let reviewer = Reviewer()
+        reviewer.registerReview(for: entity, quality: quality)
+        
+        // Update counts based on quality
+        if quality >= 4 {
+            entity.correctCount += 1
+        } else if quality >= 2 {
+            entity.hardCount += 1
+        } else {
+            entity.wrongCount += 1
+        }
+        
+        // Track the event with quality score
+        let isCorrect = quality >= 3
+        let event = ReviewEventEntity(timestamp: Date(), isCorrect: isCorrect, quality: quality, card: entity)
         flashcardsRepository?.saveNew(flashCard: entity)
     }
 
-    // Trigger per-outcome action
-    if isCorrect {
+    // Trigger appropriate action based on quality
+    if quality >= 4 {
         actions.onCorrect()
+    } else if quality >= 2 {
+        // Partial success - don't trigger wrong or correct action
     } else {
         actions.onWrong()
     }

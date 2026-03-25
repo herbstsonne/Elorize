@@ -30,11 +30,13 @@ struct StatisticsView: View {
                 ForEach(subjects, id: \.id) { subject in
                     let count = statisticsViewModel.cardCount(in: subject, from: flashCards)
                     let repeatCount = statisticsViewModel.repeatCardCount(in: subject, from: flashCards)
+                    let hardCount = statisticsViewModel.hardCardCount(in: subject, from: flashCards)
                     let gotItCount = statisticsViewModel.gotItCardCount(in: subject, from: flashCards)
                     SubjectSectionView(
                       subject: subject, 
                       cardCount: count, 
-                      repeatCount: repeatCount, 
+                      repeatCount: repeatCount,
+                      hardCount: hardCount,
                       gotItCount: gotItCount
                     )
                 }
@@ -133,8 +135,14 @@ private extension StatisticsView {
     ForEach(stats) { stat in
         let day: Date = stat.date
 
-        ForEach([Result.gotIt, Result.repeatWrong], id: \.self) { (result: Result) in
-            let count: Int = (result == .gotIt) ? stat.correct : stat.wrong
+        ForEach([Result.gotIt, Result.hard, Result.repeatWrong], id: \.self) { (result: Result) in
+            let count: Int = {
+                switch result {
+                case .gotIt: return stat.correct
+                case .hard: return stat.hard
+                case .repeatWrong: return stat.wrong
+                }
+            }()
             let dayValue: PlottableValue<Date> = .value("Day", day, unit: .day)
             let countValue: PlottableValue<Int> = .value("Count", count)
 
@@ -148,11 +156,12 @@ private extension StatisticsView {
   @ViewBuilder
   func dailyChart(stats: [DailyStat], firstDate: Date, lastDate: Date, availableWidth: CGFloat, barWidth: CGFloat) -> some View {
       let successColor: Color = Color.app(.success)
+      let hardColor: Color = Color.app(.warning)
       let errorColor: Color = Color.app(.error)
 
       // Compute y-axis max with explicit types
       let maxYPerDay: [Int] = stats.map { (stat: DailyStat) -> Int in
-          stat.correct + stat.wrong
+          stat.correct + stat.hard + stat.wrong
       }
       let maxYValue: Int = maxYPerDay.max() ?? 0
       let yMax: Int = max(Int(Double(maxYValue) * 1.2), 1)
@@ -168,6 +177,7 @@ private extension StatisticsView {
           stats: stats,
           today: today,
           successColor: successColor,
+          hardColor: hardColor,
           errorColor: errorColor,
           fullDomain: fullDomain,
           yMax: yMax,
@@ -191,6 +201,7 @@ private extension StatisticsView {
       stats: [DailyStat],
       today: Date,
       successColor: Color,
+      hardColor: Color,
       errorColor: Color,
       fullDomain: ClosedRange<Date>,
       yMax: Int,
@@ -200,7 +211,7 @@ private extension StatisticsView {
       let filteredStats = stats.filter { fullDomain.contains($0.date) }
       
       // Calculate actual bar width - make bars narrower so they appear closer together
-      let actualBarWidth = barWidth * 0.3
+      let actualBarWidth = barWidth * 0.2
       
       let chart = Chart {
           // Bars for each day/result with explicit styles to avoid scale inference
@@ -215,6 +226,15 @@ private extension StatisticsView {
               )
               .foregroundStyle(successColor)
               .position(by: .value("Result", "Correct"))
+
+              // Hard bar
+              BarMark(
+                  x: .value("Day", day, unit: .day),
+                  y: .value("Count", stat.hard),
+                  width: .fixed(actualBarWidth)
+              )
+              .foregroundStyle(hardColor)
+              .position(by: .value("Result", "Hard"))
 
               // Wrong bar
               BarMark(
@@ -310,7 +330,7 @@ private extension StatisticsView {
   }
 
   @ViewBuilder
-  func SubjectSectionView(subject: SubjectEntity, cardCount: Int, repeatCount: Int, gotItCount: Int) -> some View {
+  func SubjectSectionView(subject: SubjectEntity, cardCount: Int, repeatCount: Int, hardCount: Int, gotItCount: Int) -> some View {
       Section(subject.name ?? "Unknown") {
           HStack {
               Text("Cards")
@@ -322,6 +342,13 @@ private extension StatisticsView {
                           .foregroundStyle(Color.app(.error))
                       Text("\(repeatCount)")
                           .foregroundStyle(Color.app(.error))
+                  }
+                  HStack(spacing: 4) {
+                      Image(systemName: "minus")
+                          .font(.caption)
+                          .foregroundStyle(Color.app(.warning))
+                      Text("\(hardCount)")
+                          .foregroundStyle(Color.app(.warning))
                   }
                   HStack(spacing: 4) {
                       Image(systemName: "checkmark")

@@ -29,6 +29,7 @@ public final class FlashCardEntity {
 	public var lastQuality: Int?
   
   public var correctCount: Int = 0
+  public var hardCount: Int = 0
   public var wrongCount: Int = 0
 
 	public init(
