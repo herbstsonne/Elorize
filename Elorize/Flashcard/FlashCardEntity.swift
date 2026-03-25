@@ -6,6 +6,7 @@ public final class FlashCardEntity {
 	// Identity
 	@Attribute(.unique) public var id: UUID
 	@Relationship var subject: SubjectEntity?
+	@Relationship(deleteRule: .cascade, inverse: \ReviewEventEntity.card) var reviewEvents: [ReviewEventEntity]?
 
 	// Content
 	public var front: String
@@ -29,6 +30,7 @@ public final class FlashCardEntity {
 	public var lastQuality: Int?
   
   public var correctCount: Int = 0
+  public var hardCount: Int = 0
   public var wrongCount: Int = 0
 
 	public init(

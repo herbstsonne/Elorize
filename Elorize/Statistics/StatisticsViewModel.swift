@@ -16,19 +16,9 @@ final class StatisticsViewModel: ObservableObject {
       calendar.startOfDay(for: date)
   }
   
-  // Compute daily stats from review events (moved from view)
+  // Compute daily stats from review events using shared calculator
   func dailyStats(from reviewEvents: [ReviewEventEntity]) -> [DailyStat] {
-    var map: [Date: (correct: Int, wrong: Int)] = [:]
-    for event in reviewEvents {
-      let d = dayStart(for: event.timestamp)
-      var entry = map[d] ?? (correct: 0, wrong: 0)
-      if event.isCorrect { entry.correct += 1 } else { entry.wrong += 1 }
-      map[d] = entry
-    }
-    return map.map { key, value in
-      DailyStat(id: key, date: key, correct: value.correct, wrong: value.wrong)
-    }
-    .sorted { $0.date < $1.date }
+    ReviewStatisticsCalculator.dailyStats(from: reviewEvents, calendar: calendar)
   }
 
   // Count cards for a subject from a given list (moved from view)
@@ -43,28 +33,19 @@ final class StatisticsViewModel: ObservableObject {
     return count
   }
   
-  // Count "Repeat" cards (wrongCount > 0) for a subject
+  // Count total "Repeat" reviews for a subject using shared calculator
   func repeatCardCount(in subject: SubjectEntity, from flashCards: [FlashCardEntity]) -> Int {
-    let targetID = subject.id
-    var count = 0
-    for card in flashCards {
-      if card.subject?.id == targetID && card.wrongCount > 0 {
-        count += 1
-      }
-    }
-    return count
+    ReviewStatisticsCalculator.repeatCount(for: subject.id, from: flashCards)
   }
   
-  // Count "Got it" cards (correctCount > 0 and wrongCount == 0) for a subject
+  // Count total "Hard" reviews for a subject using shared calculator
+  func hardCardCount(in subject: SubjectEntity, from flashCards: [FlashCardEntity]) -> Int {
+    ReviewStatisticsCalculator.hardCount(for: subject.id, from: flashCards)
+  }
+  
+  // Count total "Got it" reviews for a subject using shared calculator
   func gotItCardCount(in subject: SubjectEntity, from flashCards: [FlashCardEntity]) -> Int {
-    let targetID = subject.id
-    var count = 0
-    for card in flashCards {
-      if card.subject?.id == targetID && card.correctCount > 0 && card.wrongCount == 0 {
-        count += 1
-      }
-    }
-    return count
+    ReviewStatisticsCalculator.gotItCount(for: subject.id, from: flashCards)
   }
 
   // Chart helpers to keep logic out of the view
@@ -75,7 +56,7 @@ final class StatisticsViewModel: ObservableObject {
   }
 
   func chartStyleScale() -> (domain: [String], range: [Color]) {
-    ( ["Got it", "Repeat"], [Color.app(.success), Color.app(.error)] )
+    ( ["Got it", "Hard", "Repeat"], [Color.app(.success), Color.app(.warning), Color.app(.error)] )
   }
   
   init(homeViewModel: HomeViewModel) {

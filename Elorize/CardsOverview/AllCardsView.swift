@@ -274,8 +274,28 @@ private extension AllCardsView {
       }
       // Stats row
       HStack(spacing: 12) {
-        Text("✅ \(card.correctCount)")
-        Text("❌ \(card.wrongCount)")
+        let counts = ReviewStatisticsCalculator.reviewCounts(for: card)
+        HStack(spacing: 4) {
+          Image(systemName: "xmark")
+            .font(.caption2)
+            .foregroundStyle(Color.app(.error))
+          Text("\(counts.repeat)")
+            .foregroundStyle(Color.app(.error))
+        }
+        HStack(spacing: 4) {
+          Image(systemName: "minus")
+            .font(.caption2)
+            .foregroundStyle(Color.app(.warning))
+          Text("\(counts.hard)")
+            .foregroundStyle(Color.app(.warning))
+        }
+        HStack(spacing: 4) {
+          Image(systemName: "checkmark")
+            .font(.caption2)
+            .foregroundStyle(Color.app(.success))
+          Text("\(counts.gotIt)")
+            .foregroundStyle(Color.app(.success))
+        }
         if let last = card.lastReviewedAt {
           Text("Last: \(last.formatted(date: .abbreviated, time: .shortened))")
         } else {
@@ -545,20 +565,46 @@ private struct CardDetailEditor: View {
         }
       }
       Section("Statistics") {
+        let counts = ReviewStatisticsCalculator.reviewCounts(for: card)
         HStack {
-          Text("Correct")
+          Label("Repeat", systemImage: "xmark")
+            .foregroundStyle(Color.app(.error))
           Spacer()
-          Text("\(card.correctCount)")
+          Text("\(counts.repeat)")
+            .foregroundStyle(Color.app(.error))
         }
         HStack {
-          Text("Wrong")
+          Label("Hard", systemImage: "minus")
+            .foregroundStyle(Color.app(.warning))
           Spacer()
-          Text("\(card.wrongCount)")
+          Text("\(counts.hard)")
+            .foregroundStyle(Color.app(.warning))
+        }
+        HStack {
+          Label("Got it", systemImage: "checkmark")
+            .foregroundStyle(Color.app(.success))
+          Spacer()
+          Text("\(counts.gotIt)")
+            .foregroundStyle(Color.app(.success))
         }
         HStack {
           Text("Last reviewed")
           Spacer()
           Text(card.lastReviewedAt?.formatted(date: .abbreviated, time: .shortened) ?? "—")
+        }
+        HStack {
+          Text("Ease factor")
+          Spacer()
+          Text(String(format: "%.2f", card.easeFactor))
+        }
+        HStack {
+          Text("Next review")
+          Spacer()
+          if let nextDue = card.card.nextDueDate {
+            Text(nextDue.formatted(date: .abbreviated, time: .omitted))
+          } else {
+            Text("—")
+          }
         }
       }
     }
