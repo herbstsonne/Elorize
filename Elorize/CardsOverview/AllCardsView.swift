@@ -274,25 +274,26 @@ private extension AllCardsView {
       }
       // Stats row
       HStack(spacing: 12) {
+        let counts = ReviewStatisticsCalculator.reviewCounts(for: card)
         HStack(spacing: 4) {
           Image(systemName: "xmark")
             .font(.caption2)
             .foregroundStyle(Color.app(.error))
-          Text("\(card.wrongCount)")
+          Text("\(counts.repeat)")
             .foregroundStyle(Color.app(.error))
         }
         HStack(spacing: 4) {
           Image(systemName: "minus")
             .font(.caption2)
             .foregroundStyle(Color.app(.warning))
-          Text("\(card.hardCount)")
+          Text("\(counts.hard)")
             .foregroundStyle(Color.app(.warning))
         }
         HStack(spacing: 4) {
           Image(systemName: "checkmark")
             .font(.caption2)
             .foregroundStyle(Color.app(.success))
-          Text("\(card.correctCount)")
+          Text("\(counts.gotIt)")
             .foregroundStyle(Color.app(.success))
         }
         if let last = card.lastReviewedAt {
@@ -564,25 +565,26 @@ private struct CardDetailEditor: View {
         }
       }
       Section("Statistics") {
+        let counts = ReviewStatisticsCalculator.reviewCounts(for: card)
         HStack {
           Label("Repeat", systemImage: "xmark")
             .foregroundStyle(Color.app(.error))
           Spacer()
-          Text("\(card.wrongCount)")
+          Text("\(counts.repeat)")
             .foregroundStyle(Color.app(.error))
         }
         HStack {
           Label("Hard", systemImage: "minus")
             .foregroundStyle(Color.app(.warning))
           Spacer()
-          Text("\(card.hardCount)")
+          Text("\(counts.hard)")
             .foregroundStyle(Color.app(.warning))
         }
         HStack {
           Label("Got it", systemImage: "checkmark")
             .foregroundStyle(Color.app(.success))
           Spacer()
-          Text("\(card.correctCount)")
+          Text("\(counts.gotIt)")
             .foregroundStyle(Color.app(.success))
         }
         HStack {

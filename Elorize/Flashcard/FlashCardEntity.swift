@@ -6,6 +6,7 @@ public final class FlashCardEntity {
 	// Identity
 	@Attribute(.unique) public var id: UUID
 	@Relationship var subject: SubjectEntity?
+	@Relationship(deleteRule: .cascade, inverse: \ReviewEventEntity.card) var reviewEvents: [ReviewEventEntity]?
 
 	// Content
 	public var front: String

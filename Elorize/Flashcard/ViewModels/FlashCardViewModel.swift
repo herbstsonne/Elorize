@@ -157,6 +157,12 @@ final class FlashCardViewModel: ObservableObject {
         // Track the event with quality score
         let isCorrect = quality >= 3
         let event = ReviewEventEntity(timestamp: Date(), isCorrect: isCorrect, quality: quality, card: entity)
+        
+        // Insert the event into the context and save
+        if let context = entity.modelContext {
+            context.insert(event)
+        }
+        
         flashcardsRepository?.saveNew(flashCard: entity)
     }
 

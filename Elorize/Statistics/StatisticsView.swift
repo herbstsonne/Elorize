@@ -3,6 +3,14 @@ import SwiftData
 internal import Combine
 import Charts
 
+// Data structure for chart
+fileprivate struct ReviewChartData: Identifiable {
+    let id = UUID()
+    let date: Date
+    let type: String
+    let count: Int
+}
+
 struct StatisticsView: View {
   let homeViewModel: HomeViewModel
   @StateObject private var statisticsViewModel: StatisticsViewModel
@@ -196,7 +204,6 @@ private extension StatisticsView {
       return (statsToDisplay, fullDomain)
   }
   
-  @ViewBuilder
   private func buildChart(
       stats: [DailyStat],
       today: Date,
@@ -210,110 +217,80 @@ private extension StatisticsView {
       // Filter stats to only show those within the domain
       let filteredStats = stats.filter { fullDomain.contains($0.date) }
       
-      // Calculate actual bar width - make bars narrower so they appear closer together
-      let actualBarWidth = barWidth * 0.2
-      
-      let chart = Chart {
-          // Bars for each day/result with explicit styles to avoid scale inference
-          ForEach(filteredStats) { (stat: DailyStat) in
-              let day: Date = stat.date
-
-              // Correct bar
-              BarMark(
-                  x: .value("Day", day, unit: .day),
-                  y: .value("Count", stat.correct),
-                  width: .fixed(actualBarWidth)
-              )
-              .foregroundStyle(successColor)
-              .position(by: .value("Result", "Correct"))
-
-              // Hard bar
-              BarMark(
-                  x: .value("Day", day, unit: .day),
-                  y: .value("Count", stat.hard),
-                  width: .fixed(actualBarWidth)
-              )
-              .foregroundStyle(hardColor)
-              .position(by: .value("Result", "Hard"))
-
-              // Wrong bar
-              BarMark(
-                  x: .value("Day", day, unit: .day),
-                  y: .value("Count", stat.wrong),
-                  width: .fixed(actualBarWidth)
-              )
-              .foregroundStyle(errorColor)
-              .position(by: .value("Result", "Wrong"))
-          }
-
-          // Only show "Today" marker if today is within the domain
-          if fullDomain.contains(today) {
-              RuleMark(x: .value("Today", today, unit: .day))
-                  .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 3]))
-                  .foregroundStyle(Color.app(.accent_subtle))
-                  .annotation(position: .top, alignment: .center, spacing: 4) {
-                      Text("Today")
-                          .font(.caption)
-                          .fontWeight(.medium)
-                          .foregroundStyle(Color.app(.accent_subtle))
-                          .id("today-marker")
-                  }
-          }
+      // Transform data into series format for grouped bars with manual offsets
+      let chartData: [ReviewChartData] = filteredStats.flatMap { stat in
+          // Create offset dates to position bars side-by-side
+          // Each bar is offset by a few hours to create the grouped effect
+          let baseDate = stat.date
+          let hoursOffset: TimeInterval = 3 * 3600 // 3 hours in seconds
+          
+          return [
+              ReviewChartData(date: Calendar.current.date(byAdding: .hour, value: -3, to: baseDate)!, type: "Repeat", count: stat.wrong),
+              ReviewChartData(date: baseDate, type: "Hard", count: stat.hard),
+              ReviewChartData(date: Calendar.current.date(byAdding: .hour, value: 3, to: baseDate)!, type: "Got it", count: stat.correct)
+          ]
       }
       
-      applyChartModifiers(to: chart, fullDomain: fullDomain, yMax: yMax)
-  }
-  
-  private func applyChartModifiers<Content: ChartContent>(
-      to chart: Chart<Content>,
-      fullDomain: ClosedRange<Date>,
-      yMax: Int
-  ) -> some View {
       // Calculate days in range to determine stride
       let daysInRange = Calendar.current.dateComponents([.day], from: fullDomain.lowerBound, to: fullDomain.upperBound).day ?? 1
       
-      // Adjust stride based on number of days to prevent overlap
       let labelStride: Int
       if daysInRange > 30 {
-          labelStride = 7 // Show weekly labels for month+ views
+          labelStride = 7
       } else if daysInRange > 14 {
-          labelStride = 3 // Show every 3rd day for 2-4 weeks
+          labelStride = 3
       } else if daysInRange > 7 {
-          labelStride = 2 // Show every other day for 1-2 weeks
+          labelStride = 2
       } else {
-          labelStride = 1 // Show all days for week or less
+          labelStride = 1
       }
       
-      return chart
-          .chartXScale(domain: fullDomain)
-          .chartYScale(domain: 0 ... yMax)
-          .chartPlotStyle { plotArea in
-              plotArea.background(Color.secondary.opacity(0.05))
-          }
-          .chartYAxis { 
-              AxisMarks(position: .leading, values: .automatic) 
-          }
-          .chartXAxis { 
-              AxisMarks(values: .stride(by: .day, count: labelStride)) { value in
-                  AxisGridLine()
-                  AxisValueLabel {
-                      if let date: Date = value.as(Date.self) {
-                          VStack(spacing: 0) {
-                              Spacer()
-                                  .frame(height: 8)
-                              Text(date, format: Date.FormatStyle()
-                                  .locale(Locale(identifier: "en_US"))
-                                  .month(.twoDigits)
-                                  .day(.twoDigits))
-                              .font(.caption2)
-                              .rotationEffect(.degrees(45), anchor: .center)
-                              .fixedSize(horizontal: true, vertical: true)
-                              .frame(width: 50, height: 50, alignment: .topLeading)
-                          }
+      // Individual bar width
+      let individualBarWidth: CGFloat = 8
+      
+      return Chart(chartData) { item in
+          BarMark(
+              x: .value("Day", item.date, unit: .hour),
+              y: .value("Count", item.count),
+              width: .fixed(individualBarWidth)
+          )
+          .foregroundStyle(by: .value("Type", item.type))
+      }
+      .chartForegroundStyleScale([
+          "Repeat": errorColor,
+          "Hard": hardColor,
+          "Got it": successColor
+      ])
+      .chartXScale(domain: fullDomain)
+      .chartYScale(domain: 0 ... yMax)
+      .chartLegend(position: .top, alignment: .center, spacing: 8)
+      .chartPlotStyle { plotArea in
+          plotArea.background(Color.secondary.opacity(0.05))
+      }
+      .chartYAxis { 
+          AxisMarks(position: .leading, values: .automatic) 
+      }
+      .chartXAxis { 
+          AxisMarks(values: .stride(by: .day, count: labelStride)) { value in
+              AxisGridLine()
+              AxisValueLabel {
+                  if let date: Date = value.as(Date.self) {
+                      VStack(spacing: 0) {
+                          Spacer()
+                              .frame(height: 8)
+                          Text(date, format: Date.FormatStyle()
+                              .locale(Locale(identifier: "en_US"))
+                              .month(.twoDigits)
+                              .day(.twoDigits))
+                          .font(.caption2)
+                          .rotationEffect(.degrees(45), anchor: .center)
+                          .fixedSize(horizontal: true, vertical: true)
+                          .frame(width: 50, height: 50, alignment: .topLeading)
                       }
                   }
               }
           }
+      }
   }
   
   @ViewBuilder
