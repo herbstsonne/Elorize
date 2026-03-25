@@ -146,7 +146,7 @@ private extension FlashCardView {
 				viewModel.isFlipped = false
 			}
 		} label: {
-			Label("Repeat", systemImage: "xmark")
+			Label(LocalizedStringKey("Repeat"), systemImage: "xmark")
 				.font(.caption)
 				.frame(maxWidth: .infinity)
 		}
@@ -167,7 +167,7 @@ private extension FlashCardView {
 				viewModel.isFlipped = false
 			}
 		} label: {
-			Label("Hard", systemImage: "minus")
+			Label(LocalizedStringKey("Hard"), systemImage: "minus")
 				.font(.caption)
 				.frame(maxWidth: .infinity)
 		}
@@ -188,7 +188,7 @@ private extension FlashCardView {
 				viewModel.isFlipped = false
 			}
 		} label: {
-			Label("Got it", systemImage: "checkmark")
+			Label(LocalizedStringKey("Got it"), systemImage: "checkmark")
 				.font(.caption)
 				.frame(maxWidth: .infinity)
 		}

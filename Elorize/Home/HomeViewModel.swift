@@ -138,16 +138,16 @@ class HomeViewModel: ObservableObject {
     let label: String
     switch String(describing: reviewFilter).lowercased() {
     case let s where s.contains("wrong"):
-      label = "Repeat"
+      label = String(localized: "Repeat")
     case let s where s.contains("correct"):
-      label = "Got it!"
+      label = String(localized: "Got it")
     default:
-      label = String(describing: reviewFilter)
+      label = String(localized: "All")
     }
     parts.append(label)
 
     if parts.isEmpty {
-      return "All"
+      return String(localized: "All")
     } else {
       return parts.joined(separator: " • ")
     }
