@@ -60,7 +60,7 @@ private extension FilterView {
   func showPickerFilterByKnowledge() -> some View {
     Picker("FilterByKnowledge", selection: $vm.reviewFilter) {
       ForEach(ReviewFilter.allCases) { f in
-        Text(f.rawValue)
+        Text(LocalizedStringKey(f.rawValue))
           .tag(f)
           .accentText()
       }

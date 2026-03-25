@@ -18,6 +18,7 @@ Elegant, minimalist flashcards with a Parisian-inspired design.
   <img src="Images/cards_sort.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/cards_edit.png" alt="Home" width="240" style="margin-right:12px;" />
   <img src="Images/statistics.png" alt="Home" width="240" style="margin-right:12px;" />
+  <img src="Images/home_german.png" alt="Home" width="240" style="margin-right:12px;" />
   </p>
 
   ## iPad
@@ -51,7 +52,7 @@ Elegant, minimalist flashcards with a Parisian-inspired design.
 - Thoughtful defaults: "All" selection when no subject is chosen  
 - Keyboard-friendly text entry for quick card creation  
 - Dark Mode support  
-- Localization-ready strings (where applicable)  
+- Localization for German available
 
 ---
 

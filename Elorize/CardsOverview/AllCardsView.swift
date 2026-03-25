@@ -564,41 +564,41 @@ private struct CardDetailEditor: View {
           }
         }
       }
-      Section("Statistics") {
+      Section(LocalizedStringKey("Statistics")) {
         let counts = ReviewStatisticsCalculator.reviewCounts(for: card)
         HStack {
-          Label("Repeat", systemImage: "xmark")
+          Label(LocalizedStringKey("Repeat"), systemImage: "xmark")
             .foregroundStyle(Color.app(.error))
           Spacer()
           Text("\(counts.repeat)")
             .foregroundStyle(Color.app(.error))
         }
         HStack {
-          Label("Hard", systemImage: "minus")
+          Label(LocalizedStringKey("Hard"), systemImage: "minus")
             .foregroundStyle(Color.app(.warning))
           Spacer()
           Text("\(counts.hard)")
             .foregroundStyle(Color.app(.warning))
         }
         HStack {
-          Label("Got it", systemImage: "checkmark")
+          Label(LocalizedStringKey("Got it"), systemImage: "checkmark")
             .foregroundStyle(Color.app(.success))
           Spacer()
           Text("\(counts.gotIt)")
             .foregroundStyle(Color.app(.success))
         }
         HStack {
-          Text("Last reviewed")
+          Text(LocalizedStringKey("Last reviewed"))
           Spacer()
           Text(card.lastReviewedAt?.formatted(date: .abbreviated, time: .shortened) ?? "—")
         }
         HStack {
-          Text("Ease factor")
+          Text(LocalizedStringKey("Ease factor"))
           Spacer()
           Text(String(format: "%.2f", card.easeFactor))
         }
         HStack {
-          Text("Next review")
+          Text(LocalizedStringKey("Next review"))
           Spacer()
           if let nextDue = card.card.nextDueDate {
             Text(nextDue.formatted(date: .abbreviated, time: .omitted))

@@ -47,7 +47,7 @@ struct QuizQuestionView: View {
               // Answer reveal
               if viewModel.showingAnswer {
                 VStack(spacing: 16) {
-                  Text("Answer")
+                  Text(String(localized:"Answer"))
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(Color.app(.gold_primary))
@@ -73,7 +73,7 @@ struct QuizQuestionView: View {
                 
                 // Self-grading buttons
                 VStack(spacing: 12) {
-                  Text("Did you get it right?")
+                  Text(String(localized:"Did you get it right?"))
                     .font(.headline)
                     .foregroundStyle(Color.app(.accent_default))
                   

@@ -63,14 +63,14 @@ private extension StatisticsView {
 
   @ViewBuilder
   func OverallSection(totalCards: Int, totalSubjects: Int) -> some View {
-      Section("Overall") {
+      Section(LocalizedStringKey("Overall")) {
           HStack {
-              Text("Total Cards")
+              Text(LocalizedStringKey("Total Cards"))
               Spacer()
               Text("\(totalCards)")
           }
           HStack {
-              Text("Total Subjects")
+              Text(LocalizedStringKey("Total Subjects"))
               Spacer()
               Text("\(totalSubjects)")
           }
@@ -80,9 +80,9 @@ private extension StatisticsView {
 
   @ViewBuilder
   func DailyPerformanceSection(stats: [DailyStat]) -> some View {
-      Section("Daily Performance") {
+      Section(LocalizedStringKey("Daily Performance")) {
           if stats.isEmpty {
-              Text("No review activity yet.")
+              Text(LocalizedStringKey("No review activity yet."))
                   .foregroundStyle(.secondary)
           } else {
               let firstDate: Date = stats.first?.date ?? Date()
@@ -219,9 +219,9 @@ private extension StatisticsView {
       // Transform data into series format for stacked bars
       let chartData: [ReviewChartData] = filteredStats.flatMap { stat in
           [
-              ReviewChartData(date: stat.date, category: "Repeat", count: stat.wrong),
-              ReviewChartData(date: stat.date, category: "Hard", count: stat.hard),
-              ReviewChartData(date: stat.date, category: "Got it", count: stat.correct)
+              ReviewChartData(date: stat.date, category: String(localized: "Repeat"), count: stat.wrong),
+              ReviewChartData(date: stat.date, category: String(localized: "Hard"), count: stat.hard),
+              ReviewChartData(date: stat.date, category: String(localized: "Got it"), count: stat.correct)
           ]
       }
       
@@ -250,9 +250,9 @@ private extension StatisticsView {
           .foregroundStyle(by: .value("Category", item.category))
       }
       .chartForegroundStyleScale([
-          "Repeat": errorColor,
-          "Hard": hardColor,
-          "Got it": successColor
+          String(localized: "Repeat"): errorColor,
+          String(localized: "Hard"): hardColor,
+          String(localized: "Got it"): successColor
       ])
       .chartXScale(domain: fullDomain)
       .chartYScale(domain: 0 ... yMax)
@@ -301,9 +301,9 @@ private extension StatisticsView {
 
   @ViewBuilder
   func SubjectSectionView(subject: SubjectEntity, cardCount: Int, repeatCount: Int, hardCount: Int, gotItCount: Int) -> some View {
-      Section(subject.name ?? "Unknown") {
+      Section(subject.name ?? String(localized: "Unknown")) {
           HStack {
-              Text("Cards")
+              Text(LocalizedStringKey("Cards"))
               Spacer()
               HStack(spacing: 12) {
                   HStack(spacing: 4) {

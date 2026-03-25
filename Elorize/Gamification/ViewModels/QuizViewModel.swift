@@ -63,32 +63,19 @@ final class QuizViewModel: ObservableObject {
         hasAwardedXP = false
     }
     
+    var scoring: QuizScoring {
+        QuizScoring(score: score, totalQuestions: cards.count)
+    }
+    
     var scorePercentage: Double {
-        guard !cards.isEmpty else { return 0 }
-        return Double(score) / Double(cards.count)
+        scoring.scorePercentage
     }
     
     var scoreColor: Color {
-        if scorePercentage >= 0.9 {
-            return Color.app(.success)
-        } else if scorePercentage >= 0.7 {
-            return .blue
-        } else if scorePercentage >= 0.5 {
-            return .orange
-        } else {
-            return Color.app(.error)
-        }
+        scoring.scoreColor
     }
     
     var scoreMessage: String {
-        if scorePercentage >= 0.9 {
-            return "Outstanding! 🎉"
-        } else if scorePercentage >= 0.7 {
-            return "Great job! 👍"
-        } else if scorePercentage >= 0.5 {
-            return "Good effort! 📚"
-        } else {
-            return "Keep studying! 💪"
-        }
+        scoring.scoreMessage
     }
 }
