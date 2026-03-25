@@ -244,11 +244,10 @@ private extension StatisticsView {
       
       return Chart(chartData) { item in
           BarMark(
-              x: .value("Day", item.date, unit: .hour),
-              y: .value("Count", item.count),
-              width: .fixed(individualBarWidth)
+              x: .value("Day", item.date, unit: .day),
+              y: .value("Count", item.count)
           )
-          .foregroundStyle(by: .value("Type", item.type))
+          .foregroundStyle(by: .value("Category", item.category))
       }
       .chartForegroundStyleScale([
           "Repeat": errorColor,
