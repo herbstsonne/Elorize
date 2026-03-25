@@ -3,11 +3,11 @@ import SwiftData
 internal import Combine
 import Charts
 
-// Data structure for chart
+// Data structure for chart with category for grouping
 fileprivate struct ReviewChartData: Identifiable {
     let id = UUID()
     let date: Date
-    let type: String
+    let category: String
     let count: Int
 }
 
@@ -217,17 +217,12 @@ private extension StatisticsView {
       // Filter stats to only show those within the domain
       let filteredStats = stats.filter { fullDomain.contains($0.date) }
       
-      // Transform data into series format for grouped bars with manual offsets
+      // Transform data into series format for stacked bars
       let chartData: [ReviewChartData] = filteredStats.flatMap { stat in
-          // Create offset dates to position bars side-by-side
-          // Each bar is offset by a few hours to create the grouped effect
-          let baseDate = stat.date
-          let hoursOffset: TimeInterval = 3 * 3600 // 3 hours in seconds
-          
-          return [
-              ReviewChartData(date: Calendar.current.date(byAdding: .hour, value: -3, to: baseDate)!, type: "Repeat", count: stat.wrong),
-              ReviewChartData(date: baseDate, type: "Hard", count: stat.hard),
-              ReviewChartData(date: Calendar.current.date(byAdding: .hour, value: 3, to: baseDate)!, type: "Got it", count: stat.correct)
+          [
+              ReviewChartData(date: stat.date, category: "Repeat", count: stat.wrong),
+              ReviewChartData(date: stat.date, category: "Hard", count: stat.hard),
+              ReviewChartData(date: stat.date, category: "Got it", count: stat.correct)
           ]
       }
       
@@ -245,16 +240,12 @@ private extension StatisticsView {
           labelStride = 1
       }
       
-      // Individual bar width
-      let individualBarWidth: CGFloat = 8
-      
       return Chart(chartData) { item in
           BarMark(
-              x: .value("Day", item.date, unit: .hour),
-              y: .value("Count", item.count),
-              width: .fixed(individualBarWidth)
+              x: .value("Day", item.date, unit: .day),
+              y: .value("Count", item.count)
           )
-          .foregroundStyle(by: .value("Type", item.type))
+          .foregroundStyle(by: .value("Category", item.category))
       }
       .chartForegroundStyleScale([
           "Repeat": errorColor,
