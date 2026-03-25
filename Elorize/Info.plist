@@ -4,5 +4,7 @@
 <dict>
 	<key>CFBundleDisplayName</key>
 	<string>Gold &amp; Ink</string>
+  <key>NSCameraUsageDescription</key>
+  <string>Gold &amp; Ink needs camera access to let you take photos for your flashcards.</string>
 </dict>
 </plist>
