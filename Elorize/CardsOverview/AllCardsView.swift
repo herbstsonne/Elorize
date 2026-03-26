@@ -8,6 +8,8 @@ struct AllCardsView: View {
   @Environment(\.modelContext) private var context
   @Environment(\.editMode) private var editMode
   @StateObject private var vm = AllCardsViewModel()
+  
+  @State private var showingCSVImport = false
 
   @Query private var subjects: [SubjectEntity]
   @Query(sort: [SortDescriptor(\FlashCardEntity.createdAt, order: .reverse)])
@@ -83,6 +85,9 @@ struct AllCardsView: View {
     .sheet(isPresented: $viewModel.showingAddSheet) {
       AddCardSelectionView()
         .environmentObject(viewModel)
+    }
+    .sheet(isPresented: $showingCSVImport) {
+      CSVImportView()
     }
     .toolbarBackground(.visible, for: .navigationBar)
     .toolbarBackground(Color.clear, for: .navigationBar)
@@ -167,6 +172,14 @@ private extension AllCardsView {
   func trailingToolbarItems() -> some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
       sortMenu()
+    }
+    ToolbarItem(placement: .topBarTrailing) {
+      Button {
+        showingCSVImport = true
+      } label: {
+        Image(systemName: "square.and.arrow.down")
+      }
+      .accessibilityLabel("Import CSV")
     }
     ToolbarItem(placement: .topBarTrailing) {
       Button {
