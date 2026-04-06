@@ -18,7 +18,7 @@ struct FlowerTimerView: View {
             }
             .padding(8)
             .frame(maxWidth: .infinity)
-            .background(Color.app(.background_secondary).opacity(0.5))
+            .background(Color.app(.button_pressed).opacity(0.5))
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .padding(.horizontal)
             .padding(.top, 8)
@@ -28,6 +28,12 @@ struct FlowerTimerView: View {
         }
         .fullScreenCover(isPresented: $viewModel.showCompletionCelebration) {
             completionOverlay
+        }
+        .onChange(of: viewModel.showCompletionCelebration) { oldValue, newValue in
+            // Automatically save flower when celebration appears
+            if newValue == true && oldValue == false {
+                saveFlower()
+            }
         }
     }
     
@@ -124,18 +130,18 @@ struct FlowerTimerView: View {
         VStack(spacing: 2) {
             if viewModel.isTimerRunning || viewModel.isPaused {
                 Text(viewModel.timeRemainingFormatted)
-                    .font(.system(size: 8, weight: .bold, design: .rounded))
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
                     .monospacedDigit()
-                    .foregroundStyle(Color.app(.accent_default))
+                    .foregroundStyle(Color.app(.text_highlight))
                 
                 Text("Keep learning to grow your flower!")
-                    .font(.system(size: 6))
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 9))
+                    .foregroundStyle(Color.app(.text_highlight))
                     .multilineTextAlignment(.center)
             } else {
                 Text("Ready to start")
-                    .font(.system(size: 7))
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.app(.text_highlight))
             }
         }
     }
@@ -149,8 +155,7 @@ struct FlowerTimerView: View {
                 } label: {
                     Label("Start", systemImage: "play.fill")
                         .font(.caption)
-                        .foregroundStyle(Color.app(.button_default))
-                        .frame(maxWidth: .infinity)
+                        .foregroundStyle(Color.app(.button_pressed))
                         .padding(8)
                 }
                 .buttonStyle(
@@ -172,7 +177,6 @@ struct FlowerTimerView: View {
                   Image(systemName: viewModel.isPaused ? "play.fill" : "pause.fill")
                         .font(.caption)
                         .foregroundStyle(Color.app(.accent_subtle))
-                        .frame(maxWidth: .infinity)
                         .padding(8)
                 }
                 .buttonStyle(
@@ -194,7 +198,6 @@ struct FlowerTimerView: View {
                     Image(systemName: "stop.fill")
                         .font(.caption)
                         .foregroundStyle(Color.app(.accent_subtle))
-                        .frame(maxWidth: .infinity)
                         .padding(8)
                 }
                 .buttonStyle(
@@ -218,11 +221,11 @@ struct FlowerTimerView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(flower.rawValue)
                             .font(.headline)
-                            .foregroundStyle(Color.app(.text_primary))
+                            .foregroundStyle(Color.app(.accent_subtle))
                         
                         Text("\(flower.duration) minutes")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.app(.accent_subtle))
                     }
                     
                     Spacer()
@@ -234,10 +237,6 @@ struct FlowerTimerView: View {
                     }
                 }
                 .padding(.vertical, 8)
-                .background(
-                    viewModel.selectedFlower == flower ?
-                    Color.app(.accent_default).opacity(0.1) : Color.clear
-                )
                 .contentShape(Rectangle())
                 .onTapGesture {
                     print("🌸 Selecting flower: \(flower.rawValue) - \(flower.duration) min")
@@ -248,56 +247,34 @@ struct FlowerTimerView: View {
             }
             .scrollContentBackground(.hidden)
             .background(Color.app(.background_primary).opacity(0.95))
-            .navigationTitle("Choose a Flower")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        viewModel.showFlowerPicker = false
-                    }
-                }
+              ToolbarItem(placement: .topBarTrailing) {
+                  Button("Cancel") {
+                      viewModel.showFlowerPicker = false
+                  }
+              }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.large])
         .presentationBackground(Color.app(.background_primary).opacity(0.85))
     }
     
     private var completionOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.4)
-                .ignoresSafeArea()
+        VStack(spacing: 24) {
+            Text(viewModel.selectedFlower.emoji)
+                .font(.system(size: 100))
+                .scaleEffect(1.2)
+                .animation(.spring(response: 0.6, dampingFraction: 0.5), value: viewModel.showCompletionCelebration)
             
-            VStack(spacing: 24) {
-                Text(viewModel.selectedFlower.emoji)
-                    .font(.system(size: 100))
-                    .scaleEffect(1.2)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.5), value: viewModel.showCompletionCelebration)
+            VStack(spacing: 8) {
+                Text("Flower Grown!")
+                    .font(.title.bold())
+                    .foregroundStyle(Color.app(.accent_subtle))
                 
-                VStack(spacing: 8) {
-                    Text("Flower Grown!")
-                        .font(.title.bold())
-                        .foregroundStyle(.white)
-                    
-                    Text("Great job studying!")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.8))
-                }
-                
-                Button {
-                    saveFlower()
-                    withAnimation {
-                        viewModel.showCompletionCelebration = false
-                    }
-                    viewModel.stopTimer()
-                } label: {
-                    Text("Add to Garden")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: 200)
-                        .padding()
-                        .background(viewModel.selectedFlower.color)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
+                Text("Added to your garden!")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.app(.accent_subtle))
             }
         }
     }

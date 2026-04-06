@@ -6,7 +6,7 @@ struct BackgroundColorView: View {
 		ZStack {
 			// Deep, inky background with a subtle vignette
 			LinearGradient(
-				colors: [Color.app(.background_primary), Color.app(.background_secondary)],
+				colors: [Color.app(.background_primary), Color.app(.button_default)],
 				startPoint: .topLeading,
 				endPoint: .bottomTrailing
 			)
