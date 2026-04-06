@@ -25,11 +25,10 @@ struct HomeView: View {
   var body: some View {
     ZStack {
       BackgroundColorView()
-      VStack {
+      VStack(spacing: 0) {
+        FlowerTimerView()
         showFlashCardSection()
       }
-      
-      // Celebration overlay in center of screen
       if viewModel.showLevelUpCelebration {
         Color.clear
           .ignoresSafeArea()

@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UIKit
+internal import Combine
 
 struct HomeTabView: View {
   
@@ -45,6 +46,14 @@ struct HomeTabView: View {
       .tag(AppTab.statistics)
       .tabItem {
         Label("Statistics", systemImage: "chart.bar")
+      }
+      
+      NavigationStack {
+        GardenView()
+      }
+      .tag(AppTab.garden)
+      .tabItem {
+          Label(AppTab.garden.title, systemImage: AppTab.garden.icon)
       }
     }
     .onChange(of: viewModel.currentTab) { _, _ in

@@ -7,7 +7,8 @@ struct ElorizeApp: App {
         let schema = Schema([
             SubjectEntity.self,
             FlashCardEntity.self,
-            ReviewEventEntity.self
+            ReviewEventEntity.self,
+            FlowerEntity.self
         ])
         
         let modelConfiguration = ModelConfiguration(

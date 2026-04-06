@@ -24,7 +24,7 @@ struct XPProgressCompactView: View {
       }
       .buttonStyle(.plain)
       .padding(.vertical, 6)
-      .frame(minWidth: 140)
+      .frame(minWidth: 150)
       .accessibilityLabel("Open XP details")
     }
     .accessibilityLabel(viewModel.accessibilityLabel)
