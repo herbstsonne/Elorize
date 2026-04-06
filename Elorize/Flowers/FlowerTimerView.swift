@@ -26,10 +26,8 @@ struct FlowerTimerView: View {
         .sheet(isPresented: $viewModel.showFlowerPicker) {
             flowerPickerSheet
         }
-        .overlay {
-            if viewModel.showCompletionCelebration {
-                completionOverlay
-            }
+        .fullScreenCover(isPresented: $viewModel.showCompletionCelebration) {
+            completionOverlay
         }
     }
     
@@ -266,23 +264,23 @@ struct FlowerTimerView: View {
     
     private var completionOverlay: some View {
         ZStack {
-            Color.black.opacity(0.3)
+            Color.black.opacity(0.4)
                 .ignoresSafeArea()
             
             VStack(spacing: 24) {
                 Text(viewModel.selectedFlower.emoji)
                     .font(.system(size: 100))
-                    .scaleEffect(viewModel.showCompletionCelebration ? 1.2 : 0.5)
+                    .scaleEffect(1.2)
                     .animation(.spring(response: 0.6, dampingFraction: 0.5), value: viewModel.showCompletionCelebration)
                 
                 VStack(spacing: 8) {
                     Text("Flower Grown!")
                         .font(.title.bold())
-                        .foregroundStyle(Color.app(.text_primary))
+                        .foregroundStyle(.white)
                     
                     Text("Great job studying!")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.white.opacity(0.8))
                 }
                 
                 Button {
@@ -301,11 +299,6 @@ struct FlowerTimerView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
-            .padding(32)
-            .background(Color.app(.background_primary))
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-            .shadow(radius: 20)
-            .padding(32)
         }
     }
     
@@ -317,11 +310,18 @@ struct FlowerTimerView: View {
             studyDurationMinutes: viewModel.selectedFlower.duration
         )
         context.insert(flower)
-        do {
-            try context.save()
-            print("✅ Flower saved successfully: \(flower.flowerType.rawValue)")
-        } catch {
-            print("❌ Failed to save flower: \(error)")
+        
+        // Save synchronously on main thread to ensure it's persisted
+        Task { @MainActor in
+            do {
+                try context.save()
+                print("✅ Flower saved successfully: \(flower.flowerType.rawValue)")
+                
+                // Post notification for garden to refresh
+                NotificationCenter.default.post(name: NSNotification.Name("FlowerAdded"), object: nil)
+            } catch {
+                print("❌ Failed to save flower: \(error)")
+            }
         }
     }
 }
