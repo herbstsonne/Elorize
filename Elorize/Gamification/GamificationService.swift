@@ -5,11 +5,11 @@ public final class GamificationService: @unchecked Sendable {
   public private(set) var state: XPLevelState
 
   /// Configure base XP curve parameters.
-  /// Example: baseNextLevelXP = 100, growth = 1.2 means each level requires 20% more XP than the previous.
+  /// Example: baseNextLevelXP = 500, growth = 1.2 means each level requires 20% more XP than the previous.
   private let baseNextLevelXP: Int
   private let growth: Double
 
-  public init(initialXP: Int = 0, initialLevel: Int = 1, baseNextLevelXP: Int = 100, growth: Double = 1.2) {
+  public init(initialXP: Int = 0, initialLevel: Int = 1, baseNextLevelXP: Int = 500, growth: Double = 1.2) {
     self.baseNextLevelXP = max(10, baseNextLevelXP)
     self.growth = max(1.0, growth)
     
