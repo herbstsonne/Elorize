@@ -7,7 +7,6 @@ struct FlowerTimerView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Compact timer view at the top
             HStack(spacing: 8) {
                 if !viewModel.isTimerRunning {
                     flowerPickerButton
@@ -58,14 +57,14 @@ struct FlowerTimerView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.app(.background_secondary),
+                            Color.app(.button_default),
                             Color.app(.background_primary)
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
-                .frame(width: 60, height: 60)
+                .frame(width: 80, height: 80)
             
             // Progress ring
             Circle()
@@ -74,7 +73,7 @@ struct FlowerTimerView: View {
                     viewModel.selectedFlower.color.opacity(0.8),
                     style: StrokeStyle(lineWidth: 3, lineCap: .round)
                 )
-                .frame(width: 60, height: 60)
+                .frame(width: 80, height: 80)
                 .rotationEffect(.degrees(-90))
                 .animation(.linear(duration: 1.0), value: viewModel.progress)
             
@@ -126,7 +125,7 @@ struct FlowerTimerView: View {
         VStack(spacing: 2) {
             if viewModel.isTimerRunning || viewModel.isPaused {
                 Text(viewModel.timeRemainingFormatted)
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(Color.app(.accent_default))
                 
@@ -145,22 +144,26 @@ struct FlowerTimerView: View {
     private var controlButtons: some View {
         HStack(spacing: 8) {
             if !viewModel.isTimerRunning {
-                // Start button
-                Button {
-                    viewModel.startTimer()
-                } label: {
-                    Label("Start", systemImage: "play.fill")
-                        .font(.caption)
-                        .frame(maxWidth: .infinity)
-                        .padding(8)
-                }
-                .buttonStyle(
-                    ComposedPressTintStyle(
-                        kind: .borderedProminent,
-                        normalTint: Color.app(.accent_default),
-                        pressedTint: Color.app(.accent_pressed)
-                    )
-                )
+              Text("Start timer")
+                .font(.caption)
+                .foregroundStyle(Color.app(.accent_default))
+              Button {
+                  viewModel.startTimer()
+              } label: {
+                Image(systemName: "play.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color.app(.button_default))
+                    .frame(maxWidth: .infinity)
+                    .padding(8)
+              }
+              .buttonStyle(
+                  ComposedPressTintStyle(
+                      kind: .borderedProminent,
+                      normalTint: Color.app(.accent_default),
+                      pressedTint: Color.app(.accent_pressed)
+                  )
+              )
+              .accessibilityLabel("Start")
             } else {
                 // Pause/Resume button
                 Button {
@@ -170,9 +173,9 @@ struct FlowerTimerView: View {
                         viewModel.pauseTimer()
                     }
                 } label: {
-                    Label(viewModel.isPaused ? "Resume" : "Pause", 
-                          systemImage: viewModel.isPaused ? "play.fill" : "pause.fill")
+                    Image(systemName: viewModel.isPaused ? "play.fill" : "pause.fill")
                         .font(.caption)
+                        .foregroundStyle(Color.app(.accent_default))
                         .frame(maxWidth: .infinity)
                         .padding(8)
                 }
@@ -183,6 +186,7 @@ struct FlowerTimerView: View {
                         pressedTint: Color.app(.button_pressed)
                     )
                 )
+                .accessibilityLabel(viewModel.isPaused ? "Resume" : "Pause")
                 
                 // Stop button
                 Button {
@@ -192,8 +196,9 @@ struct FlowerTimerView: View {
                     }
                     viewModel.stopTimer()
                 } label: {
-                    Label("Stop", systemImage: "stop.fill")
+                    Image(systemName: "stop.fill")
                         .font(.caption)
+                        .foregroundStyle(Color.app(.accent_default))
                         .frame(maxWidth: .infinity)
                         .padding(8)
                 }
@@ -204,6 +209,7 @@ struct FlowerTimerView: View {
                         pressedTint: Color.app(.button_pressed)
                     )
                 )
+                .accessibilityLabel("Stop")
             }
         }
     }
@@ -222,11 +228,11 @@ struct FlowerTimerView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(flower.rawValue)
                                 .font(.headline)
-                                .foregroundStyle(Color.app(.text_primary))
+                                .foregroundStyle(Color.app(.accent_subtle))
                             
                             Text("\(flower.duration) minutes")
                                 .font(.caption)
-                                .foregroundStyle(Color.app(.text_highlight))
+                                .foregroundStyle(Color.app(.accent_subtle))
                         }
                         
                         Spacer()
@@ -242,8 +248,8 @@ struct FlowerTimerView: View {
                 .listRowBackground(Color.app(.background_secondary).opacity(0.5))
             }
             .scrollContentBackground(.hidden)
-            .background(Color.app(.background_primary).opacity(0.85))
-            .navigationTitle("Grow a flower")
+            .background(Color.app(.background_primary).opacity(0.95))
+            .navigationTitle("Grow a Flower")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
