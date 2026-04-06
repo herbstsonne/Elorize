@@ -7,6 +7,7 @@ struct FlowerTimerView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Compact timer view at the top
             HStack(spacing: 8) {
                 if !viewModel.isTimerRunning {
                     flowerPickerButton
@@ -57,14 +58,14 @@ struct FlowerTimerView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.app(.button_default),
+                            Color.app(.background_secondary),
                             Color.app(.background_primary)
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
-                .frame(width: 80, height: 80)
+                .frame(width: 60, height: 60)
             
             // Progress ring
             Circle()
@@ -73,7 +74,7 @@ struct FlowerTimerView: View {
                     viewModel.selectedFlower.color.opacity(0.8),
                     style: StrokeStyle(lineWidth: 3, lineCap: .round)
                 )
-                .frame(width: 80, height: 80)
+                .frame(width: 60, height: 60)
                 .rotationEffect(.degrees(-90))
                 .animation(.linear(duration: 1.0), value: viewModel.progress)
             
@@ -125,7 +126,7 @@ struct FlowerTimerView: View {
         VStack(spacing: 2) {
             if viewModel.isTimerRunning || viewModel.isPaused {
                 Text(viewModel.timeRemainingFormatted)
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(size: 8, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(Color.app(.accent_default))
                 
@@ -144,26 +145,23 @@ struct FlowerTimerView: View {
     private var controlButtons: some View {
         HStack(spacing: 8) {
             if !viewModel.isTimerRunning {
-              Text("Start timer")
-                .font(.caption)
-                .foregroundStyle(Color.app(.accent_default))
-              Button {
-                  viewModel.startTimer()
-              } label: {
-                Image(systemName: "play.fill")
-                    .font(.caption)
-                    .foregroundStyle(Color.app(.button_default))
-                    .frame(maxWidth: .infinity)
-                    .padding(8)
-              }
-              .buttonStyle(
-                  ComposedPressTintStyle(
-                      kind: .borderedProminent,
-                      normalTint: Color.app(.accent_default),
-                      pressedTint: Color.app(.accent_pressed)
-                  )
-              )
-              .accessibilityLabel("Start")
+                // Start button
+                Button {
+                    viewModel.startTimer()
+                } label: {
+                    Label("Start", systemImage: "play.fill")
+                        .font(.caption)
+                        .foregroundStyle(Color.app(.button_default))
+                        .frame(maxWidth: .infinity)
+                        .padding(8)
+                }
+                .buttonStyle(
+                    ComposedPressTintStyle(
+                        kind: .borderedProminent,
+                        normalTint: Color.app(.accent_default),
+                        pressedTint: Color.app(.accent_pressed)
+                    )
+                )
             } else {
                 // Pause/Resume button
                 Button {
@@ -173,9 +171,9 @@ struct FlowerTimerView: View {
                         viewModel.pauseTimer()
                     }
                 } label: {
-                    Image(systemName: viewModel.isPaused ? "play.fill" : "pause.fill")
+                  Image(systemName: viewModel.isPaused ? "play.fill" : "pause.fill")
                         .font(.caption)
-                        .foregroundStyle(Color.app(.accent_default))
+                        .foregroundStyle(Color.app(.accent_subtle))
                         .frame(maxWidth: .infinity)
                         .padding(8)
                 }
@@ -186,7 +184,6 @@ struct FlowerTimerView: View {
                         pressedTint: Color.app(.button_pressed)
                     )
                 )
-                .accessibilityLabel(viewModel.isPaused ? "Resume" : "Pause")
                 
                 // Stop button
                 Button {
@@ -198,7 +195,7 @@ struct FlowerTimerView: View {
                 } label: {
                     Image(systemName: "stop.fill")
                         .font(.caption)
-                        .foregroundStyle(Color.app(.accent_default))
+                        .foregroundStyle(Color.app(.accent_subtle))
                         .frame(maxWidth: .infinity)
                         .padding(8)
                 }
@@ -209,7 +206,6 @@ struct FlowerTimerView: View {
                         pressedTint: Color.app(.button_pressed)
                     )
                 )
-                .accessibilityLabel("Stop")
             }
         }
     }
@@ -217,39 +213,44 @@ struct FlowerTimerView: View {
     private var flowerPickerSheet: some View {
         NavigationStack {
             List(FlowerType.allCases) { flower in
-                Button {
+                HStack(spacing: 16) {
+                    Text(flower.emoji)
+                        .font(.system(size: 40))
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(flower.rawValue)
+                            .font(.headline)
+                            .foregroundStyle(Color.app(.text_primary))
+                        
+                        Text("\(flower.duration) minutes")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    if viewModel.selectedFlower == flower {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(Color.app(.accent_default))
+                            .font(.title3)
+                    }
+                }
+                .padding(.vertical, 8)
+                .background(
+                    viewModel.selectedFlower == flower ?
+                    Color.app(.accent_default).opacity(0.1) : Color.clear
+                )
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    print("🌸 Selecting flower: \(flower.rawValue) - \(flower.duration) min")
                     viewModel.changeFlower(flower)
                     viewModel.showFlowerPicker = false
-                } label: {
-                    HStack(spacing: 16) {
-                        Text(flower.emoji)
-                            .font(.system(size: 40))
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(flower.rawValue)
-                                .font(.headline)
-                                .foregroundStyle(Color.app(.accent_subtle))
-                            
-                            Text("\(flower.duration) minutes")
-                                .font(.caption)
-                                .foregroundStyle(Color.app(.accent_subtle))
-                        }
-                        
-                        Spacer()
-                        
-                        if viewModel.selectedFlower == flower {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(Color.app(.accent_default))
-                        }
-                    }
-                    .padding(.vertical, 8)
                 }
-                .buttonStyle(.plain)
                 .listRowBackground(Color.app(.background_secondary).opacity(0.5))
             }
             .scrollContentBackground(.hidden)
             .background(Color.app(.background_primary).opacity(0.95))
-            .navigationTitle("Grow a Flower")
+            .navigationTitle("Choose a Flower")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -259,7 +260,7 @@ struct FlowerTimerView: View {
                 }
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.medium])
         .presentationBackground(Color.app(.background_primary).opacity(0.85))
     }
     
@@ -286,7 +287,9 @@ struct FlowerTimerView: View {
                 
                 Button {
                     saveFlower()
-                    viewModel.showCompletionCelebration = false
+                    withAnimation {
+                        viewModel.showCompletionCelebration = false
+                    }
                     viewModel.stopTimer()
                 } label: {
                     Text("Add to Garden")
@@ -314,7 +317,12 @@ struct FlowerTimerView: View {
             studyDurationMinutes: viewModel.selectedFlower.duration
         )
         context.insert(flower)
-        try? context.save()
+        do {
+            try context.save()
+            print("✅ Flower saved successfully: \(flower.flowerType.rawValue)")
+        } catch {
+            print("❌ Failed to save flower: \(error)")
+        }
     }
 }
 
