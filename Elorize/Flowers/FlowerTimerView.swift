@@ -7,7 +7,6 @@ struct FlowerTimerView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Compact timer view at the top
             HStack(spacing: 8) {
                 if !viewModel.isTimerRunning {
                     flowerPickerButton
@@ -30,7 +29,6 @@ struct FlowerTimerView: View {
             completionOverlay
         }
         .onChange(of: viewModel.showCompletionCelebration) { oldValue, newValue in
-            // Automatically save flower when celebration appears
             if newValue == true && oldValue == false {
                 saveFlower()
             }
@@ -149,7 +147,6 @@ struct FlowerTimerView: View {
     private var controlButtons: some View {
         HStack(spacing: 8) {
             if !viewModel.isTimerRunning {
-                // Start button
                 Button {
                     viewModel.startTimer()
                 } label: {
@@ -166,7 +163,6 @@ struct FlowerTimerView: View {
                     )
                 )
             } else {
-                // Pause/Resume button
                 Button {
                     if viewModel.isPaused {
                         viewModel.resumeTimer()
@@ -187,9 +183,7 @@ struct FlowerTimerView: View {
                     )
                 )
                 
-                // Stop button
                 Button {
-                    // Save the flower if timer completed
                     if viewModel.progress >= 1.0 {
                         saveFlower()
                     }
@@ -249,8 +243,8 @@ struct FlowerTimerView: View {
             .background(Color.app(.background_primary).opacity(0.95))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-              ToolbarItem(placement: .topBarTrailing) {
-                  Button("Cancel") {
+              ToolbarItem(placement: .topBarLeading) {
+                  Button("Close") {
                       viewModel.showFlowerPicker = false
                   }
               }

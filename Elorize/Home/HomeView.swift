@@ -93,15 +93,16 @@ struct HomeView: View {
                 .font(.footnote)
               Text(viewModel.activeFilterSummary)
                 .font(.footnote)
-                .tint(Color.app(.accent_subtle))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .truncationMode(.tail)
             }
+            .foregroundStyle(Color.app(.accent_subtle))
             .padding(.vertical, 6)
             .padding(.horizontal, 10)
             .contentShape(Rectangle())
           }
+          .buttonStyle(.plain)
           .accessibilityLabel("Open filters. Active: \(viewModel.activeFilterSummary)")
         }
       }
@@ -121,7 +122,7 @@ struct HomeView: View {
           showingMultipleChoiceQuiz = true
         }
       )
-      .presentationDetents([.height(300)])
+      .presentationDetents([.large])
       .presentationDragIndicator(.visible)
     }
     .sheet(isPresented: $showingQuiz) {
