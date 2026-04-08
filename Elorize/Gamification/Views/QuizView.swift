@@ -23,7 +23,7 @@ struct QuizView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
+                    Button("Close") {
                         dismiss()
                     }
                 }

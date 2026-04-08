@@ -36,7 +36,7 @@ struct AddFlashCardView: View {
 			}
       .toolbar {
         ToolbarItem(placement: .topBarLeading) {
-          Button("Cancel") { dismiss() }
+          Button("Close") { dismiss() }
         }
         ToolbarItem(placement: .topBarTrailing) {
           Button("Save") {
