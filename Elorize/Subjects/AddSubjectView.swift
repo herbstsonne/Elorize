@@ -32,7 +32,7 @@ private extension AddSubjectView {
 	
 	@ToolbarContentBuilder
 	func showToolBar() -> some ToolbarContent {
-		ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+		ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
 		ToolbarItem(placement: .confirmationAction) {
 			Button("Save") {
 				if viewModel.save() { dismiss() }

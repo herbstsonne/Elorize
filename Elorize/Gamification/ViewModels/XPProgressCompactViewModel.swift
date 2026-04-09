@@ -33,7 +33,7 @@ final class XPProgressCompactViewModel: ObservableObject {
     }
     
     var xpForNextLevel: Int {
-        homeViewModel?.xpState.xpForNextLevel ?? 100
+        homeViewModel?.xpState.xpForNextLevel ?? 500
     }
     
     var xpRemaining: Int {

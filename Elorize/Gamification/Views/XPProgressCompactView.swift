@@ -24,7 +24,7 @@ struct XPProgressCompactView: View {
       }
       .buttonStyle(.plain)
       .padding(.vertical, 6)
-      .frame(minWidth: 140)
+      .frame(minWidth: 150)
       .accessibilityLabel("Open XP details")
     }
     .accessibilityLabel(viewModel.accessibilityLabel)
@@ -81,7 +81,7 @@ private struct XPDetailsView: View {
           VStack(alignment: .leading, spacing: 8) {
             Text("• Correct answer: +5 XP")
             Text("• Wrong answer: +1 XP (for the attempt)")
-            Text("• Level up: Every 100 XP, your level increases and XP resets within the new level")
+            Text("• Level up: Every 500 XP, your level increases and XP resets within the new level")
           }
         }
 

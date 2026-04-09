@@ -163,7 +163,7 @@ class HomeViewModel: ObservableObject {
       self.currentTab = stored
     }
     // Restore XP and Level state from persisted storage
-    self.gamificationService = GamificationService(initialXP: storedTotalXP, initialLevel: storedLevel)
+    self.gamificationService = GamificationService(initialXP: storedTotalXP, initialLevel: storedLevel, baseNextLevelXP: 500)
     let restored = gamificationService.state
     self.xpState = restored
     self.lastObservedLevel = restored.level

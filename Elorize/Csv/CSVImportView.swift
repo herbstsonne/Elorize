@@ -247,7 +247,7 @@ private extension CSVImportView {
         Button(action: {
             viewModel.reset()
         }) {
-            Text(LocalizedStringKey("Cancel"))
+            Text(LocalizedStringKey("Close"))
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Color.secondary.opacity(0.2))
