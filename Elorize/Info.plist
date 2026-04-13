@@ -2,9 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDisplayName</key>
-	<string>Gold &amp; Ink</string>
-  <key>NSCameraUsageDescription</key>
-  <string>Gold &amp; Ink needs camera access to let you take photos for your flashcards.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>com.goldink</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>goldink</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
