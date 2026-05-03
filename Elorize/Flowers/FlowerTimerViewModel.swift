@@ -1,5 +1,8 @@
 import SwiftUI
 internal import Combine
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @MainActor
 class FlowerTimerViewModel: ObservableObject {
@@ -36,6 +39,9 @@ class FlowerTimerViewModel: ObservableObject {
         startTime = Date()
         progress = 0.0
         
+        // Prevent screen from locking while timer is running
+        setIdleTimerDisabled(true)
+        
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.updateTimer()
         }
@@ -45,11 +51,17 @@ class FlowerTimerViewModel: ObservableObject {
         isPaused = true
         timer?.invalidate()
         timer = nil
+        
+        // Allow screen to lock when paused
+        setIdleTimerDisabled(false)
     }
     
     func resumeTimer() {
         guard isPaused else { return }
         isPaused = false
+        
+        // Prevent screen from locking when resumed
+        setIdleTimerDisabled(true)
         
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             self?.updateTimer()
@@ -63,6 +75,9 @@ class FlowerTimerViewModel: ObservableObject {
         timer = nil
         timeRemaining = 0
         progress = 0.0
+        
+        // Allow screen to lock when timer is stopped
+        setIdleTimerDisabled(false)
     }
     
     func resetTimer() {
@@ -87,6 +102,9 @@ class FlowerTimerViewModel: ObservableObject {
         progress = 1.0
         showCompletionCelebration = true
         
+        // Allow screen to lock when timer is complete
+        setIdleTimerDisabled(false)
+        
         // Hide celebration after 3 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
             self?.showCompletionCelebration = false
@@ -98,5 +116,13 @@ class FlowerTimerViewModel: ObservableObject {
         guard !isTimerRunning else { return }
         selectedFlower = flower
         timeRemaining = flower.durationInSeconds
+    }
+    
+    // MARK: - Idle Timer Management
+    
+    private func setIdleTimerDisabled(_ disabled: Bool) {
+        #if canImport(UIKit)
+        UIApplication.shared.isIdleTimerDisabled = disabled
+        #endif
     }
 }
