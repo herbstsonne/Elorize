@@ -8,6 +8,19 @@ public extension Color {
     static func app(_ color: AssetColors.AppColor, bundle: Bundle = .main) -> Color {
         AssetColors.color(color, bundle: bundle)
     }
+    
+    /// Blue to gold gradient background
+    /// Usage: Color.appGradientBackground
+    static var appGradientBackground: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                .blue,
+                .app(.gold_primary)
+            ]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
 }
 #endif
 

@@ -1,8 +1,8 @@
 <p align="center"><img src="Images/elorize_icon.png" alt="Elorize Icon" width="96" /></p>
 
-# Gold & Ink
+# Flashcards 1.0
 
-Elegant, minimalist flashcards with a Parisian-inspired design.
+Minimalistic flashcards.
 
 ## iPhone
 

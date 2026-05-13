@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct ElorizeApp: App {
+struct FlashcardsApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             SubjectEntity.self,

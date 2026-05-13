@@ -15,8 +15,7 @@ struct GardenView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                backgroundGradient
+                BackgroundColorView()
                 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -33,7 +32,6 @@ struct GardenView: View {
                     .padding()
                 }
             }
-            .navigationTitle("My Garden")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -75,7 +73,7 @@ struct GardenView: View {
                 
                 Text(flowers.count == 1 ? "Flower" : "Flowers")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.app(.accent_default))
             }
             .frame(maxWidth: .infinity)
             .padding()
@@ -89,7 +87,7 @@ struct GardenView: View {
                 
                 Text("Minutes")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.app(.accent_default))
             }
             .frame(maxWidth: .infinity)
             .padding()
@@ -110,7 +108,7 @@ struct GardenView: View {
             
             Text("Complete study timers to grow flowers!")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.app(.accent_default))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
         }
@@ -187,13 +185,13 @@ struct FlowerCardView: View {
             
             Text(flower.flowerType.rawValue)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.app(.accent_default))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             
             Text(formattedDate)
                 .font(.caption2)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(Color.app(.accent_default))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
